@@ -1,0 +1,152 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
+\usepackage{amsmath,amssymb,amsfonts}
+\newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
+\newcommand{\defq}{\stackrel {\rm def}{=}}
+
+\title{Programmatic solution}
+\begin{document}
+
+\subsection*{Simplified problem statement}
+
+\includegraphics[width=0.9\textwidth]{debug.png}
+
+Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge}.
+
+\subsubsection*{Variables}
+
+\begin{description}
+  \item[Input] \begin{description}
+    \item[$\theta_l$] Average of the {\em left} sensors input, between $0$ and $1$ when very close, $30°$ sensor field.
+    \item[$\theta_r$] Average of the {\em right} sensors input, idem.
+    \item[$\varepsilon$] Energy indicator, between $1$ when full and $0$ when dead.
+    \end{description}
+  \item[Output] \begin{description}
+     \item[$d \theta$] Orientation relative increment, between $-1$ for $???°$ leftward and $-$ for $???°$ rightward.
+   \end{description}
+    \item[Internal] \begin{description}
+    \item[$\lambda$] Orientation preference $0$ if left, $1$ if right, $\lambda=0$ at start.
+   \end{description}
+\end{description}
+
+\subsubsection*{Computation unit: neuronoid}
+
+\eqline{\begin{array}{cc}
+  \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
+  z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i}\right), \\
+  h(v) \defq \frac{1}{1+\exp(-4\,v)}, &
+  H(v) \defq \left\{\begin{array}{rcl} 1 &\mbox{if}& v > 0\\ 0 &\mbox{if}& v < 0\\ \end{array}\right. \\
+\end{array}}
+%h := v -> 1/(1+exp(-4*v)): limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity;
+where $v_i$ is the membrane potential, and $h(\cdot)$ is the normalized sigmoid with $h(-infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, which is the mollification of the Heaviside function $H(\cdot)$, so that
+% dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, v(t)):
+\eqline{v(t) = 1/\tau \, \int_0^t z(s) \, exp(-(t-s)/\tau) \, ds + v(0) \, exp(-t/\tau) = \left. z(t) \right|_{\tau = 0}.}
+
+It is thus a very common 1st order ``neuronoid'' model, but with an adjustable bias (or offset) $w_{i}$.
+
+\subsubsection*{Programmatoid and neuronoid computation}
+
+\subsubsection*{Programmatoid  computation}
+
+Here we call ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the Heaviside function, considering $1$ as the true value and $0$ as the false value. With the convention $H(v)$ implements the test of the positive sign of $v$, while
+\begin{description}
+  \item[programmatoid cunjuction]  The $v_0 = H(H(v_1) + H(v_2) + \cdots)$ formula perfoms a {\em or} operation.
+  \item[programmatoid disjuction]  The $v_0 = H(v_1) \, H(v_2) \, \cdots)$ formula perfoms a {\em and} operation.
+  \item[programmatoid negation]  The $v_0 = H(1- H(v_1))$ formula performs a negation.
+\end{description}
+so that we can combine any boolean expression on any test of value sign, thus value comparison, and value interval inclusion, switches between two expressions, etc.
+% vthierry : AHHHHHHHHHHHHHHH y a un mot pour designer cette classe d'expression.
+
+Using local feedback we can also design:
+\begin{description}
+  \item[monostable binary value] The $v_0 = v_0 + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
+\end{description}
+and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage).
+
+\subsubsection*{Mollification of the Heaviside function}
+
+The Heaviside function is thus a functional implementation of the sign test of a value,  and $H(v) \simeq h(W_{\infty} \, v), W_{\infty}  \rightarrow +\infty$, i.e.:
+%int(1-h(w*v),v=0..infinity) assuming w > 0);
+% v_oo := solve(h(W_oo * v_oo) = 1 - e_oo, v_oo); v_oo_ := (-e_oo - ln(e_oo)) / (4*W_oo); d_oo := series(v_oo - v_oo_, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
+\eqline{
+    |H(\cdot) - h(\cdot)|_{{\cal L}_1} = O\left(\frac{1}{W_{\infty}}\right), \;\;
+    h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty \Leftrightarrow v_\infty  = \frac{-\log(\epsilon_\infty)}{4\,W_\infty}+ O\left(\epsilon_{\infty}\right).
+}
+
+This allows one to approximate a construct of the form:
+\eqline{\lambda \, H(v) \simeq h(v + W_\infty \, (\lambda - 1)), \mbox{ with } \lambda \in \{0, 1\} \mbox{ and }  v \ll W_\infty, }
+in words: it approximates a binary switch $\lambda \in \{0, 1\}$ prefixing a sign test by a computation unit, since for $\lambda=1$ it equals $H(v)$ on both sides and if $\lambda = 0$ it almost equals $0$on both sides.
+
+\subsubsection*{Neuronoid  computation}
+
+We call ``neuronoid'' computation the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
+
+By successive combination, any programmatoid  computation involving the $H(\cdot)$ function can be approximated by a neuronoid, with $\tau \simeq 0$.
+
+A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc. (not detailed here because not used at this stage).
+
+\subsection*{A putative controller}
+
+\subsubsection*{Navigation}
+
+{\bf Heuristic}: The bot runs at constant velocity, (i) ahead by default and (ii) if passing in the preferred orientation is possible, makes a quarter turn.
+
+{\bf Programmatoid solution}:
+\eqline{\begin{array}{rcl}
+    d\theta &=& \underbrace{\gamma \, (\theta_l - \theta_r)}_{\mbox{\begin{tabular}{lc}linear correction to \\ maintain direction ahead\end{tabular}}}+ \underbrace{\frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)}_{\mbox{direction change}}\\
+    \Delta\theta_r &=& \lambda \,  H(\beta - \theta_r) \\
+    \Delta\theta_l &=& (1 - \lambda) \, H(\beta - \theta_l) \\
+\end{array}}
+where: \begin{description}
+  \item[$\Delta\theta_*$] raises from 0 to 1 when the left sensor detects a passing, i.e., the fact tat the side wall is not close anymore.
+  \item[$\gamma$] is a feedback loop gain $0 < \gamma < 1$ to be adjusted high enough to correct the direction, small enough to avoid oscillations.
+  \item[$\beta$] is a threshold below which the side sensor input corresponds to no side wall  but a passing.
+\end{description}
+in words: the bot navigates ahead thanks to the linear correction parameterized by $\gamma$ and perform a quarter turn in the preferred direction as soon a passing is detected.
+
+{\bf Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
+\eqline{\begin{array}{rcl}
+    d\theta &=& h\left(\gamma \, (\theta_l - \theta_r)+ \frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)\right)\\
+    \Delta\theta_r &=& h(W_\infty /2 \, (\beta - \theta_r) + W_\infty \, (\lambda - 1)) \\
+    \Delta\theta_l &=& h(W_\infty/2 \, (\beta - \theta_l) - W_\infty \, \lambda) \\
+\end{array}}
+as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
+
+With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while $\Delta\theta_*$ almost binary value is approximated by the mollification for the previous subsection.
+
+\subsubsection*{Direction choice}
+
+{\bf Heuristic}: The initial direction is right, but as soon as an input contradicts this assumption, it is turned left once, and this remains.
+\begin{description}
+  \item[Case 1] If the energy is to low, it means we turn in the wrong direction, so it changes.
+  \item[Case 2] If there is a blue color on the left it means we must change from right to left.
+  \item[Case 3] If there is a red (or yellow, etc) color somewhere, then change the turn direction if i see it again on the left.
+\end{description}
+
+{\bf Programmatoid solution}:
+\eqline{\begin{array}{rcl}
+    \lambda &=& \lambda + \Delta\lambda_1 + \Delta\lambda_2 + \Delta\lambda_3 + \cdots \\
+    \Delta\lambda_1 &=& (\lambda - 1) \, H(\alpha - \varepsilon) \\
+    \Delta\lambda_2 &=& (\lambda - 1) \, H(\iota - I_{\mbox{left blue color sensor}}) \\
+    \Delta\lambda_3 &=& (\lambda - 1) \, (\Upsilon_{\mbox{again red color}} + \Upsilon_{\mbox{again yellow color}} + \cdots) \\
+    \cdots &&\\
+    \Upsilon_{\mbox{again this color}} &=& \Upsilon_{\mbox{seen this color}} \, H(\iota - I_{\mbox{left this color sensor}}) \\
+    \Upsilon_{\mbox{seen this color}} &=& \Upsilon_{\mbox{seen this color}}  + (1 - \Upsilon_{\mbox{seen this color}}) \, H(\iota - I_{\mbox{this color sensor}}) \\
+    \cdots &&\\
+\end{array}}
+where: \begin{description}
+  \item[$\alpha$] is a the energy threshold, corresponding to the energy consumption during one turn.
+  \item[$\iota$] is some color detection threshold.
+  \item[$\Delta\lambda_1$] raises to one if the energy decreases below a threshold.
+  \item[$\Delta\lambda_2$] raises to one if the blue color is seen on the left.
+  \item[$\Delta\lambda_3$] raises to one if some color is seen again.
+  \item[$\Upsilon_{\mbox{\normalfont again this color}}$] raises to one  a previously seen color is seen again on the left.
+  \item[$\Upsilon_{\mbox{\normalfont seen this color}}$] raises to one  a color is seen for the first time.
+  \item[$I_{\mbox{\normalfont left this color sensor}}$] combines color sensor input.
+  \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
+\end{description}
+
+{\bf Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
+
+\end{document}
