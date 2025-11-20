@@ -60,9 +60,9 @@ so that we can combine any boolean expression on any test of value sign, thus va
 
 Using local feedback we can also design:
 \begin{description}
-  \item[monostable binary value] The $v_0 = v_0 + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
+  \item[monostable binary value] The $v_0 = v_0  + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
 \end{description}
-and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage).
+and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage, see appendix).
 
 \subsubsection*{Mollification of the Heaviside function}
 
@@ -84,7 +84,7 @@ We call ``neuronoid'' computation the conception of an input-output transform ba
 
 By successive combination, any programmatoid  computation involving the $H(\cdot)$ function can be approximated by a neuronoid, with $\tau \simeq 0$.
 
-A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc. (not detailed here because not used at this stage).
+A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc. (not detailed here because not used at this stage,  see appendix).
 
 \subsection*{A putative controller}
 
@@ -148,5 +148,17 @@ where: \begin{description}
 \end{description}
 
 {\bf Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
+
+\subsection*{Appendix: a few programmatoid and neuronoid components}
+
+To be done.
+
+%\subsubsection*{Monostable binary value}
+
+%avec l = l/2 + h() si neuronoid pour avoir v fini
+
+%\subsubsection*{Bistable binary value}
+
+%Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
 
 \end{document}
