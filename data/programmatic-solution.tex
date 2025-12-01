@@ -7,8 +7,13 @@
 
 \title{Programmatic solution}
 \begin{document}
+\tableofcontents
 
-\subsection*{Simplified problem statement}
+\section{Programming with programmatoid and neuronoid}
+
+Let us consider the following digital experimental setup, as described in \href{https://github.com/rougier/braincraft/blob/master/README.md#introduction}{braincraft challenge presentation}.
+
+\subsection{Simplified problem statement}
 
 \includegraphics[width=0.9\textwidth]{debug.png}
 
@@ -23,14 +28,18 @@ Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge
     \item[$\varepsilon$] Energy indicator, between $1$ when full and $0$ when dead.
     \end{description}
   \item[Output] \begin{description}
-     \item[$d \theta$] Orientation relative increment, between $-1$ for $???°$ leftward and $-$ for $???°$ rightward.
+     \item[$d \theta$] Orientation relative increment, between $-1$ for $-5°$ leftward and $1$ for $5°$ rightward.
    \end{description}
     \item[Internal] \begin{description}
     \item[$\lambda$] Orientation preference $0$ if left, $1$ if right, $\lambda=0$ at start.
    \end{description}
 \end{description}
 
+With respect to the original we consider only two leftward and rightward sensor, and re-normalize the input/output values.
+
 \subsubsection*{Computation unit: neuronoid}
+
+By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
 \eqline{\begin{array}{cc}
   \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
@@ -39,46 +48,64 @@ Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge
   H(v) \defq \left\{\begin{array}{rcl} 1 &\mbox{if}& v > 0\\ 0 &\mbox{if}& v < 0\\ \end{array}\right. \\
 \end{array}}
 %h := v -> 1/(1+exp(-4*v)): limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity;
-where $v_i$ is the membrane potential, and $h(\cdot)$ is the normalized sigmoid with $h(-infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, which is the mollification of the Heaviside function $H(\cdot)$, so that
+where $v_i$ is the membrane potential, so that:
+\eqline{\begin{array}{rcl} v(t)
 % dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, v(t)):
-\eqline{v(t) = 1/\tau \, \int_0^t z(s) \, exp(-(t-s)/\tau) \, ds + v(0) \, exp(-t/\tau) = \left. z(t) \right|_{\tau = 0}.}
+  &=& 1/\tau \, \int_0^t z(s) \, exp(-(t-s)/\tau) \, ds + v(0) \, exp(-t/\tau) \\
+% dsolve({tau * D(v)(t) + v(t) = z0, v(0) = v0}, v(t)):
+  &=& \left. z(0) + (v(0) - z(0)) \, e^{-t/\tau} \right|_{z(t)= z(0)}. \\
+  &=& \left. z(t) \right|_{\tau = 0} \\
+  &\simeq&  (1-\gamma) \, v(t-\Delta t) + \gamma \, z(t-\Delta t)) \\
+% rsolve({v(t+1) = (1-g) * v(t) + g * z(t), v(0) = v0}, v(t));
+  &=& \sum_{s=0}^{t-1} z(s) \, \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
+% rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, v(t));
+  &=& \left. z(0) + (v(0) - z(0)) \,  (1-\gamma)^t \right|_{z(t)= z(0)} \\
+  &=& \left. z(t) \right|_{\gamma = 1}. \\
+\end{array}}
+writing also the  corresponding discrete approximation using an Euler schema with $0 < \gamma < 1, 0 < \tau$:
+% simplify(solve({(1-g)^t = exp(-t/tau)}, g) assuming 0 < g, g < 1); simplify(solve({(1-g)^t = exp(-t/tau)}, tau) assuming 0 < g, g < 1);
+\eqline{\begin{array}{c}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)) \\  \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0. \end{array}}
+
+Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, which is the mollification of the Heaviside function $H(\cdot)$, as detailed below.
 
 It is thus a very common 1st order ``neuronoid'' model, but with an adjustable bias (or offset) $w_{i}$.
 
-\subsubsection*{Programmatoid and neuronoid computation}
+\subsection{Programmatoid and neuronoid computation}
 
 \subsubsection*{Programmatoid  computation}
 
-Here we call ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the Heaviside function, considering $1$ as the true value and $0$ as the false value. With the convention $H(v)$ implements the test of the positive sign of $v$, while
+We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the Heaviside function, considering $1$ as the true value and $0$ as the false value. The $H(v)$ implements the test of the positive sign of $v$, while for $v_i \in \{0, 1\}$:
 \begin{description}
-  \item[programmatoid cunjuction]  The $v_0 = H(H(v_1) + H(v_2) + \cdots)$ formula perfoms a {\em or} operation.
-  \item[programmatoid disjuction]  The $v_0 = H(v_1) \, H(v_2) \, \cdots)$ formula perfoms a {\em and} operation.
-  \item[programmatoid negation]  The $v_0 = H(1- H(v_1))$ formula performs a negation.
+  \item[programmatoid conjunction]  The $v_0 = H(v_1 + v_2 + \cdots)$ formula performs a {\em or} operation.
+  \item[programmatoid disjunction]  The $v_0 = v_1 \, v_2 \cdots$ formula performs a {\em and} operation.
+  \item[programmatoid negation]  The $v_0 = (1- v_1)$ formula performs a negation.
 \end{description}
-so that we can combine any boolean expression on any test of value sign, thus value comparison, and value interval inclusion, switches between two expressions, etc.
-% vthierry : AHHHHHHHHHHHHHHH y a un mot pour designer cette classe d'expression.
+so that we can combine any boolean expression on any test of value sign, thus value comparison, and value interval inclusion, switches between two expressions, etc. This defines \href{https://en.wikipedia.org/wiki/Real_algebraic_geometry}{real semi-algebraic} sets of degree 1.
 
-Using local feedback we can also design:
-\begin{description}
-  \item[monostable binary value] The $v_0 = v_0  + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
-\end{description}
-and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage, see appendix).
+Using local feedback we can also design several functions detailed in the Appendix of this section, while we also can combine neuronoid and programmatoid functions to design temporal functions.
 
 \subsubsection*{Mollification of the Heaviside function}
 
-The Heaviside function is thus a functional implementation of the sign test of a value,  and $H(v) \simeq h(W_{\infty} \, v), W_{\infty}  \rightarrow +\infty$, i.e.:
+The Heaviside function is related to a conditional expression by a simple relation:
+\eqline{H(v) = conditional\;value > 0 \mbox{ ? } 1 \mbox{ : } conditional\;value < 0 \mbox{ ? } 0 \mbox{ : } H(0),}
+where $condition \mbox{ ? } value\;if\;true \mbox{ : } value\;if\;false$ is a conditional expression.
+
+The Heaviside function approximates sigmoid with huge slope at zero, i.e.:
+\eqline{\forall v \ne 0, H(v) = \lim_{W_{\infty}  \rightarrow +\infty} h(W_{\infty} \, v), \left. h'(W_{\infty} \, v)  \right|_{v = 0} =  W_{\infty}}
+while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
+More precisely:
+\eqline{|H(\cdot) - h(\cdot)|_{{\cal L}_1} = O\left(\frac{1}{W_{\infty}}\right),}
+and, for $0 < \epsilon_\infty \ll 1 < v_\infty$:
 %int(1-h(w*v),v=0..infinity) assuming w > 0);
 % v_oo := solve(h(W_oo * v_oo) = 1 - e_oo, v_oo); v_oo_ := (-e_oo - ln(e_oo)) / (4*W_oo); d_oo := series(v_oo - v_oo_, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
-\eqline{
-    |H(\cdot) - h(\cdot)|_{{\cal L}_1} = O\left(\frac{1}{W_{\infty}}\right), \;\;
-    h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty \Leftrightarrow v_\infty  = \frac{-\log(\epsilon_\infty)}{4\,W_\infty}+ O\left(\epsilon_{\infty}\right).
-}
+\eqline{h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty  \Leftrightarrow v_\infty  = \frac{-\log(\epsilon_\infty)}{4\,W_\infty} + O\left(\epsilon_{\infty}\right).}
 
-This allows one to approximate a construct of the form:
-\eqline{\lambda \, H(v) \simeq h(v + W_\infty \, (\lambda - 1)), \mbox{ with } \lambda \in \{0, 1\} \mbox{ and }  v \ll W_\infty, }
-in words: it approximates a binary switch $\lambda \in \{0, 1\}$ prefixing a sign test by a computation unit, since for $\lambda=1$ it equals $H(v)$ on both sides and if $\lambda = 0$ it almost equals $0$on both sides.
+A step further, the local variation of sigmoid writes:
+% s := v -> 1/(1+exp(-4*v)): series(s(v), v = v0, 2);
+% series(4/(1+exp(4*v))^2, v=infinity, 1);
+\eqline{\begin{array}{rcl} h(v) &=& h(v_0) + \left[ \frac{4}{\exp(v_0)^8} + O\left(\frac{1}{\exp(v_0)^{12}}\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\ &\simeq& h(v_0) + \frac{v - v_0}{\exp(v_0)^8/4}. \end{array}}
 
-\subsubsection*{Neuronoid  computation}
+\subsubsection*{Neuronoid  implementation of programmatoid computation}
 
 We call ``neuronoid'' computation the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
 
@@ -90,9 +117,9 @@ A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we 
 
 \subsubsection*{Navigation}
 
-{\bf Heuristic}: The bot runs at constant velocity, (i) ahead by default and (ii) if passing in the preferred orientation is possible, makes a quarter turn.
+\paragraph{Heuristic}: The bot runs at constant velocity, (i) ahead by default and (ii) if passing in the preferred orientation is possible, makes a quarter turn.
 
-{\bf Programmatoid solution}:
+\paragraph{Programmatoid solution}:
 \eqline{\begin{array}{rcl}
     d\theta &=& \underbrace{\gamma \, (\theta_l - \theta_r)}_{\mbox{\begin{tabular}{lc}linear correction to \\ maintain direction ahead\end{tabular}}}+ \underbrace{\frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)}_{\mbox{direction change}}\\
     \Delta\theta_r &=& \lambda \,  H(\beta - \theta_r) \\
@@ -105,26 +132,26 @@ where: \begin{description}
 \end{description}
 in words: the bot navigates ahead thanks to the linear correction parameterized by $\gamma$ and perform a quarter turn in the preferred direction as soon a passing is detected.
 
-{\bf Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
+\paragraph{Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
 \eqline{\begin{array}{rcl}
     d\theta &=& h\left(\gamma \, (\theta_l - \theta_r)+ \frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)\right)\\
-    \Delta\theta_r &=& h(W_\infty /2 \, (\beta - \theta_r) + W_\infty \, (\lambda - 1)) \\
-    \Delta\theta_l &=& h(W_\infty/2 \, (\beta - \theta_l) - W_\infty \, \lambda) \\
+    \Delta\theta_r &=& h(W_\infty \, (\beta - \theta_r) + 2\, W_\infty \, (\lambda - 1)) \\
+    \Delta\theta_l &=& h(W_\infty \, (\beta - \theta_l) - 2\, W_\infty \, \lambda) \\
 \end{array}}
 as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
 
-With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while $\Delta\theta_*$ almost binary value is approximated by the mollification for the previous subsection.
+With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the Heaviside function. This part of the system is feed-forward thus without convergence or stability issue.
 
 \subsubsection*{Direction choice}
 
-{\bf Heuristic}: The initial direction is right, but as soon as an input contradicts this assumption, it is turned left once, and this remains.
+\paragraph{Heuristic}: The initial direction is right, but as soon as an input contradicts this assumption, it is turned left once, and this remains.
 \begin{description}
   \item[Case 1] If the energy is to low, it means we turn in the wrong direction, so it changes.
   \item[Case 2] If there is a blue color on the left it means we must change from right to left.
   \item[Case 3] If there is a red (or yellow, etc) color somewhere, then change the turn direction if i see it again on the left.
 \end{description}
 
-{\bf Programmatoid solution}:
+\paragraph{Programmatoid solution}:
 \eqline{\begin{array}{rcl}
     \lambda &=& \lambda + \Delta\lambda_1 + \Delta\lambda_2 + \Delta\lambda_3 + \cdots \\
     \Delta\lambda_1 &=& (\lambda - 1) \, H(\alpha - \varepsilon) \\
@@ -147,9 +174,77 @@ where: \begin{description}
   \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
 \end{description}
 
-{\bf Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
+\paragraph{Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
 
 \subsection*{Appendix: a few programmatoid and neuronoid components}
+
+\subsubsection*{Conditional expression}
+
+For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$ and a control $v_l \in \{0, 1\}$, the equation, for $W_\infty > 1$, and $0 < W_\epsilon \ll 1$ :
+\eqline{\begin{array}{rcll}  v_o(t+1)
+    &=& v_l(t) == 1 \mbox{ ? } v_{i1}(t) \mbox{ : } v_{i0}(t) & (1) \\
+    &=& v_l(t) \, v_{i1}(t)  + (1- v_l(t)) \, v_{i0}(t) & (2) \\
+    &=& H(v_{i1}(t) - W_\infty \, (1 - v_l(t)) - W_\epsilon) + H(v_{i0}(t) - W_\infty \, v_l(t) - W_\epsilon)  & (3) \\
+    &\simeq& h(W_\infty \, v_{i1}(t) - 2 \, W_\infty \, (1 - v_l(t))) + h(W_\infty \, v_{i0}(t) - 2 \, W_\infty \, v_l(t)) & (4) . \\
+\end{array}}
+
+\begin{itemize}
+
+\item It is obvious to verify that line (1) and (2) are equivalent.
+
+\item The fact line (2) and (3) are equivalent is verified by this truth table: \\
+\centerline{\small \begin{tabular}{|c|c|c||c|c|c|} \hline
+    $v_l(t)$ & $v_{i1}(t)$ & $v_{i0}(t)$ & $v_{i1}(t) - W_\infty \, (1 - v_l(t)) - W_\epsilon$ & $v_{i0}(t) - W_\infty \, v_l(t) - W_\epsilon$ & $v_o(t+1)$ \\ \hline
+    $1$ & $0$ & $0$ & $- W_\epsilon < 0$ & $-W_\infty - W_\epsilon < 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
+    $1$ & $0$ & $1$ & $- W_\epsilon < 0$ & $1 - W_\infty - W_\epsilon< 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
+    $1$ & $1$ & $0$ & $1 - W_\epsilon > 0 $ & $-W_\infty - W_\epsilon< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
+    $1$ & $1$ & $1$ & $1 - W_\epsilon > 0$ & $1 - W_\infty - W_\epsilon< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
+    $0$ & $0$ & $0$ & $- W_\infty -W_\epsilon < 0$ & $- W_\epsilon< 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
+    $0$ & $0$ & $1$ & $- W_\infty - W_\epsilon < 0 $ & $1 - W_\epsilon > 0$ & 0 + 1= 1 = $v_{i0}(t)$ \\
+    $0$ & $1$ & $0$ & $1 - W_\infty - W_\epsilon< 0 $ & $- W_\epsilon > 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
+    $0$ & $1$ & $1$ & $1 - W_\infty - W_\epsilon< 0 $ & $1 - W_\epsilon > 0 $ & 0 + 1= 1 = $v_{i0}(t)$  \\
+    \hline\end{tabular}}
+
+\item The approximation of line (3) at line (4) can be quantified as follows, for $v_{i1}(t) \in [0, 1]$, $v_{i0}(t) \in [0, 1]$, and $v_{l}(t) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\}$, $1 \ll W_\infty$.
+  
+  - For $v_{l}(t)  \ge 1 - \epsilon_\infty$:
+  \eqline{v_o(t+1) \leq h(W_\infty  \, v_{i1}(t) - 2 \, W_\infty \epsilon_\infty)) + h(W_\infty  \, (2 \, \epsilon_\infty - 1)),}
+
+  calcul pour $v_{i1}(t) > 1 - \epsilon_\infty$ et $v_{i1}(t) < \epsilon_\infty$
+  
+  - For $v_{l}(t)  \le \epsilon_\infty$:
+  \eqline{v_o(t+1) \geq h(W_\infty  \, (2 \, \epsilon_\infty - 1)) + h(W_\infty  \, v_{i0}(t) - 2 \, W_\infty \, \epsilon_\infty).}
+
+\end{itemize}
+
+To explain the design choices, let us notice that:
+
+\begin{itemize}
+\item The $W_\infty$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary value we will have have the desired value at 0. It allows to replace an expression including a product by a binary function, by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level, thus allowing one a straightforward neuronoid approximation.
+\item The $W_\epsilon$ value is used at the programmatoid level to avoid the ambiguous $0$ value and ensure that for $v\simeq0$  we obtain $H(v - W_\epsilon) = 0$. It is not useful at the neuronoid level, since the $h(\cdot)$ function is continuous.
+\end{itemize}
+
+
+
+\subsubsection*{RS input/output gate}
+
+For an input $v_i(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$, and a control $v_l \in \{0, 1\}$, the equation:
+\eqline{\begin{array}{rcl}  v_o(t+1)
+    &=& v_l(t) \, v_i(t)  + (1- v_l(t)) \, v_o(t) \\
+    &=& v_l(t) == 1 \mbox{ ? } v_o(t) \mbox{ : } v_i(t), \\
+\end{array}}
+implements a 1 bit memory, i.e., also called a RS gate.
+
+From the previous 
+
+        
+  
+
+
+\begin{description}
+  \item[monostable binary value] The $v_0 = v_0  + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
+\end{description}
+and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage, see appendix).
 
 To be done.
 
@@ -160,5 +255,34 @@ To be done.
 %\subsubsection*{Bistable binary value}
 
 %Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
+
+\section{Using the braincraft challenge setup}
+
+Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge}.
+
+You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
+
+\subsection*{Installation of the setup}
+~
+\\- Connect to {\tt https://github.com} with your login.
+\\- Go to the \href{https://github.com/rougier/braincraft}{braincraft challenge} and create a new fork:
+\\\centerline{\includegraphics[width=0.9\textwidth]{tuto1.png}}
+\\- Download the repository in SSH read/write mode:
+\\\centerline{\includegraphics[width=0.9\textwidth]{tuto2.png}}
+\\-In the braincraft local git directory, run {\tt make test}
+\\~~~~~ + You may have to run {\tt make install}, before.
+\\~~~~~ + You are advised to use a virtual environment, running {\tt make venv}
+
+\subsection*{Running at the programmatic level}
+
+The {\tt def next(input)} function that takes the {\tt input = depth\_l, color\_l, depth\_r, color\_r, energy} date structure and output the {\tt d\_o} where a stands for the orientation is to be defined.
+
+The {\tt programmatic.py} code provides all functions to evaluate the implementation, without training phase.
+  
+\subsection*{Running at the artificial neural network level}
+
+The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
+
+The {\tt neuronoid.py} code provides all functions to evaluate the implementation, without training phase. 
 
 \end{document}
