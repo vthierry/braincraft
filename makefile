@@ -16,6 +16,12 @@ venv:
 sync:
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
-programmatic-solution:
+programmatic-solution: data/programmatic-solution.pdf data/programmatic-solution.mpl.out.txt
+
+data/programmatic-solution.pdf: data/programmatic-solution.tex
 	cd data ; pdflatex programmatic-solution ; rm -f *.aux *.toc *.log
+
+data/programmatic-solution.mpl.out.txt: data/programmatic-solution.mpl
+	maple $^ > $@
+
 

@@ -1,0 +1,158 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+#
+# Symbolic derivations quoted in programmatic-solution.tex
+#
+
+## Sigmoid function and properties
+> h := v -> 1/(1+exp(-4*v)):
+
+### Basic sigmoid values
+> h__ := limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity);
+                              h__ := 0, 1/2, 1, 1
+
+
+### Link with Heavide function
+> d_Hv_1 := int(abs(Heaviside(v)-h(w*v)), v=-infinity..infinity) assuming w > 0;
+                                            ln(2)
+                              d_Hv_1 := 1/2 -----
+                                              w
+
+
+#### Heaviside approximation for v_oo
+> v_oo := simplify(solve(h(W_oo * v_oo) = 1 - e_oo, v_oo)) assuming 0 < e_oo, e_oo < 1;
+                                  -ln(e_oo) + ln(1 - e_oo)
+                      v_oo := 1/4 ------------------------
+                                            W_oo
+
+> v_oo_ := series(v_oo, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
+                               ln(e_oo)     1                 2
+                v_oo_ := - 1/4 -------- - ------ e_oo + O(e_oo )
+                                 W_oo     4 W_oo
+
+
+### Local behavior of h()
+> h_v0 := series(h(v), v = v0, 2);
+                     1            4 exp(-4 v0)                         2
+       h_v0 := -------------- + ----------------- (v - v0) + O((v - v0) )
+               1 + exp(-4 v0)                   2
+                                (1 + exp(-4 v0))
+
+> h_v0_1 := simplify(series(coeff(h_v0, v - v0, 1), v0=infinity, 1));
+                     h_v0_1 := 4 exp(-4 v0) + O(exp(-8 v0))
+
+
+## First order continous differential equation and discrete approximation, with variable and fixed input
+> dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, {v(t)});
+                      /   t            _z1           \
+                      |  /  z(_z1) exp(---)          |
+                      | |              tau           |        t
+               v(t) = | |   --------------- d_z1 + v0| exp(- ---)
+                      | |         tau                |       tau
+                      |/                             |
+                      \  0                           /
+
+> dsolve({tau * D(v)(t) + v(t) = z0, v(0) = v0}, {v(t)});
+                                           t
+                        v(t) = z0 + exp(- ---) (v0 - z0)
+                                          tau
+
+> rsolve({v(t+1) = (1-g) * v(t) + g * z(t), v(0) = v0}, {v(t)});
+                                /  t                               \
+                                |-----                             |
+                            t   | \            (t - t0)            |
+          {v(t) = v0 (1 - g)  + |  )    (1 - g)         g z(t0 - 1)|}
+                                | /                                |
+                                |-----                             |
+                                \t0 = 1                            /
+
+> rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
+                                      t             t
+                    {v(t) = v0 (1 - g)  - z0 (1 - g)  + z0}
+
+
+### Continous/discrete correspondence
+> simplify(solve({(1-g)^t = exp(-t/tau)}, g) assuming 0 < g, g < 1);
+                                          1
+                             {g = -exp(- ---) + 1}
+                                         tau
+
+> simplify(solve({(1-g)^t = exp(-t/tau)}, tau) assuming 0 < g, g < 1);
+                                           1
+                              {tau = - ---------}
+                                       ln(1 - g)
+
+
+## Conditional expression
+
+### Verification in the programmatoid case
+
+> ok := {}:
+> for v_l in 1,0 do
+>   for v_1 in 0,1 do
+>     for v_0 in 0,1 do
+>        ok := ok union {evalb(v_l * v_1 + (1 -v_l) * v_0 = Heaviside(v_1 - W_s * (1 - v_l) - W_d)+Heaviside(v_0 - W_s * v_l - W_d))} assuming 0 < W_d, W_d < 1, 1 < W_s:
+>     od
+>   od
+>  od:
+> ok;
+                                     {true}
+
+
+### Inequalities in the neuronoid case
+
+#### Inequalities of the neuronoid mechanism
+> ineqs := {}:
+> for v_l in 0,e,1-e,1 do
+>   for v_1 in 0,e,1-e,1 do
+>     ineqs := ineqs union {expand(W_w * v_1 - W_s * (1 - v_l) - W_d) * signum(subs(e = 0, v_l * v_1 - 1/2)) > 0}
+>   od:
+>   for v_0 in 0,e,1-e,1 do
+>      ineqs := ineqs union {expand(W_w * v_0 - W_s * v_l - W_d) * signum(subs(e = 0, (1 - v_l) * v_0 - 1/2)) > 0}
+>   od
+> od:
+> ineqs;
+{0 < W_d, 0 < -W_d + W_w, 0 < W_d + W_s, 0 < -W_w + W_s + W_d, 0 < W_s e + W_d,
+
+    0 < -W_w e + W_d, 0 < -W_s e + W_d + W_s, 0 < -W_w e - W_d + W_w,
+
+    0 < -W_w e + W_d + W_s, 0 < -W_s e - W_d + W_w, 0 < W_s e - W_w e + W_d,
+
+    0 < W_w e + W_d + W_s - W_w, 0 < -W_s e + W_d + W_s - W_w,
+
+    0 < -W_s e - W_w e - W_d + W_w, 0 < -W_s e - W_w e + W_d + W_s,
+
+    0 < -W_s e + W_w e + W_d + W_s - W_w}
+
+
+#### Verification of particular solution
+> eqs0 := {W_d = 1, W_w = 2, W_s = 4, e = 1/8}:
+> ok := map(evalb, subs(eqs0, ineqs));
+                                  ok := {true}
+
+
+#### Verification of the canonical form
+> assume(
+>   0 < W_d, 0 < W_s, 0 < W_w, 0 < e, e < 1,
+>   W_d < W_w, W_d < W_s, W_w < W_s,
+>   W_w * e < W_d, W_s * e < W_d, W_d + e * (W_s + W_w) < W_w,
+>   0 < mu, mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w,
+# these two inequalities are redundant, but maple requires them  
+>   W_d + e * W_w < W_w, mu < W_d, mu + W_d < W_w): 
+> ok := map(e -> evalb(op(1, e) < signum(op(2, e))), ineqs);
+                                  ok := {true}
+
+>  
+#### Verification of the margin
+> ok := map(e -> evalb(op(1, e) < signum(op(2, e) - mu)), ineqs);
+                                  ok := {true}
+
+> mu0 := solve(subs(eqs0, {mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w}), mu);
+Warning, solve may be ignoring assumptions on the input variables.
+                               mu0 := {mu~ < 1/4}
+
+> quit
+memory used=3107.5MB, alloc=256.3MB, time=17.52

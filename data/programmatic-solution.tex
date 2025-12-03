@@ -47,23 +47,17 @@ By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neur
   h(v) \defq \frac{1}{1+\exp(-4\,v)}, &
   H(v) \defq \left\{\begin{array}{rcl} 1 &\mbox{if}& v > 0\\ 0 &\mbox{if}& v < 0\\ \end{array}\right. \\
 \end{array}}
-%h := v -> 1/(1+exp(-4*v)): limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity;
 where $v_i$ is the membrane potential, so that:
 \eqline{\begin{array}{rcl} v(t)
-% dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, v(t)):
   &=& 1/\tau \, \int_0^t z(s) \, exp(-(t-s)/\tau) \, ds + v(0) \, exp(-t/\tau) \\
-% dsolve({tau * D(v)(t) + v(t) = z0, v(0) = v0}, v(t)):
   &=& \left. z(0) + (v(0) - z(0)) \, e^{-t/\tau} \right|_{z(t)= z(0)}. \\
   &=& \left. z(t) \right|_{\tau = 0} \\
   &\simeq&  (1-\gamma) \, v(t-\Delta t) + \gamma \, z(t-\Delta t)) \\
-% rsolve({v(t+1) = (1-g) * v(t) + g * z(t), v(0) = v0}, v(t));
   &=& \sum_{s=0}^{t-1} z(s) \, \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
-% rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, v(t));
   &=& \left. z(0) + (v(0) - z(0)) \,  (1-\gamma)^t \right|_{z(t)= z(0)} \\
   &=& \left. z(t) \right|_{\gamma = 1}. \\
 \end{array}}
 writing also the  corresponding discrete approximation using an Euler schema with $0 < \gamma < 1, 0 < \tau$:
-% simplify(solve({(1-g)^t = exp(-t/tau)}, g) assuming 0 < g, g < 1); simplify(solve({(1-g)^t = exp(-t/tau)}, tau) assuming 0 < g, g < 1);
 \eqline{\begin{array}{c}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)) \\  \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0. \end{array}}
 
 Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, which is the mollification of the Heaviside function $H(\cdot)$, as detailed below.
@@ -94,16 +88,17 @@ The Heaviside function approximates sigmoid with huge slope at zero, i.e.:
 \eqline{\forall v \ne 0, H(v) = \lim_{W_{\infty}  \rightarrow +\infty} h(W_{\infty} \, v), \left. h'(W_{\infty} \, v)  \right|_{v = 0} =  W_{\infty}}
 while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
 More precisely:
-\eqline{|H(\cdot) - h(\cdot)|_{{\cal L}_1} = O\left(\frac{1}{W_{\infty}}\right),}
+\eqline{|H(\cdot) - h(\cdot)|_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{W_{\infty}}}
 and, for $0 < \epsilon_\infty \ll 1 < v_\infty$:
-%int(1-h(w*v),v=0..infinity) assuming w > 0);
-% v_oo := solve(h(W_oo * v_oo) = 1 - e_oo, v_oo); v_oo_ := (-e_oo - ln(e_oo)) / (4*W_oo); d_oo := series(v_oo - v_oo_, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
-\eqline{h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty  \Leftrightarrow v_\infty  = \frac{-\log(\epsilon_\infty)}{4\,W_\infty} + O\left(\epsilon_{\infty}\right).}
+\eqline{h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty
+  \Leftrightarrow v_\infty  =
+ \frac{\log(1-\epsilon_\infty) -\log(\epsilon_\infty)}{4\,W_\infty} =
+ \frac{-\log(\epsilon_\infty)}{4\,W_\infty} + O\left(\epsilon_{\infty}\right).}
 
 A step further, the local variation of sigmoid writes:
-% s := v -> 1/(1+exp(-4*v)): series(s(v), v = v0, 2);
-% series(4/(1+exp(4*v))^2, v=infinity, 1);
-\eqline{\begin{array}{rcl} h(v) &=& h(v_0) + \left[ \frac{4}{\exp(v_0)^8} + O\left(\frac{1}{\exp(v_0)^{12}}\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\ &\simeq& h(v_0) + \frac{v - v_0}{\exp(v_0)^8/4}. \end{array}}
+\eqline{\begin{array}{rcl} h(v)
+    &=& h(v_0) + \left[ 4 \, \exp(-8 \, v_0)+ O\left(\exp(-12 \, v_0))\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\
+    &\simeq& h(v_0) + 4 \, \exp(-8 \, v_0)  \, (v - v_0). \\ \end{array}}
 
 \subsubsection*{Neuronoid  implementation of programmatoid computation}
 
@@ -180,48 +175,58 @@ where: \begin{description}
 
 \subsubsection*{Conditional expression}
 
-For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$ and a control $v_l \in \{0, 1\}$, the equation, for $W_\infty > 1$, and $0 < W_\epsilon \ll 1$ :
+For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$ and a control $v_l \in \{0, 1\}$, the condition expression equation, for $0 < W_\delta \ll 1 < W_\sigma$ :
 \eqline{\begin{array}{rcll}  v_o(t+1)
     &=& v_l(t) == 1 \mbox{ ? } v_{i1}(t) \mbox{ : } v_{i0}(t) & (1) \\
     &=& v_l(t) \, v_{i1}(t)  + (1- v_l(t)) \, v_{i0}(t) & (2) \\
-    &=& H(v_{i1}(t) - W_\infty \, (1 - v_l(t)) - W_\epsilon) + H(v_{i0}(t) - W_\infty \, v_l(t) - W_\epsilon)  & (3) \\
-    &\simeq& h(W_\infty \, v_{i1}(t) - 2 \, W_\infty \, (1 - v_l(t))) + h(W_\infty \, v_{i0}(t) - 2 \, W_\infty \, v_l(t)) & (4) . \\
+    &=& H(v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta) + H(v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)  & (3) \\
+    &\simeq& h(W'_\infty \, (W_\omega \, v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W_\infty \, (W_\omega  \, v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)). & (4) \\
 \end{array}}
+
+To explain these design choices, let us notice that:
+
+\begin{itemize}
+\item The $W_\sigma$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary switch value, it constraints the Heaviside function output to correspond to the desired value. Here, an expression including a product by a binary function, is replaces by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level. This trick allows one a straightforward neuronoid approximation.
+\item The $W_\delta$ value is used at the programmatoid level to avoid the ambiguous $0$ value and ensure that for $v\simeq0$  we obtain $H(v - W_\delta) = 0$.
+\item The $W'_\infty$ gain is used to approximate the Heaviside function by a sigmoid, as discussed previously.
+\item Informally, at the neuronoid level, we mimic the programmatoid mechanisms, assuming that suitable $W'_\infty, W_\omega, W_\sigma, W_\delta$ values will reproduced the programmatoid conditional expression. It works, although the parameter adjustment is not obvious, as derived now.
+\end{itemize}
+
+Let us now verify the equivalence between these equations:
 
 \begin{itemize}
 
 \item It is obvious to verify that line (1) and (2) are equivalent.
 
 \item The fact line (2) and (3) are equivalent is verified by this truth table: \\
-\centerline{\small \begin{tabular}{|c|c|c||c|c|c|} \hline
-    $v_l(t)$ & $v_{i1}(t)$ & $v_{i0}(t)$ & $v_{i1}(t) - W_\infty \, (1 - v_l(t)) - W_\epsilon$ & $v_{i0}(t) - W_\infty \, v_l(t) - W_\epsilon$ & $v_o(t+1)$ \\ \hline
-    $1$ & $0$ & $0$ & $- W_\epsilon < 0$ & $-W_\infty - W_\epsilon < 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
-    $1$ & $0$ & $1$ & $- W_\epsilon < 0$ & $1 - W_\infty - W_\epsilon< 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
-    $1$ & $1$ & $0$ & $1 - W_\epsilon > 0 $ & $-W_\infty - W_\epsilon< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
-    $1$ & $1$ & $1$ & $1 - W_\epsilon > 0$ & $1 - W_\infty - W_\epsilon< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
-    $0$ & $0$ & $0$ & $- W_\infty -W_\epsilon < 0$ & $- W_\epsilon< 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
-    $0$ & $0$ & $1$ & $- W_\infty - W_\epsilon < 0 $ & $1 - W_\epsilon > 0$ & 0 + 1= 1 = $v_{i0}(t)$ \\
-    $0$ & $1$ & $0$ & $1 - W_\infty - W_\epsilon< 0 $ & $- W_\epsilon > 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
-    $0$ & $1$ & $1$ & $1 - W_\infty - W_\epsilon< 0 $ & $1 - W_\epsilon > 0 $ & 0 + 1= 1 = $v_{i0}(t)$  \\
+\centerline{\scriptsize \begin{tabular}{|c|c|c||c|c|c|} \hline
+    $v_l(t)$ & $v_{i1}(t)$ & $v_{i0}(t)$ &  $v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta$ & $v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta$ & $v_o(t+1)$ \\ \hline
+    $1$ & $0$ & $0$ & $- W_\delta < 0$ & $-W_\sigma - W_\delta < 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
+    $1$ & $0$ & $1$ & $- W_\delta < 0$ & $1 - W_\sigma - W_\delta< 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
+    $1$ & $1$ & $0$ & $1 - W_\delta > 0 $ & $-W_\sigma - W_\delta< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
+    $1$ & $1$ & $1$ & $1 - W_\delta > 0$ & $1 - W_\sigma - W_\delta< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
+    $0$ & $0$ & $0$ & $- W_\sigma -W_\delta < 0$ & $- W_\delta< 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
+    $0$ & $0$ & $1$ & $- W_\sigma - W_\delta < 0 $ & $1 - W_\delta > 0$ & 0 + 1= 1 = $v_{i0}(t)$ \\
+    $0$ & $1$ & $0$ & $1 - W_\sigma - W_\delta< 0 $ & $- W_\delta > 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
+    $0$ & $1$ & $1$ & $1 - W_\sigma - W_\delta< 0 $ & $1 - W_\delta > 0 $ & 0 + 1= 1 = $v_{i0}(t)$  \\
     \hline\end{tabular}}
 
-\item The approximation of line (3) at line (4) can be quantified as follows, for $v_{i1}(t) \in [0, 1]$, $v_{i0}(t) \in [0, 1]$, and $v_{l}(t) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\}$, $1 \ll W_\infty$.
-  
-  - For $v_{l}(t)  \ge 1 - \epsilon_\infty$:
-  \eqline{v_o(t+1) \leq h(W_\infty  \, v_{i1}(t) - 2 \, W_\infty \epsilon_\infty)) + h(W_\infty  \, (2 \, \epsilon_\infty - 1)),}
+\item The approximation of line (3) at line (4) by continuous quantities corresponds now to:
+  \eqline{v_*(t) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\} = \{\simeq 0, \simeq 1\}, \epsilon_\infty \ll 1/2,}
+  in words: values to be either below or above a threshold close to either $0$ or $1$.
+  The truth table now involves intervals and has been generated using the \href{https://github.com/vthierry/braincraft/raw/master/data/programmatic-solution.mpl.txt.out}{computer algebra piece of code associated to this document}. Considering the following intuitive design constraints:
+  \eqline{0 <W_\delta < \{W_\omega,W_\sigma\}, 0 <W_\omega<W_\sigma, 0 < \epsilon_\infty < 1}
+  the computer algebra derivations show that the approximation at line (4) is valid as soon as:
+  \eqline{W_\omega \, \epsilon_\infty < W_\delta, W_\sigma \, \epsilon_\infty < W_\delta, W_\delta + (W_\omega + W_\sigma) \, \epsilon_\infty  < W_\omega.}
 
-  calcul pour $v_{i1}(t) > 1 - \epsilon_\infty$ et $v_{i1}(t) < \epsilon_\infty$
-  
-  - For $v_{l}(t)  \le \epsilon_\infty$:
-  \eqline{v_o(t+1) \geq h(W_\infty  \, (2 \, \epsilon_\infty - 1)) + h(W_\infty  \, v_{i0}(t) - 2 \, W_\infty \, \epsilon_\infty).}
+ Furthermore, let us consider the margin:
+ \eqline{0 < \mu = \min(W_\delta - \epsilon_\infty \, W_\sigma, W_\omega - (W_\omega + W_\sigma) \, \epsilon_\infty - W_\delta),}
+yielding:
+\eqline{|v_o(t+1) - 1/2| > h(W'_\infty \, \mu).}
+We thus can adjust $W'_\infty = W_\infty / \mu$ in order $v_o(t+1) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\}$ for further calculation. 
+ 
+For instance $\{W_\delta = 1, W_\omega = 2, W_\sigma = 4, \epsilon_\infty = 1/8\}$ is a suitable solution with $\mu = 1/4$.
 
-\end{itemize}
-
-To explain the design choices, let us notice that:
-
-\begin{itemize}
-\item The $W_\infty$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary value we will have have the desired value at 0. It allows to replace an expression including a product by a binary function, by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level, thus allowing one a straightforward neuronoid approximation.
-\item The $W_\epsilon$ value is used at the programmatoid level to avoid the ambiguous $0$ value and ensure that for $v\simeq0$  we obtain $H(v - W_\epsilon) = 0$. It is not useful at the neuronoid level, since the $h(\cdot)$ function is continuous.
 \end{itemize}
 
 
@@ -272,6 +277,25 @@ You must be familiar with basic {\tt git} usage and basic {\tt python} programma
 \\-In the braincraft local git directory, run {\tt make test}
 \\~~~~~ + You may have to run {\tt make install}, before.
 \\~~~~~ + You are advised to use a virtual environment, running {\tt make venv}
+
+\begin{verbatim}
+
+* Note : vthierry veut PAS gagner la compétition is veut just vérifier des hypothèse quant la calculabilité avec des neuronoid.
+
+- Warningup : duration (bot don't move before warmup period is over) just 1 to allow a 1st input ... ou bien c est plus subtil ?
+
+- Quelles dimensions pour Win (quelles entrées où ? le truc de dimension P), W, et Wout(ligne ou colonne) ?
+
+- Avis sur calcul de depth et couleur ?
+ + depth: prendre le min des capteurs de gauche/droite ou vaut mieux leur moyenne pondérée ?
+ + couleur: les murs ont le vert comme couleur par defaut ? prendre la valeur de couleur la plus nombreuse hormis celle du mur est pertinent ?
+
+- Pour expérimenter l'approche programmatique avant de passer à l'approche connexiviste :
+ - comment ``débrancher´´ le réseau et just avoir (P inputs) -> output ? sans reimplementer tout evaluate() ? 
+
+- Pour expérimenter l'approche connectiviste sans apprentissage … juste implémenter def train(func, timeout=100.0): ... c est quoi ``func´´ ?
+
+\end{verbatim}
 
 \subsection*{Running at the programmatic level}
 
