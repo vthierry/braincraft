@@ -23,8 +23,10 @@ Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge
 
 \begin{description}
   \item[Input] \begin{description}
-    \item[$\theta_l$] Average of the {\em left} sensors input, between $0$ and $1$ when very close, $30°$ sensor field.
-    \item[$\theta_r$] Average of the {\em right} sensors input, idem.
+    \item[$\theta_l$] Max average of the {\em left} sensors input, between $0$ and $1$ when very close, $30°$ sensor field.
+    \item[$\theta_r$] Max average of the {\em right} sensors input, idem.
+   \item[$I_{\mbox{left color sensor}}$] , for each color max-average value of the {\em left} color sensors, see usage in the sequel.
+   \item[$I_{\mbox{right color sensor}}$] , idem.
     \item[$\varepsilon$] Energy indicator, between $1$ when full and $0$ when dead.
     \end{description}
   \item[Output] \begin{description}
@@ -180,7 +182,7 @@ For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(
     &=& v_l(t) == 1 \mbox{ ? } v_{i1}(t) \mbox{ : } v_{i0}(t) & (1) \\
     &=& v_l(t) \, v_{i1}(t)  + (1- v_l(t)) \, v_{i0}(t) & (2) \\
     &=& H(v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta) + H(v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)  & (3) \\
-    &\simeq& h(W'_\infty \, (W_\omega \, v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W_\infty \, (W_\omega  \, v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)). & (4) \\
+    &\simeq& h(W'_\infty \, (W_\omega \, v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W'_\infty \, (W_\omega  \, v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)). & (4) \\
 \end{array}}
 
 To explain these design choices, let us notice that:
@@ -229,19 +231,21 @@ For instance $\{W_\delta = 1, W_\omega = 2, W_\sigma = 4, \epsilon_\infty = 1/8\
 
 \end{itemize}
 
-
-
 \subsubsection*{RS input/output gate}
 
 For an input $v_i(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$, and a control $v_l \in \{0, 1\}$, the equation:
 \eqline{\begin{array}{rcl}  v_o(t+1)
-    &=& v_l(t) \, v_i(t)  + (1- v_l(t)) \, v_o(t) \\
     &=& v_l(t) == 1 \mbox{ ? } v_o(t) \mbox{ : } v_i(t), \\
+    &=& v_l(t) \, v_o(t)  + (1- v_l(t)) \, v_i(t) \\
+    &=& H(v_{o}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta) + H(v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)  \\
+    &\simeq& h(W'_\infty \, (W_\omega \, v_{o}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W'_\infty \, (W_\omega  \, v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)). \\
 \end{array}}
-implements a 1 bit memory, i.e., also called a RS gate.
+implements a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
 
-From the previous 
-
+The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level, but not necessarily at the neuronoid level, since we have a continous equation.  More precisely:
+\eqline{\begin{array}{c}v_o(t+1) = h(W'_\infty \, W_\omega \, v_{o}(t) - W_\beta(t)) + h_\beta(t), \\ \left\{\begin{array}{rcl} W_\beta &\defq& W_\sigma \, (1 - v_l(t)) + W_\delta \\ h_\beta(t) &\defq&  h(W'_\infty \, (W_\omega  \, v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)) \in [-1, 1] \end{array} \right. \end{array}}
+with a non contracting recurrent function, since:
+\eqline{h'(W'_\infty \, W_\omega \, v) > 1$ for $|v| \leq W'_\infty \, W_\omega.}
         
   
 
