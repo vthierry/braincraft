@@ -14,10 +14,12 @@ d_Hv_1 := int(abs(Heaviside(v)-h(w*v)), v=-infinity..infinity) assuming w > 0;
 #### Heaviside approximation for v_oo
 v_oo := simplify(solve(h(W_oo * v_oo) = 1 - e_oo, v_oo)) assuming 0 < e_oo, e_oo < 1;
 v_oo_ := series(v_oo, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
+map(e_oo_->[e_oo_,evalf(subs(W_oo=1,e_oo=e_oo_,v_oo))], [1/10,1/100,1/1000,1/1000000]);
 
 ### Local behavior of h()
 h_v0 := series(h(v), v = v0, 2);
 h_v0_1 := simplify(series(coeff(h_v0, v - v0, 1), v0=infinity, 1));
+lprint(map(v0_->[v0_,evalf(subs(v0=v0_,convert(h_v0_1,polynom)))], [1,2,5,10]));
 
 ## First order continous differential equation and discrete approximation, with variable and fixed input
 dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, {v(t)});
@@ -59,7 +61,7 @@ ineqs;
 
 #### Verification of particular solution
 eqs0 := {W_d = 1, W_w = 2, W_s = 4, e = 1/8}:
-ok := map(evalb, subs(eqs0, ineqs));
+#####ok := map(evalb, subs(eqs0, ineqs));
 
 #### Verification of the canonical form
 assume(
@@ -69,8 +71,14 @@ assume(
   0 < mu, mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w,
 # these two inequalities are redundant, but maple requires them  
   W_d + e * W_w < W_w, mu < W_d, mu + W_d < W_w): 
-ok := map(e -> evalb(op(1, e) < signum(op(2, e))), ineqs);
+#####ok := map(e -> evalb(op(1, e) < signum(op(2, e))), ineqs);
  
 #### Verification of the margin
-ok := map(e -> evalb(op(1, e) < signum(op(2, e) - mu)), ineqs);
+#####ok := map(e -> evalb(op(1, e) < signum(op(2, e) - mu)), ineqs);
 mu0 := solve(subs(eqs0, {mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w}), mu);
+
+## Binary memory
+
+### Recurrent equation convergence
+W := 1: v0 := -1: v1 := 1e30: while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(h(W*(v1-1/2))): lprint(v0): od:
+

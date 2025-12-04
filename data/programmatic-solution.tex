@@ -97,10 +97,21 @@ and, for $0 < \epsilon_\infty \ll 1 < v_\infty$:
  \frac{\log(1-\epsilon_\infty) -\log(\epsilon_\infty)}{4\,W_\infty} =
  \frac{-\log(\epsilon_\infty)}{4\,W_\infty} + O\left(\epsilon_{\infty}\right).}
 
+Numerically, the convergence is very fast, e.g. $W_\infty = 2$, for $\epsilon_\infty = 0.1\%$:
+\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
+  $\epsilon_\infty$ & $10^{-1}$ & $10^{-2}$ & $10^{-3}$ & $10^{-6}$ \\ \hline
+  $W_\infty$ & 0.55 & 1.15 & 1.73 & 3.46 \\
+  \hline \end{tabular}}
+  
 A step further, the local variation of sigmoid writes:
 \eqline{\begin{array}{rcl} h(v)
     &=& h(v_0) + \left[ 4 \, \exp(-8 \, v_0)+ O\left(\exp(-12 \, v_0))\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\
     &\simeq& h(v_0) + 4 \, \exp(-8 \, v_0)  \, (v - v_0). \\ \end{array}}
+Numerically, values decrease very rapidly:
+\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
+  $v_0$                                      & $1$          & $2$           & $5$          & $10$ \\ \hline
+  $4 \, \exp(-8 \, v_0) \simeq$ & $10^{-1}$ & $10^{-3}$ & $10^{-8}$ & $10^{-17}$ \\
+  \hline \end{tabular}}
 
 \subsubsection*{Neuronoid  implementation of programmatoid computation}
 
