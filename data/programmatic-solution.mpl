@@ -5,6 +5,12 @@
 ## Sigmoid function and properties
 h := v -> 1/(1+exp(-4*v)):
 
+## Linear relation with tanh
+ok := evalb(0 = convert(h(v) - (1+tanh(2 * v))/2, exp));
+
+## Approximation of arctan
+#####plot([tanh, v->2*h(v/2)-1, v->arctan(Pi/2*v)/(Pi/2)],color=[blue,green,red]);
+
 ### Basic sigmoid values
 h__ := limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity);
 
@@ -80,5 +86,12 @@ mu0 := solve(subs(eqs0, {mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w}),
 ## Binary memory
 
 ### Recurrent equation convergence
-W := 1: v0 := -1: v1 := 1e30: while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(h(W*(v1-1/2))): lprint(v0): od:
+fixpoint := proc(f, v_0)
+  local v1 := 1e111, v0 := v_0, maxiter := 111, epsilon := 1e-3, result := op([]):
+  for t to maxiter while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(f(v1)): result := result, v0: od:
+  [result]
+end:
 
+fixpoint(v->2*h(5*v)-1, -0.9);
+fixpoint(v->2*h(5*v)-1, 0.9);
+fixpoint(v->h(5*(v+1)/2), -0.9);

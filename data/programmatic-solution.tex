@@ -62,7 +62,10 @@ where $v_i$ is the membrane potential, so that:
 writing also the  corresponding discrete approximation using an Euler schema with $0 < \gamma < 1, 0 < \tau$:
 \eqline{\begin{array}{c}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)) \\  \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0. \end{array}}
 
-Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, which is the mollification of the Heaviside function $H(\cdot)$, as detailed below.
+Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, linearly related to the hyperbolic function:
+\eqline{h(v) = \frac{1 + \tanh(2 \, v)}{2}.}
+
+It is the mollification of the Heaviside function $H(\cdot)$, as detailed below.
 
 It is thus a very common 1st order ``neuronoid'' model, but with an adjustable bias (or offset) $w_{i}$.
 
