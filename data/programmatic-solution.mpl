@@ -87,11 +87,13 @@ mu0 := solve(subs(eqs0, {mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w}),
 
 ### Recurrent equation convergence
 fixpoint := proc(f, v_0)
-  local v1 := 1e111, v0 := v_0, maxiter := 111, epsilon := 1e-3, result := op([]):
+  local v1 := 1e111, v0 := v_0, maxiter := 111, epsilon := 1e-6, result := op([]):
   for t to maxiter while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(f(v1)): result := result, v0: od:
   [result]
 end:
 
 fixpoint(v->2*h(5*v)-1, -0.9);
 fixpoint(v->2*h(5*v)-1, 0.9);
-fixpoint(v->h(5*(v+1)/2), -0.9);
+fixpoint(v->h(10*(2*v-1)), -0.1);
+fixpoint(v->h(5*(2*v-1)), -0.001);
+fixpoint(v->h(1.0*(2*v-1)), -0.001);
