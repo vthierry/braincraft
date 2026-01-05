@@ -16,7 +16,7 @@ venv:
 	./braincraft/bin/activate
 
 sync:
-	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
+	clean ; git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
 programmatic-solution: data/programmatic-solution.pdf data/programmatic-solution.mpl.out.txt
 
