@@ -8,6 +8,7 @@ test:
 install:
 	sudo apt install python3.12-venv python3-tqdm
 	chmod a+rx ./braincraft/bin/activate
+	sedgrep -name '*.py' -in atan2 -out arctan2
 
 venv:
 	python3 -m venv braincraft

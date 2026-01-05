@@ -135,7 +135,7 @@ class Camera:
         D = 0.25 # projection distance
         W = 2 * D * np.tan(np.radians(self.fov)/2)
         X = W/2 * np.linspace(+1, -1, n, endpoint=True)
-        angles = direction + np.atan2(X, D)
+        angles = direction + np.arctan2(X, D)
         start = position
                 
         for i, angle in enumerate(angles):
@@ -169,7 +169,7 @@ class Camera:
         D = 0.25 # projection distance
         W = 2 * D * np.tan(np.radians(self.fov)/2)
         X = W/2 * np.linspace(+1, -1, n, endpoint=True)
-        angles = direction + np.atan2(X, D)
+        angles = direction + np.arctan2(X, D)
         
         for i, angle in enumerate(angles):
             end, cell, face, steps = self.raycast(start, angle, world)
