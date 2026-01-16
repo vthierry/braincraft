@@ -1,3 +1,3 @@
 The manual player is controlled by left and right arrows
 Since the human player (e.g. you) has a bird eye view, this serves as an ideal reference
-Final score: 1.33 (single run)
+Final score: 1.88 (single run)

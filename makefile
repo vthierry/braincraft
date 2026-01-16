@@ -1,10 +1,11 @@
 # https://github.com/vthierry/braincraft
 
-what=env1_player_manual
+#what=env1_player_manual
+what=env1_player_simple
 
 test:
-	python3 braincraft/$(what).py  2>&1 | tee data/$(what).py.out.txt
-	git add data/$(what).py.out.txt
+	python3 braincraft/$(what).py 2>&1 | tee data/log/$(what).py.out.txt
+	git add data/log/$(what).py.out.txt
 
 install:
 #	sudo apt install python3.12-venv python3-tqdm
@@ -21,6 +22,9 @@ venv:
 
 sync:
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
+
+git:
+	$(BROWSER) https://github.com/vthierry/braincraft
 
 programmatic-solution: data/programmatic-solution.pdf data/programmatic-solution.mpl.out.txt
 

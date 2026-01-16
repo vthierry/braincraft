@@ -1,0 +1,5 @@
+Starting training for 100 seconds (user time)
+Elapsed:           | 00:00s (real-time)Elapsed: ▏         | 00:01s (real-time)Elapsed: ▎         | 00:02s (real-time)Elapsed: ▍         | 00:04s (real-time)Elapsed: ▌         | 00:05s (real-time)Elapsed: ▋         | 00:07s (real-time)Elapsed: ▋         | 00:07s (real-time)
+Training stopped early at 7.39s (4 iterations, undershoot by 92.6%)
+Evaluation completed after 6.04 seconds
+Final score: 1.31 ± 0.86
