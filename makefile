@@ -1,7 +1,7 @@
 # https://github.com/vthierry/braincraft
 
 #what=env1_player_manual
-what=env1_player_simple
+what=env1_player_programmatoid
 
 test:
 	python3 braincraft/$(what).py 2>&1 | tee data/log/$(what).py.out.txt

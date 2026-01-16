@@ -49,7 +49,7 @@ def random_player():
 if __name__ == "__main__":
     import time
     import numpy as np    
-    from challenge__callback_1 import train, evaluate
+    from challenge_callback_1 import train, evaluate
 
     seed = 12345
     
