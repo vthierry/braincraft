@@ -1,80 +1,116 @@
 # Braincraft challenge — 1000 neurons, 100 seconds, 10 runs, 2 choices, no reward
-# Copyright (C) 2025 Nicolas P. Rougier
+# Copyright (C) 2025 Nicolas P. Rougierr, patched by Thierry.Vieville@inria.fr 2026
 # Released under the GNU General Public License 3
 import time
 import numpy as np
-from tqdm import tqdm
+from bot import Bot
 from camera import Camera
 
-# from bot import Bot
-# from environment import Environment
-
-def train(func, timeout=100.0):
+# Defines some non-linear functions
+def identity(x):
+    """Defines the identity function value.
     """
-    Runs the given training function with a user-time timeout and
-    returns the last result. The training function is supposed to yield
-    temporary results or else, training can be terminated without any results.
+    return x
+
+def sigmoid(x):
+    """Defines the normalized sigmoid function.
     """
+    return 1 / (1 + np.exp(-4 * x))
 
-    start = time.process_time()
-    elapsed = time.process_time() - start
-    last_result = None
+def d_sigmoid(x):
+    """Defines the normalized sigmoid function derivative.
+    """
+    e_x = np.exp(-4 * x)
+    e_xp1 = 1 + e_x
+    return 4 * e_x / (e_xp1* e_xp1)
 
-    with tqdm(total=timeout, unit="s",
-              bar_format="Elapsed: {bar}| {elapsed}s (real-time)") as progress:
+def step(x):
+    """Defines the step (ot Heavyside) function.
+    """
+    return 0 if x < 0 else 1
 
-        # Run training until timeout or when no more training needed.
-        for i, result in enumerate(func()):
-            elapsed = time.process_time() - start
-            if elapsed > timeout:
-                progress.update(timeout-progress.n)
-                break
-            else:
-                progress.update(elapsed - progress.n)
-                last_result = result
+# Defines the next function for a the global neurnoid model and state
+def next_output_from_network(context):
+    """Returns the next bot output and update the state.
 
-        # Timeout has been reached or training stops ealry
-        progress.close()
-        if elapsed > timeout:
-            overshoot = 100*(elapsed/timeout - 1)
-            print(f"Training stopped at {elapsed:.2f}s "
-                  f"({i} iterations, overshoot by {overshoot:.1f}%)")
-        else:
-            undershoot = 100*(1-elapsed/timeout)
-            print(f"Training stopped early at {elapsed:.2f}s "
-                  f"({i} iterations, undershoot by {undershoot:.1f}%)")
+    Parameter
+    ----------
+    context: dictionary
+    - "model" : The model parameters list as defined below.
+        - It is a `W_in, W, W_out, warmup, leak, f, g` list for this next_output_from_network() callback, where:
+            - `p = bot.camera.resolution`.
+            - `n` # The network size
+            - `W_in(n,2*p+3)` is the input weights.
+            - `W(n,n)` is the internal weights, thus `W(row-count,column-count)`.
+            - `W_out(1,n)` is the output weights.
+            - `warmup` is the number of iteration, before the bot starts.
+            - `leak(n, 1)`  the leak vector, or scalar.
+            - `f = tanh`  is the internal non-linearity.
+            - `g = identity`  is the internal non-linearity.
+    - "state"   : The model current input and state.
+        - It is a `I, X` list where:
+            - `I[:p] = 1 - bot.camera.depths`.
+            - `I[p:2*p] = bot.camera.values`.
+            - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
+            - `X[0:network_size(),0]` is the local state.
+    """
+    W_in, W, W_out, warmup, leak, f, g = context["model"]
+    I, X = context["state"]
+    X = leak*X + (1-leak)*f(np.dot(W_in, I) + np.dot(W, X))
+    O = np.dot(W_out, g(X))
+    context["state"] = I, X
+    return O
+            
+def default_model(n):
+    bot = Bot()
+    p = bot.camera.resolution
+    np.random.seed(1234567)
+    Win  = np.random.uniform(-1,1, (n,2*p+3))
+    W = np.random.uniform(-1,1, (n,n))*(np.random.uniform(0,1, (n,n)) < 0.1)
+    Wout = 0.1*np.random.uniform(-1, 1, (1,n))
+    warmup = 0
+    f = sigmoid
+    g = identity
+    leak = 0
+    model = Win, W, Wout, warmup, leak, f, g
+    return model
 
-    return last_result
-
-
-
-def evaluate(model, Bot, Environment, runs=10, seed=None, debug=False):
-    """Evaluate a model with the given number of runs.
+def evaluate(Bot, Environment, model, next_output=next_output_from_network, runs=1, debug=False):
+    """Evaluates a model.
 
     Parameters
     ----------
-    model : list    
-      model should be a W_in, W, W_out, warmup, leak, f, g list
+    Bot: class.
+      Bot class to use for evaluation.
 
-    Environment: class
-      Environment class to use for evaluation
-    
-    Bot: class
-      Bot class to use for evaluation
-    
+    Environment: class.
+      Environment class to use for evaluation.
+
+    model : list or int
+     - A `W_in, W, W_out, warmup, leak, f, g` list, or …
+     - A `n` defining the default model size,
+
+    next_output: function
+    - The `O = next_output(context)` iteration function.
+
     runs : int
-      Number of runs to evaluate
-     
+    - Number of runs.
+
     debug : boolean
-      Whether to display animation (slow)
+    - Whether to display animation or not.
     
     Returns
     =======
-    Mean score (float) and stndard deviation over the given number of runs.
+    Mean score (float) and standard deviation over the given number of runs.
     """
 
-    if seed is None:
-        seed = np.random.randint(10_000_000)
+    if isinstance(model, int):
+        model = default_model(model)
+    W_in, W, W_out, warmup, leak, f, g = model
+    n = np.shape(W)[0]
+
+    if debug:
+        start_time = time.time()
     
     if debug:
         import matplotlib.pyplot as plt
@@ -108,17 +144,10 @@ def evaluate(model, Bot, Environment, runs=10, seed=None, debug=False):
                                 [(0.1, 0.1),(0.9, 0.1)]],
                                color=("black", "white", "C1"), linewidth=(20,18,12),
                                capstyle="round", zorder=150)) }
-
-    
-    # Unfold model
-    W_in, W, W_out, warmup, leak, f, g = model
-
+        
     scores = []
-    seeds = np.random.randint(0, 1_000_000, runs)
-    # print(f"Seeds : {seeds}")
 
     for i in range(runs):
-        np.random.seed(seeds[i])
         environment = Environment()
 
         if debug:
@@ -126,8 +155,9 @@ def evaluate(model, Bot, Environment, runs=10, seed=None, debug=False):
         
         bot = Bot()
         
-        n = bot.camera.resolution
-        I, X = np.zeros((n+3,1)), np.zeros((1000,1))
+        p = bot.camera.resolution
+        I, X = np.zeros((2*p+3,1)), np.zeros((n,1))
+        context = dict({"model": model, "state": (I, X)})
 
         distance = 0
         hits = 0
@@ -146,12 +176,12 @@ def evaluate(model, Bot, Environment, runs=10, seed=None, debug=False):
 
             energy = bot.energy
 
-            # The higher, the closer
-            I[:n,0] = 1 - bot.camera.depths
+            p = bot.camera.resolution
+            I[:p,0] = 1 - bot.camera.depths
+            I[p:2*p,0] = bot.camera.values
+            I[2*p:,0] = bot.hit, bot.energy, 1.0
             
-            I[n:,0] = bot.hit, bot.energy, 1.0
-            X = (1-leak)*X + leak*f(np.dot(W_in, I) + np.dot(W, X))
-            O = np.dot(W_out, g(X))
+            O = next_output(context)
             
             # During warmup, bot does not move
             if iteration > warmup:
@@ -184,6 +214,10 @@ def evaluate(model, Bot, Environment, runs=10, seed=None, debug=False):
                 plt.pause(1/60)
 
         scores.append(distance)
+    if debug:
+        elapsed = time.time() - start_time
+        print(f"Evaluation completed after {elapsed:.2f} seconds")
+        print(f"Final score: {np.mean(scores):.2f} ± {np.std(scores):.2f}")
 
     return np.mean(scores), np.std(scores)
 

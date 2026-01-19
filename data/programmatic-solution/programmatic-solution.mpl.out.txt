@@ -10,9 +10,13 @@
 ## Sigmoid function and properties
 > h := v -> 1/(1+exp(-4*v)):
 
+## Linear relation with tanh
 > ok := evalb(0 = convert(h(v) - (1+tanh(2 * v))/2, exp));
                                    ok := true
 
+
+## Approximation of arctan
+#####plot([tanh, v->2*h(v/2)-1, v->arctan(Pi/2*v)/(Pi/2)],color=[blue,green,red]);
 
 ### Basic sigmoid values
 > h__ := limit(h(v),v=-infinity), h(0), D(h)(0), limit(h(v),v=+infinity);
@@ -82,8 +86,8 @@
                                 \t0 = 1                            /
 
 > rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
-                                      t             t
-                    {v(t) = v0 (1 - g)  - z0 (1 - g)  + z0}
+                                      t                  t
+                    {v(t) = v0 (1 - g)  + z0 - z0 (1 - g) }
 
 
 ### Continous/discrete correspondence
@@ -164,52 +168,30 @@ Warning, solve may be ignoring assumptions on the input variables.
 ## Binary memory
 
 ### Recurrent equation convergence
-> W := 1: v0 := -1: v1 := 1e30: while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(h(W*(v1-1/2))): lprint(v0): od:
-.2472623157e-2
-.1202452776
-.1796060383
-.2172820989
-.2440002853
-.2642492035
-.2802941123
-.2934216274
-.3044251270
-.3138245047
-.3219768068
-.3291365790
-.3354909125
-.3411808562
-.3463150551
-.3509787497
-.3552398937
-.3591534217
-.3627642948
-.3661097174
-.3692207793
-.3721236915
-.3748407299
-.3773909643
-.3797908290
-.3820545739
-.3841946249
-.3862218732
-.3881459115
-.3899752263
-.3917173573
-.3933790284
-.3949662588
-.3964844546
-.3979384873
-.3993327597
-.4006712625
-.4019576225
-.4031951446
-.4043868472
-.4055354935
-.4066436188
-.4077135541
-.4087474465
-.4097472777
+> fixpoint := proc(f, v_0)
+>   local v1 := 1e111, v0 := v_0, maxiter := 111, epsilon := 1e-6, result := op([]):
+>   for t to maxiter while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(f(v1)): result := result, v0: od:
+>   [result]
+> end:
+Warning, (in fixpoint) `t` is implicitly declared local
+|programmatic-solution.mpl:91|
+
+> fixpoint(v->2*h(5*v)-1, -0.9);
+                         [-0.9999999695, -0.9999999959]
+
+> fixpoint(v->2*h(5*v)-1, 0.9);
+                           [0.999999970, 0.999999996]
+
+> fixpoint(v->h(10*(2*v-1)), -0.1);
+                                    -20                   -17
+                  [0.1425164083 x 10   , 0.4248354256 x 10   ]
+
+> fixpoint(v->h(5*(2*v-1)), -0.001);
+                                     -8                   -8
+                   [0.1980334629 x 10  , 0.2061153783 x 10  ]
+
+> fixpoint(v->h(1.0*(2*v-1)), -0.001);
+                 [0.01784545184, 0.02068921720, 0.02115522279]
 
 > quit
-memory used=116.8MB, alloc=144.3MB, time=0.64
+memory used=116.5MB, alloc=144.3MB, time=1.34
