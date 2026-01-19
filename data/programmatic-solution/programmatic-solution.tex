@@ -65,7 +65,7 @@ writing also the  corresponding discrete approximation using an Euler schema wit
 Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, linearly related to the hyperbolic function:
 \eqline{h(v) = \frac{1 + \tanh(2 \, v)}{2}.}
 
-It is the mollification of the Heaviside function $H(\cdot)$, as detailed below.
+It is the mollification of the step function, called also Heaviside function, $H(\cdot)$, as detailed below.
 
 It is thus a very common 1st order ``neuronoid'' model, but with an adjustable bias (or offset) $w_{i}$.
 
@@ -73,7 +73,7 @@ It is thus a very common 1st order ``neuronoid'' model, but with an adjustable b
 
 \subsubsection*{Programmatoid  computation}
 
-We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the Heaviside function, considering $1$ as the true value and $0$ as the false value. The $H(v)$ implements the test of the positive sign of $v$, while for $v_i \in \{0, 1\}$:
+We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the step function, considering $1$ as the true value and $0$ as the false value. The $H(v)$ implements the test of the positive sign of $v$, while for $v_i \in \{0, 1\}$:
 \begin{description}
   \item[programmatoid conjunction]  The $v_0 = H(v_1 + v_2 + \cdots)$ formula performs a {\em or} operation.
   \item[programmatoid disjunction]  The $v_0 = v_1 \, v_2 \cdots$ formula performs a {\em and} operation.
@@ -83,13 +83,13 @@ so that we can combine any boolean expression on any test of value sign, thus va
 
 Using local feedback we can also design several functions detailed in the Appendix of this section, while we also can combine neuronoid and programmatoid functions to design temporal functions.
 
-\subsubsection*{Mollification of the Heaviside function}
+\subsubsection*{Mollification of the step function}
 
-The Heaviside function is related to a conditional expression by a simple relation:
+The step function is related to a conditional expression by a simple relation:
 \eqline{H(v) = conditional\;value > 0 \mbox{ ? } 1 \mbox{ : } conditional\;value < 0 \mbox{ ? } 0 \mbox{ : } H(0),}
 where $condition \mbox{ ? } value\;if\;true \mbox{ : } value\;if\;false$ is a conditional expression.
 
-The Heaviside function approximates sigmoid with huge slope at zero, i.e.:
+The step function approximates sigmoid with huge slope at zero, i.e.:
 \eqline{\forall v \ne 0, H(v) = \lim_{W_{\infty}  \rightarrow +\infty} h(W_{\infty} \, v), \left. h'(W_{\infty} \, v)  \right|_{v = 0} =  W_{\infty}}
 while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
 More precisely:
@@ -151,7 +151,7 @@ in words: the bot navigates ahead thanks to the linear correction parameterized 
 \end{array}}
 as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
 
-With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the Heaviside function. This part of the system is feed-forward thus without convergence or stability issue.
+With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the step function. This part of the system is feed-forward thus without convergence or stability issue.
 
 \subsubsection*{Direction choice}
 
@@ -202,9 +202,9 @@ For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(
 To explain these design choices, let us notice that:
 
 \begin{itemize}
-\item The $W_\sigma$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary switch value, it constraints the Heaviside function output to correspond to the desired value. Here, an expression including a product by a binary function, is replaces by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level. This trick allows one a straightforward neuronoid approximation.
+\item The $W_\sigma$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary switch value, it constraints the step function output to correspond to the desired value. Here, an expression including a product by a binary function, is replaces by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level. This trick allows one a straightforward neuronoid approximation.
 \item The $W_\delta$ value is used at the programmatoid level to avoid the ambiguous $0$ value and ensure that for $v\simeq0$  we obtain $H(v - W_\delta) = 0$.
-\item The $W'_\infty$ gain is used to approximate the Heaviside function by a sigmoid, as discussed previously.
+\item The $W'_\infty$ gain is used to approximate the step function by a sigmoid, as discussed previously.
 \item Informally, at the neuronoid level, we mimic the programmatoid mechanisms, assuming that suitable $W'_\infty, W_\omega, W_\sigma, W_\delta$ values will reproduced the programmatoid conditional expression. It works, although the parameter adjustment is not obvious, as derived now.
 \end{itemize}
 
@@ -297,6 +297,8 @@ You must be familiar with basic {\tt git} usage and basic {\tt python} programma
 \\~~~~~ + You are advised to use a virtual environment, running {\tt make venv}
 
 \subsection*{Running at the programmatic level}
+
+\href{https://raw.githack.com/vthierry/braincraft/master/braincraft/doc/challenge_callback.html}{API doc}
 
 The `challenge\_callback\_1.py`  file contains the support routines 
 
