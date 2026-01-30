@@ -28,10 +28,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-# mais aussi (voir makefile à vthierry)
-braincraft/bin/
-braincraft/lib64
-braincraft/pyvenv.cfg
 	
 # PyInstaller
 #  Usually these files are written by a python script from a template

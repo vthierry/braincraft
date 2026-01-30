@@ -1,2 +1,0 @@
-Evaluation completed after 5.24 seconds
-Final score: 0.61 ± 0.00
