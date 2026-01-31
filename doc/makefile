@@ -10,12 +10,12 @@ api/index.html: ../braincraft/challenge_callback.py
 
 # The programmatic-solution latex document
 
-programmatic-solution: programmatic-solution/programmatic-solution.pdf programmatic-solution/programmatic-solution.mpl.out.txt
+programmatic-solution: tex/programmatic-solution.pdf tex/programmatic-solution.mpl.out.txt
 
-programmatic-solution.pdf: programmatic-solution.tex
-	cd programmatic-solution ; pdflatex programmatic-solution ; rm -f *.aux *.toc *.log
+%.pdf: %.tex
+	cd tex; pdflatex $(notdir $*).tex ; rm -f *.aux *.toc *.log
 
-programmatic-solution/programmatic-solution.mpl.out.txt: programmatic-solution/programmatic-solution.mpl
+tex/programmatic-solution.mpl.out.txt: tex/programmatic-solution.mpl
 	maple $^ > $@
 
 # The python codes output log

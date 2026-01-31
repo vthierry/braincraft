@@ -4,42 +4,132 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
 \newcommand{\defq}{\stackrel {\rm def}{=}}
+\newcommand{\tab}{\hphantom{4mm}}
 
 \title{Programmatic solution}
 \begin{document}
-\tableofcontents
 
-\section{Programming with programmatoid and neuronoid}
+\section{Programmatoid braincraft challenge solution}
 
 Let us consider the following digital experimental setup, as described in \href{https://github.com/rougier/braincraft/blob/master/README.md#introduction}{braincraft challenge presentation}.
 
 \subsection{Simplified problem statement}
 
-\includegraphics[width=0.9\textwidth]{debug.png}
+\centerline{\includegraphics[width=0.9\textwidth]{../../data/debug.png}}
 
-Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge}.
+\href{https://github.com/rougier/braincraft}{The braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
 
-\subsubsection*{Variables}
+\begin{tabular}{|ll|l|}
+  \hline\multicolumn{2}{|c|}{{\bf Input variables}}\\\hline
+  $p_l \in [0_{\mbox{wall hit}}, 1_{\mbox{no wall}}[$ && \parbox{5cm}{Leftward proximity, {\small min value of the [0, +30°] range 32 left sensors.}} \\\hline 
+  $p_r \in [0_{\mbox{wall hit}}, 1_{\mbox{no wall}}[$ && \parbox{5cm}{Rightward proximity, {\small min value of the [-30°, 0] range 32 right sensors. }} \\\hline 
+  $c_l \in \{0, 4, 5\}$ && \parbox{5cm}{Leftward color sensor: \\ {\small \begin{tabular}{ll} $4$ & blue block. \\ $5$ & red block. \\ $0$ & no special block.\\ \end{tabular}}}\\\hline 
+  $c_r \in \{0, 4, 5\}$ && Rightward color sensor, idem. \\\hline 
+  $g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}]$ && Energy gauge value. \\\hline 
+  \hline \multicolumn{2}{|c|}{{\bf Output variable}}\\\hline
+  $d_o \in [-5, 5]$ && Orientation difference, saturated at  $\pm$ 5°.\\\hline 
+  \hline \multicolumn{2}{|c|}{{\bf Internal variables, with initial values}}\\\hline
+  $q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\},$&$\left.q_p\right|_{t = 0} = 0$ & Preferred quarter-turn direction.\\\hline 
+  $c_p \in \{0, 4, 5\},$&$\left.c_p\right|_{t = 0} = 0$ & Preferred quarter-turn direction color.\\\hline 
+  $g_1 \in [0, 1],$&$\left.q_1\right|_{t = 0} = 1$ & Previous energy gauge value. \\\hline 
+  $g_d \in [0, 1],$&$\left.q_1\right|_{t = 0} = 1$ & Previous energy gauge increase. \\\hline 
+  \end{tabular} 
 
-\begin{description}
-  \item[Input] \begin{description}
-    \item[$\theta_l$] Max average of the {\em left} sensors input, between $0$ and $1$ when very close, $30°$ sensor field.
-    \item[$\theta_r$] Max average of the {\em right} sensors input, idem.
-   \item[$I_{\mbox{left color sensor}}$] , for each color max-average value of the {\em left} color sensors, see usage in the sequel.
-   \item[$I_{\mbox{right color sensor}}$] , idem.
-    \item[$\varepsilon$] Energy indicator, between $1$ when full and $0$ when dead.
-    \end{description}
-  \item[Output] \begin{description}
-     \item[$d \theta$] Orientation relative increment, between $-1$ for $-5°$ leftward and $1$ for $5°$ rightward.
-   \end{description}
-    \item[Internal] \begin{description}
-    \item[$\lambda$] Orientation preference $0$ if left, $1$ if right, $\lambda=0$ at start.
-   \end{description}
+With respect to the original we consider only two leftward and rightward sensors, while the wall hit indicator is not used.
+
+\subsection{A putative controller}
+
+\subsubsection{Navigation}
+
+\paragraph{Heuristic}: The bot runs at constant velocity,
+\\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
+\\\tab (ii) attempts to perform a quarter-turn in the preferred orientation as soon as passing is detected.
+
+With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
+
+\paragraph{Programmatoid solution}:
+\eqline{\begin{array}{rclcl}
+    d_o &=& \multicolumn{3}{l}{\underbrace{\gamma \, (p_l - p_r)}_{\mbox{\begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}}} +
+                                                 \underbrace{\alpha \, (t_l - t_r)}_{\mbox{\begin{tabular}{c}quarter- turn \\ left or right\end{tabular}}}} \\
+    t_l &=& (1- q_p) \, H(\beta - p_l) &=& H((\beta - p_l) - \upsilon \, q_p)\\
+    t_r &=& q_p \, H(\beta - p_r) &=& H((\beta - p_r) - \upsilon \, (1 - q_p)) \\
+\end{array}} where: \eqline{\begin{array}{rcll}
+    w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
+    \gamma &=& \frac{5°}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at $5°$ if the depth difference is half of the path-width.}} \\
+    \alpha    &=& 5° & \mbox{\parbox{8cm}{Saturates the correction at $\pm5°$ to make the quarter-turn.}} \\
+    \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
+    \upsilon &=& 2 & \mbox{\parbox{8cm}{Transform a boolean product to a threshold.}} \\
+\end{array}} 
+
+Regarding transforming a boolean product to a threshold, we easily verify that:
+\eqline{b \in \{0, 1\}, x \in ]-M, M[  \rightarrow b \, H(x) = H(x - (1 - b) \, M),}
+for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is developed in the sequel.
+
+We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
+
+\subsubsection{Direction choice}
+
+\paragraph{Task's strategy}: \begin{description}
+\item[Task 1]  Restrict navigation to the half-loop that contains the energy source, the other does not.
+   \begin{description}\item[Heuristic] If the energy is too low, thus turning in the wrong direction, the direction is changed once. \end{description}
+ \item[Task 2] Restrict navigation to the half-loop without a closed path, indicated by a color that has already been seen once.
+   \begin{description}\item[Heuristic]  \eqline{\begin{array}{rclc}
+        \multicolumn{4}{l}{\mbox{Detect the cue if not yet done}} \\
+        \mbox{if} & c_p = 0 \mbox{ and } c_l \ne 0 &\mbox{then} & c_p \leftarrow c_l \\
+        \mbox{if} & c_p = 0 \mbox{ and } c_r \ne 0 &\mbox{then} & c_p \leftarrow c_r \\
+        \multicolumn{4}{l}{\mbox{Set the direction according to the cue}} \\
+        \mbox{if} & c_p \ne 0 \mbox{ and } c_l \ne 0 \mbox{ and } c_p = c_l &\mbox{then} & q_c \leftarrow 0 \\
+        \mbox{if} & c_p \ne 0 \mbox{ and } c_r \ne 0 \mbox{ and } c_p = c_r &\mbox{then} & q_c \leftarrow 1 \\
+        \multicolumn{4}{l}{\mbox{Reset the cue at a certain energy decrease}} \\
+        \mbox{if} & g_e <  \kappa &\mbox{then} & c_p \leftarrow 0 \\
+  \end{array}} \end{description}
+ \item[Task 3]  Test both energy sources on the left and on the right and decide which one is better.
+   \begin{description}\item[Heuristic] When energy increase occurs if the previous energy increase is higher, change direction. \end{description}
 \end{description}
 
-With respect to the original we consider only two leftward and rightward sensor, and re-normalize the input/output values.
+\clearpage
 
-\subsubsection*{Computation unit: neuronoid}
+\paragraph{Programmatoid solution}:
+\eqline{\begin{array}{rcl}
+    \lambda &=& \lambda + \Delta\lambda_1 + \Delta\lambda_2 + \Delta\lambda_3 + \cdots \\
+    \Delta\lambda_1 &=& (\lambda - 1) \, H(\alpha - \varepsilon) \\
+    \Delta\lambda_2 &=& (\lambda - 1) \, H(\iota - I_{\mbox{left blue color sensor}}) \\
+    \Delta\lambda_3 &=& (\lambda - 1) \, (\Upsilon_{\mbox{again red color}} + \Upsilon_{\mbox{again yellow color}} + \cdots) \\
+    \cdots &&\\
+    \Upsilon_{\mbox{again this color}} &=& \Upsilon_{\mbox{seen this color}} \, H(\iota - I_{\mbox{left this color sensor}}) \\
+    \Upsilon_{\mbox{seen this color}} &=& \Upsilon_{\mbox{seen this color}}  + (1 - \Upsilon_{\mbox{seen this color}}) \, H(\iota - I_{\mbox{this color sensor}}) \\
+    \cdots &&\\
+\end{array}}
+where: \begin{description}
+  \item[$\alpha$] is a the energy threshold, corresponding to the energy consumption during one turn.
+  \item[$\iota$] is some color detection threshold.
+  \item[$\Delta\lambda_1$] raises to one if the energy decreases below a threshold.
+  \item[$\Delta\lambda_2$] raises to one if the blue color is seen on the left.
+  \item[$\Delta\lambda_3$] raises to one if some color is seen again.
+  \item[$\Upsilon_{\mbox{\normalfont again this color}}$] raises to one  a previously seen color is seen again on the left.
+  \item[$\Upsilon_{\mbox{\normalfont seen this color}}$] raises to one  a color is seen for the first time.
+  \item[$I_{\mbox{\normalfont left this color sensor}}$] combines color sensor input.
+  \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
+\end{description}
+
+
+
+\clearpage
+
+\paragraph{Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
+\eqline{\begin{array}{rcl}
+    d\theta &=& h\left(\gamma \, (\theta_l - \theta_r)+ \frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)\right)\\
+    \Delta\theta_r &=& h(W_\infty \, (\beta - \theta_r) + 2\, W_\infty \, (\lambda - 1)) \\
+    \Delta\theta_l &=& h(W_\infty \, (\beta - \theta_l) - 2\, W_\infty \, \lambda) \\
+\end{array}}
+as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
+
+With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the step function. This part of the system is feed-forward thus without convergence or stability issue.
+
+\clearpage
+
+
+\subsubsection{Computation unit: neuronoid}
 
 By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
@@ -71,7 +161,7 @@ It is thus a very common 1st order ``neuronoid'' model, but with an adjustable b
 
 \subsection{Programmatoid and neuronoid computation}
 
-\subsubsection*{Programmatoid  computation}
+\subsubsection{Programmatoid  computation}
 
 We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the step function, considering $1$ as the true value and $0$ as the false value. The $H(v)$ implements the test of the positive sign of $v$, while for $v_i \in \{0, 1\}$:
 \begin{description}
@@ -83,7 +173,7 @@ so that we can combine any boolean expression on any test of value sign, thus va
 
 Using local feedback we can also design several functions detailed in the Appendix of this section, while we also can combine neuronoid and programmatoid functions to design temporal functions.
 
-\subsubsection*{Mollification of the step function}
+\subsubsection{Mollification of the step function}
 
 The step function is related to a conditional expression by a simple relation:
 \eqline{H(v) = conditional\;value > 0 \mbox{ ? } 1 \mbox{ : } conditional\;value < 0 \mbox{ ? } 0 \mbox{ : } H(0),}
@@ -116,7 +206,7 @@ Numerically, values decrease very rapidly:
   $4 \, \exp(-8 \, v_0) \simeq$ & $10^{-1}$ & $10^{-3}$ & $10^{-8}$ & $10^{-17}$ \\
   \hline \end{tabular}}
 
-\subsubsection*{Neuronoid  implementation of programmatoid computation}
+\subsubsection{Neuronoid  implementation of programmatoid computation}
 
 We call ``neuronoid'' computation the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
 
@@ -124,72 +214,11 @@ By successive combination, any programmatoid  computation involving the $H(\cdot
 
 A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc. (not detailed here because not used at this stage,  see appendix).
 
-\subsection*{A putative controller}
-
-\subsubsection*{Navigation}
-
-\paragraph{Heuristic}: The bot runs at constant velocity, (i) ahead by default and (ii) if passing in the preferred orientation is possible, makes a quarter turn.
-
-\paragraph{Programmatoid solution}:
-\eqline{\begin{array}{rcl}
-    d\theta &=& \underbrace{\gamma \, (\theta_l - \theta_r)}_{\mbox{\begin{tabular}{lc}linear correction to \\ maintain direction ahead\end{tabular}}}+ \underbrace{\frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)}_{\mbox{direction change}}\\
-    \Delta\theta_r &=& \lambda \,  H(\beta - \theta_r) \\
-    \Delta\theta_l &=& (1 - \lambda) \, H(\beta - \theta_l) \\
-\end{array}}
-where: \begin{description}
-  \item[$\Delta\theta_*$] raises from 0 to 1 when the left sensor detects a passing, i.e., the fact tat the side wall is not close anymore.
-  \item[$\gamma$] is a feedback loop gain $0 < \gamma < 1$ to be adjusted high enough to correct the direction, small enough to avoid oscillations.
-  \item[$\beta$] is a threshold below which the side sensor input corresponds to no side wall  but a passing.
-\end{description}
-in words: the bot navigates ahead thanks to the linear correction parameterized by $\gamma$ and perform a quarter turn in the preferred direction as soon a passing is detected.
-
-\paragraph{Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
-\eqline{\begin{array}{rcl}
-    d\theta &=& h\left(\gamma \, (\theta_l - \theta_r)+ \frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)\right)\\
-    \Delta\theta_r &=& h(W_\infty \, (\beta - \theta_r) + 2\, W_\infty \, (\lambda - 1)) \\
-    \Delta\theta_l &=& h(W_\infty \, (\beta - \theta_l) - 2\, W_\infty \, \lambda) \\
-\end{array}}
-as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
-
-With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the step function. This part of the system is feed-forward thus without convergence or stability issue.
-
-\subsubsection*{Direction choice}
-
-\paragraph{Heuristic}: The initial direction is right, but as soon as an input contradicts this assumption, it is turned left once, and this remains.
-\begin{description}
-  \item[Case 1] If the energy is to low, it means we turn in the wrong direction, so it changes.
-  \item[Case 2] If there is a blue color on the left it means we must change from right to left.
-  \item[Case 3] If there is a red (or yellow, etc) color somewhere, then change the turn direction if i see it again on the left.
-\end{description}
-
-\paragraph{Programmatoid solution}:
-\eqline{\begin{array}{rcl}
-    \lambda &=& \lambda + \Delta\lambda_1 + \Delta\lambda_2 + \Delta\lambda_3 + \cdots \\
-    \Delta\lambda_1 &=& (\lambda - 1) \, H(\alpha - \varepsilon) \\
-    \Delta\lambda_2 &=& (\lambda - 1) \, H(\iota - I_{\mbox{left blue color sensor}}) \\
-    \Delta\lambda_3 &=& (\lambda - 1) \, (\Upsilon_{\mbox{again red color}} + \Upsilon_{\mbox{again yellow color}} + \cdots) \\
-    \cdots &&\\
-    \Upsilon_{\mbox{again this color}} &=& \Upsilon_{\mbox{seen this color}} \, H(\iota - I_{\mbox{left this color sensor}}) \\
-    \Upsilon_{\mbox{seen this color}} &=& \Upsilon_{\mbox{seen this color}}  + (1 - \Upsilon_{\mbox{seen this color}}) \, H(\iota - I_{\mbox{this color sensor}}) \\
-    \cdots &&\\
-\end{array}}
-where: \begin{description}
-  \item[$\alpha$] is a the energy threshold, corresponding to the energy consumption during one turn.
-  \item[$\iota$] is some color detection threshold.
-  \item[$\Delta\lambda_1$] raises to one if the energy decreases below a threshold.
-  \item[$\Delta\lambda_2$] raises to one if the blue color is seen on the left.
-  \item[$\Delta\lambda_3$] raises to one if some color is seen again.
-  \item[$\Upsilon_{\mbox{\normalfont again this color}}$] raises to one  a previously seen color is seen again on the left.
-  \item[$\Upsilon_{\mbox{\normalfont seen this color}}$] raises to one  a color is seen for the first time.
-  \item[$I_{\mbox{\normalfont left this color sensor}}$] combines color sensor input.
-  \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
-\end{description}
-
 \paragraph{Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
 
-\subsection*{Appendix: a few programmatoid and neuronoid components}
+\subsection{Appendix: a few programmatoid and neuronoid components}
 
-\subsubsection*{Conditional expression}
+\subsubsection{Conditional expression}
 
 For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$ and a control $v_l \in \{0, 1\}$, the condition expression equation, for $0 < W_\delta \ll 1 < W_\sigma$ :
 \eqline{\begin{array}{rcll}  v_o(t+1)
@@ -245,7 +274,7 @@ For instance $\{W_\delta = 1, W_\omega = 2, W_\sigma = 4, \epsilon_\infty = 1/8\
 
 \end{itemize}
 
-\subsubsection*{RS input/output gate}
+\subsubsection{RS input/output gate}
 
 For an input $v_i(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$, and a control $v_l \in \{0, 1\}$, the equation:
 \eqline{\begin{array}{rcl}  v_o(t+1)
@@ -271,11 +300,11 @@ and by combination RS gates,  bistable mechanisms, etc. (not detailed here becau
 
 To be done.
 
-%\subsubsection*{Monostable binary value}
+%\subsubsection{Monostable binary value}
 
 %avec l = l/2 + h() si neuronoid pour avoir v fini
 
-%\subsubsection*{Bistable binary value}
+%\subsubsection{Bistable binary value}
 
 %Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
 
@@ -285,7 +314,7 @@ Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge
 
 You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
 
-\subsection*{Installation of the setup}
+\subsection{Installation of the setup}
 ~
 \\- Connect to {\tt https://github.com} with your login.
 \\- Go to the \href{https://github.com/rougier/braincraft}{braincraft challenge} and create a new fork:
@@ -296,7 +325,7 @@ You must be familiar with basic {\tt git} usage and basic {\tt python} programma
 \\~~~~~ + You may have to run {\tt make install}, before.
 \\~~~~~ + You are advised to use a virtual environment, running {\tt make venv}
 
-\subsection*{Running at the programmatic level}
+\subsection{Running at the programmatic level}
 
 \href{https://raw.githack.com/vthierry/braincraft/master/braincraft/doc/challenge_callback.html}{API doc}
 
@@ -307,7 +336,7 @@ The `challenge\_callback\_1.py`  file contains the support routines
 
 %The {\tt programmatic.py} code provides all functions to evaluate the implementation, without training phase.
   
-\subsection*{Running at the artificial neural network level}
+\subsection{Running at the artificial neural network level}
 
 %The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
 
