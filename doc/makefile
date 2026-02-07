@@ -1,7 +1,7 @@
 
 # The doc files to build
 
-build : api/index.html programmatic-solution logs
+build : api/index.html  tex/index.html logs
 
 # The challenge callback api documentation
 
@@ -10,12 +10,13 @@ api/index.html: ../braincraft/challenge_callback.py
 
 # The programmatic-solution latex document
 
-programmatic-solution: tex/programmatic-solution.pdf tex/programmatic-solution.mpl.out.txt
+tex/index.html: $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl))
+	cd tex ; (echo '<ul>' ; for f in `ls *.pdf *.mpl.out.txt` ; do echo "<li><a href='$$f'>$$f</a></li>" ; done ; echo '</ul>') > ../$@
 
-%.pdf: %.tex
-	cd tex; pdflatex $(notdir $*).tex ; rm -f *.aux *.toc *.log
+tex/%.pdf: tex/%.tex
+	cd tex; pdflatex $*.tex ; rm -f *.aux *.toc *.log
 
-tex/programmatic-solution.mpl.out.txt: tex/programmatic-solution.mpl
+tex/%.mpl.out.txt: tex/%.mpl
 	maple $^ > $@
 
 # The python codes output log
@@ -26,25 +27,5 @@ logs: $(patsubst %,log/%.py.out.txt,$(what))
 
 log/%.py.out.txt: ../braincraft/%.py 
 	cd ../braincraft ; python3 $*.py 2>&1 | tee ../doc/log/$*.py.out.txt
-
-# Installation/re-installation commands
-
-install:
-#	sudo apt install python3-tqdm
-#	git remote add master git@github.com:rougier/braincraft.git
-	git fetch master
-	git commit -a -m 'sync from makefile to fetech'
-	git merge master/master
-	cd ../braincraft ; sedgrep -name '*.py' -in atan2 -out arctan2
-
-# Git synchronisation commands
-
-sync: build
-	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
-
-git:
-	$(BROWSER) https://github.com/vthierry/braincraft
-
-
 
 

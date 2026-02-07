@@ -20,61 +20,148 @@ Let us consider the following digital experimental setup, as described in \href{
 \href{https://github.com/rougier/braincraft}{The braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
 
 \begin{tabular}{|ll|l|}
-  \hline\multicolumn{2}{|c|}{{\bf Input variables}}\\\hline
-  $p_l \in [0_{\mbox{wall hit}}, 1_{\mbox{no wall}}[$ && \parbox{5cm}{Leftward proximity, {\small min value of the [0, +30°] range 32 left sensors.}} \\\hline 
-  $p_r \in [0_{\mbox{wall hit}}, 1_{\mbox{no wall}}[$ && \parbox{5cm}{Rightward proximity, {\small min value of the [-30°, 0] range 32 right sensors. }} \\\hline 
-  $c_l \in \{0, 4, 5\}$ && \parbox{5cm}{Leftward color sensor: \\ {\small \begin{tabular}{ll} $4$ & blue block. \\ $5$ & red block. \\ $0$ & no special block.\\ \end{tabular}}}\\\hline 
-  $c_r \in \{0, 4, 5\}$ && Rightward color sensor, idem. \\\hline 
+  \hline\multicolumn{3}{|c|}{{\bf Input variables}}\\\hline
+  $p_l \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[$ && \parbox{5cm}{Leftward proximity, {\small max value of the [0, +30°] range 32 left sensors.}} \\\hline 
+  $p_r \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[$ && \parbox{5cm}{Rightward proximity, {\small max value of the [-30°, 0] range 32 right sensors. }} \\\hline 
+  $c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$ && \parbox{5cm}{Leftward binary red and blue color detectors.}\\\hline 
+  $c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$ && \parbox{5cm}{Rightward binary red and blue color detectors.} \\\hline 
   $g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}]$ && Energy gauge value. \\\hline 
-  \hline \multicolumn{2}{|c|}{{\bf Output variable}}\\\hline
+  \hline \multicolumn{3}{|c|}{{\bf Output variable}}\\\hline
   $d_o \in [-5, 5]$ && Orientation difference, saturated at  $\pm$ 5°.\\\hline 
-  \hline \multicolumn{2}{|c|}{{\bf Internal variables, with initial values}}\\\hline
-  $q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\},$&$\left.q_p\right|_{t = 0} = 0$ & Preferred quarter-turn direction.\\\hline 
-  $c_p \in \{0, 4, 5\},$&$\left.c_p\right|_{t = 0} = 0$ & Preferred quarter-turn direction color.\\\hline 
-  $g_1 \in [0, 1],$&$\left.q_1\right|_{t = 0} = 1$ & Previous energy gauge value. \\\hline 
-  $g_d \in [0, 1],$&$\left.q_1\right|_{t = 0} = 1$ & Previous energy gauge increase. \\\hline 
-  \end{tabular} 
+ \end{tabular} 
 
-With respect to the original we consider only two leftward and rightward sensors, while the wall hit indicator is not used.
+With respect to the original braincraft challenge:
+\\ \tab - we consider two leftward and rightward ``average'' sensors only,
+\\ \tab - color is input as binary variables, and always available,
+\\ \tab - the wall hit indicator is not used.
 
-\subsection{A putative controller}
+\newpage \subsection{A putative controller}
 
-\subsubsection{Navigation}
+\subsubsection{Input preprocessing}
 
-\paragraph{Heuristic}: The bot runs at constant velocity,
+\paragraph{Proximity sensors}\begin{description}
+\item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
+\item[Implementation] A simple sum or average could be used, thus using directly a linearcombination of the input in afferent units. \\
+  Then, if apropriate, the maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
+\\ - The series  at $\mu \rightarrow 0^+$ is easily obtained from any symbolic calculator writing, e.g.:
+\\\centerline{{\tt series(log(sum(exp(mu * p[k]), k = 1..K)) / mu, mu = 0, 2);}} \\
+\\- There is no obvious series development at $\mu \rightarrow +\infty$ but, considering $p[1] \le p[2] \le \cdots \le p[K]$, without loss of generality,
+i.e., that -for the notation- index's order correspond to decreasing values, we obtain from straightforward algebra:\eqline{\begin{array}{c}
+    \log\left(\sum_{k \in \{1\cdots K\}}  \, \exp(\mu \, p[k])\right) / \mu = p[1] + \rho / \mu\\
+    \rho \defq \log\left(1 + \sum_{k \in \{2\cdots K\}}  \, \exp(-\mu \, (p[1] - p[k]))\right) \\
+    \mbox{ with } 0 \le \rho \le \log\left(1 + (K-1) \, \exp(-\mu \, (p[1] - p[2]))\right) \le \log(K) \\
+\end{array}}
+so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding the expected result.}: \eqline{\begin{array}{rcl}
+    p_{\dagger} &\leftarrow& \log\left(\sum_{k \in K}  \, \exp(\mu \, p[k])\right) / \mu \\
+    &=& \frac{1}{K} \sum_k p_k + \log(K) / \mu + O(\mu) \\
+    &=& \max_k(p[k]) + o\left(\frac{1}{\mu}\right) \\
+\end{array}}
+  where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
+  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators.
+\end{description}
+  
+\paragraph{Color sensors}\begin{description}
+\item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
+\item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit: \eqline{\begin{array}{rcl}
+    c_{\dagger\bullet} &\leftarrow& H(\sum_{k \in K}  \, (1 - D(i_{\bullet} - c[k]))), \\
+    && \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} \\
+    D(x) &\defq& H(x-\epsilon) + H(-x-\epsilon)) = \mbox{ if } |x| < \epsilon \mbox{ then } 0 \mbox{ else } 1, \epsilon \ll 1 \\
+\end{array}}
+ where $K$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
+\end{description}
+
+\paragraph{Energy measurement}\begin{description}
+ \item[Motivation] The energy is refilled during several steps, so that energy increase accumulation has to be pre-processed.
+ \item[Processed Variables] 
+  \eqline{\begin{array}{lll}
+  g_{c\flat} \in [0, 1], \flat \in \(1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
+  g_{i\flat} \in [0, 1], \flat \in \(0, 1\} &\left.g_{i\flat} \right|_{t = 0} = 0 & \mbox{Present and last instantaneous energy increases.}\\
+  g_{e1} \in [0, 1]                               &\left.g_{e1} \right|_{t = 0} = 0 & \mbox{Last energy value.} \\
+  \end{array}}
+ \item[Implementation] \eqline{\begin{array}{lll}
+      g_{i1} \leftarrow g_{i0}, & g_{i0} \leftarrow g_e - g_{e1}, & g_{e1} \leftarrow g_e \\
+  \end{array}} thus implemented as linear computation units.
+\end{description}
+
+\subsubsection{Navigation}\begin{description}
+\item[Heuristic]: The bot runs at constant velocity,
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
 \\\tab (ii) attempts to perform a quarter-turn in the preferred orientation as soon as passing is detected.
-
-With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
-
-\paragraph{Programmatoid solution}:
-\eqline{\begin{array}{rclcl}
-    d_o &=& \multicolumn{3}{l}{\underbrace{\gamma \, (p_l - p_r)}_{\mbox{\begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}}} +
-                                                 \underbrace{\alpha \, (t_l - t_r)}_{\mbox{\begin{tabular}{c}quarter- turn \\ left or right\end{tabular}}}} \\
-    t_l &=& (1- q_p) \, H(\beta - p_l) &=& H((\beta - p_l) - \upsilon \, q_p)\\
-    t_r &=& q_p \, H(\beta - p_r) &=& H((\beta - p_r) - \upsilon \, (1 - q_p)) \\
-\end{array}} where: \eqline{\begin{array}{rcll}
+\\With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
+\item[Internal variable] \eqline{\begin{array}{lll}
+  q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
+\end{array}}
+\item[Programmatoid solution]:\eqline{\begin{array}{rclcl}
+    d_o &\leftarrow& \multicolumn{3}{l}{\underbrace{\gamma \, (p_l - p_r)}_{\mbox{\begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}}} +
+                                                                   \underbrace{\alpha \, (t_l - t_r)}_{\mbox{\begin{tabular}{c}quarter- turn \\ left or right\end{tabular}}}} \\
+    t_l &\leftarrow& (1- q_p) \, H(\beta - p_l) &=& H((\beta - p_l) - \upsilon \, q_p)\\
+    t_r &\leftarrow& q_p \, H(\beta - p_r) &=& H((\beta - p_r) - \upsilon \, (1 - q_p)) \\
+\end{array}}  where: \eqline{\begin{array}{rcll}
     w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
-    \gamma &=& \frac{5°}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at $5°$ if the depth difference is half of the path-width.}} \\
-    \alpha    &=& 5° & \mbox{\parbox{8cm}{Saturates the correction at $\pm5°$ to make the quarter-turn.}} \\
+    \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
+    \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter submut the former.}}} \\
     \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
-    \upsilon &=& 2 & \mbox{\parbox{8cm}{Transform a boolean product to a threshold.}} \\
-\end{array}} 
+    \upsilon &=& 10 & \mbox{\parbox{8cm}{Transform a boolean product to a step-function threshold.}} \\
+\end{array}} while: \eqline{\begin{array}{rclcl}
+ t_l =1&\mbox{iff}& q_p = 0 &\mbox{and while}& \beta < p_l \\
+ t_r =1&\mbox{iff}& q_p = 1 &\mbox{and while}& \beta < p_r \\
+\end{array}}  in words: we execute the quater-turn until another wall is detected.
+\end{description}
 
-Regarding transforming a boolean product to a threshold, we easily verify that:
-\eqline{b \in \{0, 1\}, x \in ]-M, M[  \rightarrow b \, H(x) = H(x - (1 - b) \, M),}
-for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is developed in the sequel.
+Regarding transforming a boolean product to a step-function threshold, we easily verify\footnote{
+If $b = 0$ then the equality writes $0 = H(x - M)$, but $x < M$ so that $H(x - M) = 0$, thus verified, while if $b = 1$then the equality writes $H(x) = H(x)$, again verified.} that:
+\eqline{b \in \{0, 1\}, x \in ]-M, M[  \Rightarrow b \, H(x) = H(x - (1 - b) \, M),}
+for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is developed and generalized in the sequel.
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
-\subsubsection{Direction choice}
+\newpage \subsubsection{Direction choices}
 
-\paragraph{Task's strategy}: \begin{description}
-\item[Task 1]  Restrict navigation to the half-loop that contains the energy source, the other does not.
-   \begin{description}\item[Heuristic] If the energy is too low, thus turning in the wrong direction, the direction is changed once. \end{description}
- \item[Task 2] Restrict navigation to the half-loop without a closed path, indicated by a color that has already been seen once.
-   \begin{description}\item[Heuristic]  \eqline{\begin{array}{rclc}
-        \multicolumn{4}{l}{\mbox{Detect the cue if not yet done}} \\
+\subsubsection{Task 1: Simple decision} \begin{description}
+  \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
+  \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
+      At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.\eqline{\begin{array}{l}
+          q_p = \mbox{if } q_p = 1  \mbox{ or } \nu > g_e \mbox{then} 1 \mbox{ else } 0 \\
+      \end{array}}
+     \item[Programmatoid solution: \eqline{\begin{array}{rcl}
+       q_p  &\leftarrow& H(\upsilon \, q_p + (\nu - g_e))
+   \end{array}} where: \eqline{\begin{array}{rcll}
+      c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
+      s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
+      l &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
+      \nu &\simeq& l \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
+  \end{array}}
+\end{description}
+
+\subsubsection{Task 1b: Simple decision but varying environment} \begin{description}
+  \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not, this may change with time.
+  \item[Heuristic]~
+    \\- If the energy is too low, the direction is inverted.
+    \\-This is registered, avoiding multiple changes at low energy.
+    \\-When the energy is high enough, change registration is reset.
+    \item[Internal variable] \eqline{\begin{array}{lll}
+        g_i \in \{0, 1\} & \left. g_i \right|_{t = 0} = 0 & \mbox{Detects the low energy, if not yet done.} \\
+        g_c \in \{0, 1\} & \left. g_c \right|_{t = 0} = 0 & \mbox{Registers if the low energy has been already detected.} \\
+    \end{array}}
+    \item[Programmatoid solution] \eqline{\begin{array}{rclcl}
+        \multicolumn{5}{l}{\mbox{Detects if the direction is to be changed.}} \\
+        g_i &\leftarrow& \mbox{if } g_c = 0 \mbox{ and } \nu > g_e  \mbox{ then } 1 \mbox{ else } 0 &=& H(H(g_c - 1/2) \\ &&& +& H(g_e - \nu) - 3/2) \\
+        \multicolumn{5}{l}{\mbox{Inverts the direction if to be changed.}} \\
+        q_p &\leftarrow& \mbox{if } g_i = 0  \mbox{ then } q_p \mbox{ else } 1 - q_p &=& H(q_p  - 1/2 - \upsilon \, (1 - g_i)) \\&&&+& H(1/2 - q_p - \upsilon \, g_i) \\
+        \multicolumn{5}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
+        g_c &\leftarrow& \mbox{if } 2 \, \nu < g_e \mbox{ then } 0 \\ && \mbox{ elif } g_c = 1 \mbox{ then } 1 \mbox{ else } g_i &=&
+        	H(g_i - 1/2 + \upsilon \, g_c - 2 \, \upsilon \, H(g_e - 2 \, \nu)) \\
+    \end{array}}
+\end{description} 
+
+\subsubsection{Task 2: Cued environment decision} \begin{description}
+  \item[Strategy] Restrict navigation to the half-loop without a closed path, as indicated by a color that has already been seen once.
+    \item[Heuristic] Detect and store the first color blob, and choose to turn in the direction it appears again.
+    \item[Internal variable] \eqline{\begin{array}{lll}
+        c_{p\bullet} \in \{0, 1\} & \left. c_{p\bullet} i \right|_{t = 0} = 0 & \mbox{Color } \\
+    \end{array}}
+    \item[Programmatoid solution] \eqline{\begin{array}{rclcl}
+         \multicolumn{4}{l}{\mbox{Detect the cue, if not yet done}} \\
         \mbox{if} & c_p = 0 \mbox{ and } c_l \ne 0 &\mbox{then} & c_p \leftarrow c_l \\
         \mbox{if} & c_p = 0 \mbox{ and } c_r \ne 0 &\mbox{then} & c_p \leftarrow c_r \\
         \multicolumn{4}{l}{\mbox{Set the direction according to the cue}} \\
@@ -82,9 +169,26 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
         \mbox{if} & c_p \ne 0 \mbox{ and } c_r \ne 0 \mbox{ and } c_p = c_r &\mbox{then} & q_c \leftarrow 1 \\
         \multicolumn{4}{l}{\mbox{Reset the cue at a certain energy decrease}} \\
         \mbox{if} & g_e <  \kappa &\mbox{then} & c_p \leftarrow 0 \\
-  \end{array}} \end{description}
+   \end{array}} \end{description}
+
+blablab $c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$
+
+\end{document}
+
+   
  \item[Task 3]  Test both energy sources on the left and on the right and decide which one is better.
-   \begin{description}\item[Heuristic] When energy increase occurs if the previous energy increase is higher, change direction. \end{description}
+   \begin{description}\item[Heuristic] When energy increase occurs if the previous energy increase is higher, change direction. \eqline{\begin{array}{rclc}
+         \multicolumn{4}{l}{\mbox{Updates the energy gauge increase.}}
+           g_d \leftarrow g_e - g_{e1}, g_{e1} \leftarrow g_e, g_{d1} \leftarrow 
+ \end{array}}
+
+   \end{description}
+
+
+
+
+\begin{description}
+  
 \end{description}
 
 \clearpage

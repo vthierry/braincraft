@@ -1,4 +1,4 @@
 all:
-	$(MAKE) -C .. programmatic-solution
+	$(MAKE) -C .. tex/index.html
 	atril programmatic-solution.pdf
 
