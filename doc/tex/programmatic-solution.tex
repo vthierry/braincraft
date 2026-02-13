@@ -57,9 +57,14 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
     &=& \max_k(p[k]) + o\left(\frac{1}{\mu}\right) \\
 \end{array}}
   where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
-  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators.
+  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators, as shown in Fig.~\ref{explog}.
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.4\textwidth]{./explog.jpg}}
+\caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
+\label{explog}
+\end{figure}
 \end{description}
-  
+
 \paragraph{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit: \eqline{\begin{array}{rcl}
@@ -71,16 +76,28 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
 \end{description}
 
 \paragraph{Energy measurement}\begin{description}
- \item[Motivation] The energy is refilled during several steps, so that energy increase accumulation has to be pre-processed.
+ \item[Motivation] The energy increase accumulation has to be pre-processed, since used in some task.
  \item[Processed Variables] 
-  \eqline{\begin{array}{lll}
-  g_{c\flat} \in [0, 1], \flat \in \(1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
-  g_{i\flat} \in [0, 1], \flat \in \(0, 1\} &\left.g_{i\flat} \right|_{t = 0} = 0 & \mbox{Present and last instantaneous energy increases.}\\
-  g_{e1} \in [0, 1]                               &\left.g_{e1} \right|_{t = 0} = 0 & \mbox{Last energy value.} \\
+\eqline{\begin{array}{lll}
+  g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
+  g_{e\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{e\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last energy value.} \\
+\end{array}}
+Here instantaneous energy increase is $(g_{e} - g_{e1})$, 
+\item[Implementation] \eqline{\begin{array}{l}
+    \mbox{Cumulating energy increase starts, saving last increase in $g_{c2}$.} \\
+    \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}}_{\mbox{\em increase after a decrease}} \mbox{ then } g_{c2} \leftarrow g_{c1}, \; g_{c1} \leftarrow (g_{e} - g_{e1}) \\
+    \mbox{Cumulating energy increase continues.} \\
+    \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\em increase after an increase}}  \mbox{ then } g_{c1} \leftarrow g_{c1} + (g_{e} - g_{e1}) \\
+    \mbox{Otherwise $g_{e} \le g_{e1}$, thus cumulating energy increase stops, and $g_{c1}$ is memorized.} \\
   \end{array}}
- \item[Implementation] \eqline{\begin{array}{lll}
-      g_{i1} \leftarrow g_{i0}, & g_{i0} \leftarrow g_e - g_{e1}, & g_{e1} \leftarrow g_e \\
-  \end{array}} thus implemented as linear computation units.
+\item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
+   g_{c1} &=& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
+  g_{c2} &=& g_{c2}  + H(H(g_{e} - g_{e1}) + H(g_{e2} - g_{e1}) - 3/2) \, (g_{c1} - g_{c2}) \\
+\end{array}}
+  which is not a pure programmatoid solution because, because of term of the form $H(u) \, v$, thus with a product,
+  but is implementable in the neuronoid framework discussed in the sequel. In brief:
+  \eqline{H(u) \, v \simeq h(v/\upsilon + \upsilon \, h(\upsilon \, u) - \upsilon)}
+  where $h(\cdot)$ is the sigmoid function, and $\upsilon$ a sufficiently large member.
 \end{description}
 
 \subsubsection{Navigation}\begin{description}
@@ -115,7 +132,7 @@ for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
-\newpage \subsubsection{Direction choices}
+\subsubsection{Direction choices}
 
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
@@ -123,13 +140,13 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
       At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.\eqline{\begin{array}{l}
           q_p = \mbox{if } q_p = 1  \mbox{ or } \nu > g_e \mbox{then} 1 \mbox{ else } 0 \\
       \end{array}}
-     \item[Programmatoid solution: \eqline{\begin{array}{rcl}
-       q_p  &\leftarrow& H(\upsilon \, q_p + (\nu - g_e))
+     \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+       q_p  &\leftarrow& H(\upsilon \, q_p + (\nu - g_e))\\
    \end{array}} where: \eqline{\begin{array}{rcll}
       c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
       s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
-      l &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
-      \nu &\simeq& l \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
+      b &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
+      \nu &\simeq& b \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
   \end{array}}
 \end{description}
 

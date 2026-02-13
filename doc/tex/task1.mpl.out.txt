@@ -1,0 +1,31 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+
+> Heaviside(0) := 1/2: H := Heaviside:
+
+> upsilon := 2: nu := 1/3:
+
+# Checks the Task 1 programmatoid equations
+
+> eq := {
+>  q_p_ = 'if q_p = 1 or nu > g_e then  1 else 0 fi'
+>  } = {
+>  q_p_ = H(upsilon * q_p + (nu - g_e))
+>  };
+eq := {q_p_ = (if q_p = 1 or g_e < nu then 1 else 0 end if)} =
+
+    {q_p_ = Heaviside(-g_e + 2 q_p + 1/3)}
+
+
+> ok := {}: for g_e in {0,1/4,1/2,3/4,1} do for q_p in {0,1} do ok := ok union {evalb(eq)} od od: ok;
+                                     {true}
+
+
+
+
+
+> quit
+memory used=3.1MB, alloc=8.3MB, time=0.06

@@ -14,7 +14,7 @@ tex/index.html: $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) $(patsubst %.mpl,%
 	cd tex ; (echo '<ul>' ; for f in `ls *.pdf *.mpl.out.txt` ; do echo "<li><a href='$$f'>$$f</a></li>" ; done ; echo '</ul>') > ../$@
 
 tex/%.pdf: tex/%.tex
-	cd tex; pdflatex $*.tex ; rm -f *.aux *.toc *.log
+	cd tex; pdflatex $*.tex ;  pdflatex $*.tex ; rm -f *.aux *.toc *.log
 
 tex/%.mpl.out.txt: tex/%.mpl
 	maple $^ > $@
