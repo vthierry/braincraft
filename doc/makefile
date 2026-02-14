@@ -10,14 +10,17 @@ api/index.html: ../braincraft/challenge_callback.py
 
 # The programmatic-solution latex document
 
-tex/index.html: $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl))
+tex/index.html: $(patsubst %.odg,%.png,$(wildcard tex/*.odg)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl)) $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) 
 	cd tex ; (echo '<ul>' ; for f in `ls *.pdf *.mpl.out.txt` ; do echo "<li><a href='$$f'>$$f</a></li>" ; done ; echo '</ul>') > ../$@
 
-tex/%.pdf: tex/%.tex
+tex/%.pdf: tex/%.tex $(wildcard tex/*.odg) $(wildcard tex/*.mpl)
 	cd tex; pdflatex $*.tex ;  pdflatex $*.tex ; rm -f *.aux *.toc *.log
 
 tex/%.mpl.out.txt: tex/%.mpl
-	maple $^ > $@
+	cd tex ; maple ../$^ > ../$@
+
+tex/%.png : tex/%.odg
+	@libreoffice --headless --convert-to png --outdir $(@D) $^
 
 # The python codes output log
 

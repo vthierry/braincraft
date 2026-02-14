@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage{graphicx}
+\usepackage{graphicx} \usepackage[export]{adjustbox}
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
 \newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
@@ -35,11 +35,11 @@ With respect to the original braincraft challenge:
 \\ \tab - color is input as binary variables, and always available,
 \\ \tab - the wall hit indicator is not used.
 
-\newpage \subsection{A putative controller}
+ \subsection{A putative controller}
 
 \subsubsection{Input preprocessing}
 
-\paragraph{Proximity sensors}\begin{description}
+\subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
 \item[Implementation] A simple sum or average could be used, thus using directly a linearcombination of the input in afferent units. \\
   Then, if apropriate, the maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
@@ -59,13 +59,15 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
   where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
   and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators, as shown in Fig.~\ref{explog}.
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=0.4\textwidth]{./explog.jpg}}
-\caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
-\label{explog}
+  \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$, from top to bottom. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
+        \label{explog}
+    \end{minipage}
 \end{figure}
 \end{description}
 
-\paragraph{Color sensors}\begin{description}
+\subsubsection{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit: \eqline{\begin{array}{rcl}
     c_{\dagger\bullet} &\leftarrow& H(\sum_{k \in K}  \, (1 - D(i_{\bullet} - c[k]))), \\
@@ -75,20 +77,20 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
  where $K$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
 \end{description}
 
-\paragraph{Energy measurement}\begin{description}
- \item[Motivation] The energy increase accumulation has to be pre-processed, since used in some task.
+\subsubsection{Energy measurement}\begin{description}
+ \item[Motivation] The energy increase accumulation is to be pre-processed, since used in some task.
  \item[Processed Variables] 
 \eqline{\begin{array}{lll}
   g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
   g_{e\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{e\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last energy value.} \\
 \end{array}}
-Here instantaneous energy increase is $(g_{e} - g_{e1})$, 
+Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the energy always changes so that $g_{e} \ne g_{e1}$.
 \item[Implementation] \eqline{\begin{array}{l}
     \mbox{Cumulating energy increase starts, saving last increase in $g_{c2}$.} \\
     \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}}_{\mbox{\em increase after a decrease}} \mbox{ then } g_{c2} \leftarrow g_{c1}, \; g_{c1} \leftarrow (g_{e} - g_{e1}) \\
     \mbox{Cumulating energy increase continues.} \\
     \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\em increase after an increase}}  \mbox{ then } g_{c1} \leftarrow g_{c1} + (g_{e} - g_{e1}) \\
-    \mbox{Otherwise $g_{e} \le g_{e1}$, thus cumulating energy increase stops, and $g_{c1}$ is memorized.} \\
+    \mbox{Otherwise $g_{e} < g_{e1}$, thus cumulating energy increase stops, and $g_{c1}$ is memorized.} \\
   \end{array}}
 \item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
    g_{c1} &=& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
@@ -96,8 +98,15 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$,
 \end{array}}
   which is not a pure programmatoid solution because, because of term of the form $H(u) \, v$, thus with a product,
   but is implementable in the neuronoid framework discussed in the sequel. In brief:
-  \eqline{H(u) \, v \simeq h(v/\upsilon + \upsilon \, h(\upsilon \, u) - \upsilon)}
-  where $h(\cdot)$ is the sigmoid function, and $\upsilon$ a sufficiently large member.
+  \eqline{H(x) \, y \simeq h(y/\upsilon + \upsilon \, h(\upsilon \, x) - \upsilon)}
+  where $h(\cdot)$ is the sigmoid function, and $\upsilon$ a sufficiently large number.
+\begin{figure}[htbp]
+  \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of energy profile when cumulating energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
+        \label{energy-step}
+    \end{minipage}
+\end{figure}
 \end{description}
 
 \subsubsection{Navigation}\begin{description}
@@ -126,7 +135,7 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$,
 \end{description}
 
 Regarding transforming a boolean product to a step-function threshold, we easily verify\footnote{
-If $b = 0$ then the equality writes $0 = H(x - M)$, but $x < M$ so that $H(x - M) = 0$, thus verified, while if $b = 1$then the equality writes $H(x) = H(x)$, again verified.} that:
+If $b = 0$ then the equality writes $0 = H(x - M)$, but $x < M$ so that $H(x - M) = 0$, thus verified, while if $b = 1$ then the equality writes $H(x) = H(x)$, again verified.} that:
 \eqline{b \in \{0, 1\}, x \in ]-M, M[  \Rightarrow b \, H(x) = H(x - (1 - b) \, M),}
 for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is developed and generalized in the sequel.
 
@@ -138,15 +147,15 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
   \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
       At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.\eqline{\begin{array}{l}
-          q_p = \mbox{if } q_p = 1  \mbox{ or } \nu > g_e \mbox{then} 1 \mbox{ else } 0 \\
+          q_p = \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{then} 1 \mbox{ else } 0 \\
       \end{array}}
      \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-       q_p  &\leftarrow& H(\upsilon \, q_p + (\nu - g_e))\\
+       q_p  &\leftarrow& H(\upsilon \, q_p + (\eta - g_e))\\
    \end{array}} where: \eqline{\begin{array}{rcll}
       c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
       s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
       b &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
-      \nu &\simeq& b \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
+      \eta &\simeq& b \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
   \end{array}}
 \end{description}
 
@@ -157,58 +166,45 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
     \\-This is registered, avoiding multiple changes at low energy.
     \\-When the energy is high enough, change registration is reset.
     \item[Internal variable] \eqline{\begin{array}{lll}
-        g_i \in \{0, 1\} & \left. g_i \right|_{t = 0} = 0 & \mbox{Detects the low energy, if not yet done.} \\
-        g_c \in \{0, 1\} & \left. g_c \right|_{t = 0} = 0 & \mbox{Registers if the low energy has been already detected.} \\
+        g_c \in \{0, 1\} & \left. g_c \right|_{t = 0} = 0 & \mbox{Registers if the low energy has been detected.} \\
     \end{array}}
-    \item[Programmatoid solution] \eqline{\begin{array}{rclcl}
-        \multicolumn{5}{l}{\mbox{Detects if the direction is to be changed.}} \\
-        g_i &\leftarrow& \mbox{if } g_c = 0 \mbox{ and } \nu > g_e  \mbox{ then } 1 \mbox{ else } 0 &=& H(H(g_c - 1/2) \\ &&& +& H(g_e - \nu) - 3/2) \\
-        \multicolumn{5}{l}{\mbox{Inverts the direction if to be changed.}} \\
-        q_p &\leftarrow& \mbox{if } g_i = 0  \mbox{ then } q_p \mbox{ else } 1 - q_p &=& H(q_p  - 1/2 - \upsilon \, (1 - g_i)) \\&&&+& H(1/2 - q_p - \upsilon \, g_i) \\
-        \multicolumn{5}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
-        g_c &\leftarrow& \mbox{if } 2 \, \nu < g_e \mbox{ then } 0 \\ && \mbox{ elif } g_c = 1 \mbox{ then } 1 \mbox{ else } g_i &=&
-        	H(g_i - 1/2 + \upsilon \, g_c - 2 \, \upsilon \, H(g_e - 2 \, \nu)) \\
-    \end{array}}
+    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+        \multicolumn{3}{l}{\mbox{Inverts the direction if to be changed.}} \\
+        q_p &\leftarrow& \mbox{if }  \eta > g_e  \mbox{ and } g_c = 0 \mbox{ then } 1 - q_p \mbox{ else } q_p \\
+       \multicolumn{3}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
+       g_c &\leftarrow& \mbox{if } g_c = 0  \mbox{ and } \eta > g_e  \mbox{ then } 1 \mbox{ elif } g_c = 1 \mbox{ and } 2 \, \eta < g_e  \mbox{ then } 0 \mbox{ else } g_c \\
+    \end{array}} In the sequel, we are going to derive a generic way to compile such an expression with binary values as a programmatoid .
+\begin{figure}[htbp]
+  \includegraphics[width=0.5\textwidth,valign=c]{./task1b.png}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of $g_c$ value at different level of energy with the indication of the direction change.}
+        \label{task1b}
+    \end{minipage}
+\end{figure}
 \end{description} 
 
 \subsubsection{Task 2: Cued environment decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop without a closed path, as indicated by a color that has already been seen once.
-    \item[Heuristic] Detect and store the first color blob, and choose to turn in the direction it appears again.
+  \item[Heuristic] Detect and store the first color blob, and choose to turn in the direction it appears again. \\ The detection is reset when the energy decreases.
     \item[Internal variable] \eqline{\begin{array}{lll}
-        c_{p\bullet} \in \{0, 1\} & \left. c_{p\bullet} i \right|_{t = 0} = 0 & \mbox{Color } \\
+        c_{c\bullet} \in \{0, 1\} , \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} & \left. c_{p\bullet} i \right|_{t = 0} = 0 & \mbox{Detected the color cue code, if any.} \\
     \end{array}}
-    \item[Programmatoid solution] \eqline{\begin{array}{rclcl}
-         \multicolumn{4}{l}{\mbox{Detect the cue, if not yet done}} \\
-        \mbox{if} & c_p = 0 \mbox{ and } c_l \ne 0 &\mbox{then} & c_p \leftarrow c_l \\
-        \mbox{if} & c_p = 0 \mbox{ and } c_r \ne 0 &\mbox{then} & c_p \leftarrow c_r \\
-        \multicolumn{4}{l}{\mbox{Set the direction according to the cue}} \\
-        \mbox{if} & c_p \ne 0 \mbox{ and } c_l \ne 0 \mbox{ and } c_p = c_l &\mbox{then} & q_c \leftarrow 0 \\
-        \mbox{if} & c_p \ne 0 \mbox{ and } c_r \ne 0 \mbox{ and } c_p = c_r &\mbox{then} & q_c \leftarrow 1 \\
-        \multicolumn{4}{l}{\mbox{Reset the cue at a certain energy decrease}} \\
-        \mbox{if} & g_e <  \kappa &\mbox{then} & c_p \leftarrow 0 \\
+    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+        \multicolumn{3}{l}{\mbox{Detect the cue, if not yet done, and reset below an energy threshold}} \\
+        c_{cb} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lb} = 1 \mbox{ or } c_{rb} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else } c_{cb} \\
+        c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{lr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
+        \multicolumn{3}{l}{\mbox{Set the direction according to the cue}} \\
+        q_c &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_c \\
    \end{array}} \end{description}
 
-blablab $c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$
+\subsubsection{Task 3: Cued environment decision} \begin{description}
+   \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increse than the former.
+    \item[Internal variable] \eqline{\begin{array}{lll}
+    \end{array}}
+    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+    \end{array}} \end{description}
 
-\end{document}
-
-   
- \item[Task 3]  Test both energy sources on the left and on the right and decide which one is better.
-   \begin{description}\item[Heuristic] When energy increase occurs if the previous energy increase is higher, change direction. \eqline{\begin{array}{rclc}
-         \multicolumn{4}{l}{\mbox{Updates the energy gauge increase.}}
-           g_d \leftarrow g_e - g_{e1}, g_{e1} \leftarrow g_e, g_{d1} \leftarrow 
- \end{array}}
-
-   \end{description}
-
-
-
-
-\begin{description}
-  
-\end{description}
-
-\clearpage
+\hrulefill
 
 \paragraph{Programmatoid solution}:
 \eqline{\begin{array}{rcl}
@@ -233,9 +229,7 @@ where: \begin{description}
   \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
 \end{description}
 
-
-
-\clearpage
+\hrulefill
 
 \paragraph{Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
 \eqline{\begin{array}{rcl}
@@ -247,8 +241,7 @@ as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $
 
 With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the step function. This part of the system is feed-forward thus without convergence or stability issue.
 
-\clearpage
-
+\hrulefill
 
 \subsubsection{Computation unit: neuronoid}
 

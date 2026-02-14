@@ -3,11 +3,11 @@
  \  MAPLE  /  All rights reserved. Maple is a trademark of
  <____ ____>  Waterloo Maple Inc.
       |       Type ? for help.
-# Exp-log transform series
+# Exp-log transform p[1..K] -> el between average and max
 
 > el := log(sum(exp(mu * p[k]), k = 1..K)) / mu:
 
-## Series at mu = 0
+## Series at µ = 0
 > series(el, mu = 0, 2);
                                        K
                                      -----
@@ -20,7 +20,7 @@
                                          K
 
 
-## Series at mu = +oo
+## Series at µ = +oo
 
 ### The p[1] extracted formula
 > el2 := p[1] + log(1 + sum(exp(-mu * (p[1] - p[k])), k = 2..K)) / mu:
@@ -30,8 +30,9 @@
                                       true
 
 
-### Plot the function
-> plotsetup(jpeg, plotoutput="explog.jpg", plotoptions="width=600,height=600");
+## Plot the function for some µ	
+> plots[setcolors](map(c->"Black",[$1..16])):
+> plotsetup(jpeg, plotoutput="explog.jpg", plotoptions="width=600,height=600"):
 > plot(map(mu_->subs(p[1]=x, p[2]=1/2,mu=mu_,expand(subs(K=2, el))),[1,2,100]),x=0..1);
 > plotsetup(x11):
 
@@ -46,4 +47,4 @@
 
 
 > quit
-memory used=42.3MB, alloc=46.3MB, time=0.21
+memory used=42.6MB, alloc=46.3MB, time=0.20
