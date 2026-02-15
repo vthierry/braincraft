@@ -12,7 +12,7 @@ install:
 # Git synchronisation commands
 
 sync:
-	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log
+	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
 git:
