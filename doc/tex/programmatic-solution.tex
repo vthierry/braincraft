@@ -6,9 +6,25 @@
 \newcommand{\defq}{\stackrel {\rm def}{=}}
 \newcommand{\tab}{\hphantom{4mm}}
 
-\title{Programmatoid and neurnoid computations}
+\title{Programmatoid and neuronoid computations}
 \begin{document}
+\maketitle
 \tableofcontents
+
+In progress : \begin{itemize}
+
+\item Ajouter tous les liens vers les fichiers maple
+
+\item Commener le compilateur qui
+  \\- liste les variables (y a la fonction indets)
+  \\- ajoute recursivement des variables pour applatir un ensemble d equations
+  \\- substitue les fonctions booleennes etc... en progid puis neuroid
+
+\item Sortir la doc du logiciel et faire lien vers doc
+
+\item Creer section sur more mechanisms aec R/S memory etc.....
+  
+ \end{itemize}
 
 \section{The braincraft challenge}
 
@@ -72,13 +88,16 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
     g_n \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} < g_{e2} \mbox{ indicates that cumulating energy increase did stop before.} \\
   \end{array}}
 \item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
-   g_{c1} &=& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
-  g_{c2} &=& g_{c2}  + H(H(g_{e} - g_{e1}) + H(g_{e2} - g_{e1}) - 3/2) \, (g_{c1} - g_{c2}) \\
+   g_{c1} &\leftarrow& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
+   g_{c2} &\leftarrow& g_{c2}  + H(H(g_{e} - g_{e1}) + H(g_{e2} - g_{e1}) - 3/2) \, (g_{c1} - g_{c2}) \\
+  \multicolumn{3}{l}{\mbox{Then}} \\
+   g_{e2} &\leftarrow& g_{e1} \\
+   g_{e1} &\leftarrow& g_{e} \\
 \end{array}}
   which is not a pure programmatoid solution because, because of term of the form $H(u) \, v$, thus with a product,
   but is implementable in the neuronoid framework discussed in the sequel. In brief:
-  \eqline{H(x) \, y \simeq h(y/\omega + \omega \, h(\omega \, x) - \omega)}
-  where $h(\cdot)$ is the sigmoid function, and $\omega$ a sufficiently large number.
+  \eqline{H(x) \, y \simeq \omega' \, h(y/\omega' + \omega \, h(\omega \, x) - \omega)}
+  where $h(\cdot)$ is the sigmoid function, and $\omega$ and $\omega'$ are sufficiently large numbers.
 \begin{figure}[htbp]
   \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
@@ -243,7 +262,7 @@ Let us also notice that all arguments $x$ of the step function $H(\cdot)$ still 
 
 \subsection{Conditional expression implementation}
 
-A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  writes: \eqline{\begin{array}{rcl}
+A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  with a binary variable $b_1 \in \{0, 1\}$ writes: \eqline{\begin{array}{rcl}
      v &\rightarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
     &=& (1 - b_1) \, v_0  + b_1 \, v_1 \\
     \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
@@ -316,6 +335,8 @@ The step-function approximates sigmoid with a huge slope at zero, i.e.:
 while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
 More precisely, the ${\cal L}_1$ error magnitude, on $]-\infty, +\infty[$, writes:
 \eqline{|\epsilon_{H,\omega}(x) |_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{\omega}, \epsilon_{H,\omega}(x) \defq H(x) - h(\omega \, x)}
+while:
+\eqline{|\epsilon_{H,\omega}(x)| = e^{-4\,w}+O\left(e^{-8\,w}\right)}
 
 It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is neglictible as soon as, say, $\omega \ge 10$:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
@@ -326,18 +347,30 @@ It has been noticed that, except for numerical comparisons, all arguments $x$ of
 \subsection{Approximation of the identify function}
 
 We also use a sigmoid to approximate the indentity function defining:
-\eqline{l_{\omega}(x) \defq \omega \, (h(x/\omega) - 1/2), \mbox{ with an error } \epsilon_{l,\omega}(x) \defq x - l_{\omega}(x)}
+\eqline{l_{\omega'}(x) \defq \omega' \, (h(x/\omega') - 1/2), \mbox{ with an error } \epsilon_{l,\omega'}(x) \defq x - l_{\omega'}(x)}
 so that, the ${\cal L}_1$ error magnitude on $[-M, +M]$:
-\eqline{\int_{x=-M}^{x=+M}|\epsilon_{l,\omega}(x)| \, dx = \frac{2}{3} \, \frac{M^4}{\omega^2} + O\left(\frac{1}{\omega^4}\right)}
+\eqline{\int_{x=-M}^{x=+M}|\epsilon_{l,\omega'}(x)| \, dx = \frac{2}{3} \, \frac{M^4}{\omega'^2} + O\left(\frac{1}{\omega'^4}\right)}
 and the related ${\cal L}_0$ error magnitude:
-\eqline{\max(|\epsilon_{l,\omega}(x)|), x \in [-M, M] = \epsilon_{l,\omega}(M)  = \frac{4}{3} \, \frac{M^3}{\omega^2} + O\left(\frac{1}{\omega^4}\right)}
+\eqline{\max(|\epsilon_{l,\omega'}(x)|), x \in [-M, M] = \epsilon_{l,\omega'}(M)  = \frac{4}{3} \, \frac{M^3}{\omega'^2} + O\left(\frac{1}{\omega'^4}\right)}
 
 Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0$ error magnitude:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
-\omega & 10 & 50 & 100 & 200 & 500 & 1000  \\ \hline
-\epsilon_{l,\omega}(1) & 0.0131 &  0.533 \, 10^{-3} &  0.133 \, 10^{-3} &  0.333 \, 10^{-4} &  0.54\, 10^{-7} &  0.12\, 10^{-7}  \\ \hline
+\omega' & 10 & 50 & 100 & 200 & 500 & 1000  \\ \hline
+\epsilon_{l,\omega'}(1) & 0.0131 &  0.533 \, 10^{-3} &  0.133 \, 10^{-3} &  0.333 \, 10^{-4} &  0.54\, 10^{-7} &  0.12\, 10^{-7}  \\ \hline
+\end{array}}
+with a negligible error for, say, $\omega'  \le 100$.
+
+\subsection{Approximation of switch mechanisms}
+
+Given normalized floating point variables $v_n \in [-1, 1], n \in \{1, N\}$ and binary variables $b_n \in \{0, 1\}, n \in \{1, N\}$, conditional expressions and related mechanisms require the implementation of formula of the form\footnote{We easily verifies that:
+\\ - if $b_n= 0$, while $|v_n/\omega'| \le 1/\omega' \ll 1$, the term $\omega' \, h(v_n/\omega' + \omega \, b_n - \omega) \simeq h(- \omega) \simeq 0$ up to $O\left(e^{-4\,w}\right)$ as derived previously, while
+\\ - if $b_n= 1$,the term $\omega' \, h(v_n/\omega' + \omega \, b_n - \omega) = \omega' \, h(v_n/\omega')$ corresponds to the approximation of the identity function, up to $O\left(\frac{1}{\omega'}\right)$ as derived previously.}:
+\eqline{\begin{array}{rcl}
+    v &=& \sum_{n \in \{0, N\}} b_n \, v_n \\
+    &=& \sum_{n \in \{0, N\}} \omega' \, h(v_n/\omega' + \omega \, b_n - \omega) + O\left(\frac{1}{\omega'^2}\right)+ O\left(e^{-4\,w}\right) \\
 \end{array}}
 
+The implementation as neuronoid, thus allows to implement more formula than only using programmatoid.
 
 \section{The explog function} \label{explog}
 
@@ -380,62 +413,6 @@ A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we 
 \paragraph{Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
 
 \subsection{Appendix: a few programmatoid and neuronoid components}
-
-\subsubsection{Conditional expression}
-
-For two inputs $v_{i1}(t) \in \{0, 1\}, v_{i0}(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$ and a control $v_l \in \{0, 1\}$, the condition expression equation, for $0 < W_\delta \ll 1 < W_\sigma$ :
-\eqline{\begin{array}{rcll}  v_o(t+1)
-    &=& v_l(t) == 1 \mbox{ ? } v_{i1}(t) \mbox{ : } v_{i0}(t) & (1) \\
-    &=& v_l(t) \, v_{i1}(t)  + (1- v_l(t)) \, v_{i0}(t) & (2) \\
-    &=& H(v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta) + H(v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)  & (3) \\
-    &\simeq& h(W'_\infty \, (W_\omega \, v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W'_\infty \, (W_\omega  \, v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta)). & (4) \\
-\end{array}}
-
-To explain these design choices, let us notice that:
-
-\begin{itemize}
-\item The $W_\sigma$ value is used at the programmatoid level to ensure that given the $v_l(t)$ binary switch value, it constraints the step function output to correspond to the desired value. Here, an expression including a product by a binary function, is replaces by a sum. The rationale is that there is no explicit multiplication between two variables at the neuronoid level. This trick allows one a straightforward neuronoid approximation.
-\item The $W_\delta$ value is used at the programmatoid level to avoid the ambiguous $0$ value and ensure that for $v\simeq0$  we obtain $H(v - W_\delta) = 0$.
-\item The $W'_\infty$ gain is used to approximate the step function by a sigmoid, as discussed previously.
-\item Informally, at the neuronoid level, we mimic the programmatoid mechanisms, assuming that suitable $W'_\infty, W_\omega, W_\sigma, W_\delta$ values will reproduced the programmatoid conditional expression. It works, although the parameter adjustment is not obvious, as derived now.
-\end{itemize}
-
-Let us now verify the equivalence between these equations:
-
-\begin{itemize}
-
-\item It is obvious to verify that line (1) and (2) are equivalent.
-
-\item The fact line (2) and (3) are equivalent is verified by this truth table: \\
-\centerline{\scriptsize \begin{tabular}{|c|c|c||c|c|c|} \hline
-    $v_l(t)$ & $v_{i1}(t)$ & $v_{i0}(t)$ &  $v_{i1}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta$ & $v_{i0}(t) - W_\sigma \, v_l(t) - W_\delta$ & $v_o(t+1)$ \\ \hline
-    $1$ & $0$ & $0$ & $- W_\delta < 0$ & $-W_\sigma - W_\delta < 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
-    $1$ & $0$ & $1$ & $- W_\delta < 0$ & $1 - W_\sigma - W_\delta< 0$ & 0 + 0 = 0 = $v_{i1}(t)$ \\
-    $1$ & $1$ & $0$ & $1 - W_\delta > 0 $ & $-W_\sigma - W_\delta< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
-    $1$ & $1$ & $1$ & $1 - W_\delta > 0$ & $1 - W_\sigma - W_\delta< 0$ & 1 + 0 = 1 = $v_{i1}(t)$ \\
-    $0$ & $0$ & $0$ & $- W_\sigma -W_\delta < 0$ & $- W_\delta< 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
-    $0$ & $0$ & $1$ & $- W_\sigma - W_\delta < 0 $ & $1 - W_\delta > 0$ & 0 + 1= 1 = $v_{i0}(t)$ \\
-    $0$ & $1$ & $0$ & $1 - W_\sigma - W_\delta< 0 $ & $- W_\delta > 0 $ & 0 + 0= 0 = $v_{i0}(t)$ \\
-    $0$ & $1$ & $1$ & $1 - W_\sigma - W_\delta< 0 $ & $1 - W_\delta > 0 $ & 0 + 1= 1 = $v_{i0}(t)$  \\
-    \hline\end{tabular}}
-
-\item The approximation of line (3) at line (4) by continuous quantities corresponds now to:
-  \eqline{v_*(t) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\} = \{\simeq 0, \simeq 1\}, \epsilon_\infty \ll 1/2,}
-  in words: values to be either below or above a threshold close to either $0$ or $1$.
-  The truth table now involves intervals and has been generated using the \href{https://github.com/vthierry/braincraft/raw/master/data/programmatic-solution.mpl.txt.out}{computer algebra piece of code associated to this document}. Considering the following intuitive design constraints:
-  \eqline{0 <W_\delta < \{W_\omega,W_\sigma\}, 0 <W_\omega<W_\sigma, 0 < \epsilon_\infty < 1}
-  the computer algebra derivations show that the approximation at line (4) is valid as soon as:
-  \eqline{W_\omega \, \epsilon_\infty < W_\delta, W_\sigma \, \epsilon_\infty < W_\delta, W_\delta + (W_\omega + W_\sigma) \, \epsilon_\infty  < W_\omega.}
-
- Furthermore, let us consider the margin:
- \eqline{0 < \mu = \min(W_\delta - \epsilon_\infty \, W_\sigma, W_\omega - (W_\omega + W_\sigma) \, \epsilon_\infty - W_\delta),}
-yielding:
-\eqline{|v_o(t+1) - 1/2| > h(W'_\infty \, \mu).}
-We thus can adjust $W'_\infty = W_\infty / \mu$ in order $v_o(t+1) \in \{[0,\epsilon_\infty], [1 - \epsilon_\infty, 1]\}$ for further calculation. 
- 
-For instance $\{W_\delta = 1, W_\omega = 2, W_\sigma = 4, \epsilon_\infty = 1/8\}$ is a suitable solution with $\mu = 1/4$.
-
-\end{itemize}
 
 \subsubsection{RS input/output gate}
 
@@ -504,25 +481,6 @@ The `challenge\_callback\_1.py`  file contains the support routines
 %The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
 
 %The {\tt neuronoid.py} code provides all functions to evaluate the implementation, without training phase. 
-
-\begin{verbatim}
-
-* Note : vthierry veut PAS gagner la compétition is veut just vérifier des hypothèse quant la calculabilité avec des neuronoid.
-
-- Warningup : duration (bot don't move before warmup period is over) just 1 to allow a 1st input ... ou bien c est plus subtil ?
-
-- Quelles dimensions pour Win (quelles entrées où ? le truc de dimension P), W, et Wout(ligne ou colonne) ?
-
-- Avis sur calcul de depth et couleur ?
- + depth: prendre le min des capteurs de gauche/droite ou vaut mieux leur moyenne pondérée ?
- + couleur: les murs ont le vert comme couleur par defaut ? prendre la valeur de couleur la plus nombreuse hormis celle du mur est pertinent ?
-
-- Pour expérimenter l'approche programmatique avant de passer à l'approche connexiviste :
- - comment ``débrancher´´ le réseau et just avoir (P inputs) -> output ? sans reimplementer tout evaluate() ? 
-
-- Pour expérimenter l'approche connectiviste sans apprentissage … juste implémenter def train(func, timeout=100.0): ... c est quoi ``func´´ ?
-
-\end{verbatim}
 
 \bibliographystyle{apalike}\bibliography{AIDE}
 \end{document}

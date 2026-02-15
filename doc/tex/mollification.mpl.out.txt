@@ -7,11 +7,19 @@
 ## Sigmoid function and properties
 > h := x -> 1/(1+exp(-4*x)):
 
-### Computed error
+### Computed error magnitude
 > int(abs(Heaviside(x)-h(w*x)), x=-infinity..infinity) assuming w > 0;
                                        ln(2)
                                    1/2 -----
                                          w
+
+
+### Residual error asymptotic behavior
+> series(h(-w), w= infinity, 1);
+                                 1           1
+                              ------- + O(-------)
+                                    4           8
+                              exp(w)      exp(w)
 
 
 ### Approximation at x=1/2
@@ -26,4 +34,4 @@
 
 
 > quit
-memory used=67.2MB, alloc=116.3MB, time=0.36
+memory used=68.4MB, alloc=118.3MB, time=0.34
