@@ -1,0 +1,41 @@
+
+## Sigmoid function and properties
+h := x -> 1/(1+exp(-4*x)):
+
+## Linear approximation
+l := x -> w * (h(x/w) - 1/2) :
+
+## Study, in [-1, 1]
+##### plot(map(w_->subs(w=w_,l(x)), [1,2,5,10,20,50]), x = -1..1);
+
+## Error L1 magnitude in [-M, M], M = R * w
+
+err1_1 :=  M^2 - w * M + log(2 * h(M/w)) * w^2/2:
+err1_2 :=  (R^2 - R+ log(2 * h(R))/2) * w^2:
+
+err1 := collect(simplify(2 * int(x - l(x), x=0..M)), w) assuming w > 0, M > 0, w > M:
+ok_1 := evalb(0 = simplify(err1_1 - err1)) assuming 0 < M, M < w;
+ok_2 := evalb(0 = simplify(subs(R=M/w,err1_2) - err1)) assuming 0 < M, M < w;
+
+err1_oo_1 := 2/3 * (M^2/w)^2:
+err1_oo_2 := 2/3 * (R * M)^2:
+
+err1_oo := series(err1, w=infinity,4):
+ok_oo_1 := evalb(simplify(convert(err1_oo, polynom) = err1_oo_1));
+ok_oo_2 := evalb(simplify(convert(err1_oo, polynom) = subs(R=M/w,err1_oo_2)));
+
+## Error L0 magnitude in [-M, M], M = R * w
+
+err0 := M - w * (h(M/w) - 1/2):
+err0_oo := series(err0, w=infinity,4):
+
+evalb(0 = simplify(err0_oo - err1_oo));
+
+err0_oo_1 := 4/3 * (M^3/w^2):
+err0_oo_2 := 4/3 * R^2 * M:
+ok_oo_1 := evalb(simplify(convert(err0_oo, polynom) = err0_oo_1));
+ok_oo_2 := evalb(simplify(convert(err0_oo, polynom) = subs(R=M/w,err0_oo_2)));
+
+### Approximation at on [-1, 1] 
+latex(LinearAlgebra[Transpose](Matrix(map(w->[w,evalf(1 - w * (h(1/w) - 1/2))],[10,50,100,200,500,1000]))));
+

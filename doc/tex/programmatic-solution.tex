@@ -6,10 +6,11 @@
 \newcommand{\defq}{\stackrel {\rm def}{=}}
 \newcommand{\tab}{\hphantom{4mm}}
 
-\title{Programmatic solution}
+\title{Programmatoid and neurnoid computations}
 \begin{document}
+\tableofcontents
 
-\section{Programmatoid braincraft challenge solution}
+\section{The braincraft challenge}
 
 Let us consider the following digital experimental setup, as described in \href{https://github.com/rougier/braincraft/blob/master/README.md#introduction}{braincraft challenge presentation}.
 
@@ -35,44 +36,20 @@ With respect to the original braincraft challenge:
 \\ \tab - color is input as binary variables, and always available,
 \\ \tab - the wall hit indicator is not used.
 
- \subsection{A putative controller}
-
-\subsubsection{Input preprocessing}
+\subsection{Input preprocessing}
 
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
-\item[Implementation] A simple sum or average could be used, thus using directly a linearcombination of the input in afferent units. \\
-  Then, if apropriate, the maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
-\\ - The series  at $\mu \rightarrow 0^+$ is easily obtained from any symbolic calculator writing, e.g.:
-\\\centerline{{\tt series(log(sum(exp(mu * p[k]), k = 1..K)) / mu, mu = 0, 2);}} \\
-\\- There is no obvious series development at $\mu \rightarrow +\infty$ but, considering $p[1] \le p[2] \le \cdots \le p[K]$, without loss of generality,
-i.e., that -for the notation- index's order correspond to decreasing values, we obtain from straightforward algebra:\eqline{\begin{array}{c}
-    \log\left(\sum_{k \in \{1\cdots K\}}  \, \exp(\mu \, p[k])\right) / \mu = p[1] + \rho / \mu\\
-    \rho \defq \log\left(1 + \sum_{k \in \{2\cdots K\}}  \, \exp(-\mu \, (p[1] - p[k]))\right) \\
-    \mbox{ with } 0 \le \rho \le \log\left(1 + (K-1) \, \exp(-\mu \, (p[1] - p[2]))\right) \le \log(K) \\
-\end{array}}
-so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding the expected result.}: \eqline{\begin{array}{rcl}
-    p_{\dagger} &\leftarrow& \log\left(\sum_{k \in K}  \, \exp(\mu \, p[k])\right) / \mu \\
-    &=& \frac{1}{K} \sum_k p_k + \log(K) / \mu + O(\mu) \\
-    &=& \max_k(p[k]) + o\left(\frac{1}{\mu}\right) \\
-\end{array}}
-  where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
-  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators, as shown in Fig.~\ref{explog}.
-\begin{figure}[htbp]
-  \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$, from top to bottom. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
-        \label{explog}
-    \end{minipage}
-\end{figure}
+\item[Implementation] A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
+We also can use the explog function as derived in Appendix~\ref{explog}, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
 \end{description}
 
 \subsubsection{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit: \eqline{\begin{array}{rcl}
-    c_{\dagger\bullet} &\leftarrow& H(\sum_{k \in K}  \, (1 - D(i_{\bullet} - c[k]))), \\
+    c_{\dagger\bullet} &\leftarrow& H(\sum_{k \in K}  \, (1 - D(i_{\bullet} - c[k]))), c[k] \in {\cal N}\\
     && \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} \\
-    D(x) &\defq& H(x-\epsilon) + H(-x-\epsilon)) = \mbox{ if } |x| < \epsilon \mbox{ then } 0 \mbox{ else } 1, \epsilon \ll 1 \\
+    D(x) &\defq& H(x-1/2) + H(-x-1/2)) = \mbox{ if } |x| < 1/2 \mbox{ then } 0 \mbox{ else } 1 \\
 \end{array}}
  where $K$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
 \end{description}
@@ -91,6 +68,8 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
     \mbox{Cumulating energy increase continues.} \\
     \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\em increase after an increase}}  \mbox{ then } g_{c1} \leftarrow g_{c1} + (g_{e} - g_{e1}) \\
     \mbox{Otherwise $g_{e} < g_{e1}$, thus cumulating energy increase stops, and $g_{c1}$ is memorized.} \\
+    g_s \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2} \mbox{ indicates that cumulating energy increase has just stopped.} \\
+    g_n \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} < g_{e2} \mbox{ indicates that cumulating energy increase did stop before.} \\
   \end{array}}
 \item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
    g_{c1} &=& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
@@ -98,8 +77,8 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
 \end{array}}
   which is not a pure programmatoid solution because, because of term of the form $H(u) \, v$, thus with a product,
   but is implementable in the neuronoid framework discussed in the sequel. In brief:
-  \eqline{H(x) \, y \simeq h(y/\upsilon + \upsilon \, h(\upsilon \, x) - \upsilon)}
-  where $h(\cdot)$ is the sigmoid function, and $\upsilon$ a sufficiently large number.
+  \eqline{H(x) \, y \simeq h(y/\omega + \omega \, h(\omega \, x) - \omega)}
+  where $h(\cdot)$ is the sigmoid function, and $\omega$ a sufficiently large number.
 \begin{figure}[htbp]
   \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
@@ -108,6 +87,8 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
     \end{minipage}
 \end{figure}
 \end{description}
+
+\subsection{A putative controller}
 
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
@@ -120,28 +101,28 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
 \item[Programmatoid solution]:\eqline{\begin{array}{rclcl}
     d_o &\leftarrow& \multicolumn{3}{l}{\underbrace{\gamma \, (p_l - p_r)}_{\mbox{\begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}}} +
                                                                    \underbrace{\alpha \, (t_l - t_r)}_{\mbox{\begin{tabular}{c}quarter- turn \\ left or right\end{tabular}}}} \\
-    t_l &\leftarrow& (1- q_p) \, H(\beta - p_l) &=& H((\beta - p_l) - \upsilon \, q_p)\\
-    t_r &\leftarrow& q_p \, H(\beta - p_r) &=& H((\beta - p_r) - \upsilon \, (1 - q_p)) \\
+    t_l &\leftarrow& (1- q_p) \, H(\beta - p_l) &=& H(H(\beta - p_l) - q_p - 1/2)\\
+    t_r &\leftarrow& q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
     w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
     \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
     \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter submut the former.}}} \\
     \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
-    \upsilon &=& 10 & \mbox{\parbox{8cm}{Transform a boolean product to a step-function threshold.}} \\
+    \omega &=& 10 & \mbox{\parbox{8cm}{Transform a boolean product to a step-function threshold.}} \\
 \end{array}} while: \eqline{\begin{array}{rclcl}
  t_l =1&\mbox{iff}& q_p = 0 &\mbox{and while}& \beta < p_l \\
  t_r =1&\mbox{iff}& q_p = 1 &\mbox{and while}& \beta < p_r \\
-\end{array}}  in words: we execute the quater-turn until another wall is detected.
+\end{array}}  in words: we execute the quater-turn until another wall is detected\footnote{The indenties:
+\eqline{\begin{array}{rcl}
+(1- q_p) \, H(\beta - p_l) &=& H(H(\beta - p_l) - q_p - 1/2)\\
+q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
+\end{array}} are easy to verify using a simple truth table.}.
 \end{description}
-
-Regarding transforming a boolean product to a step-function threshold, we easily verify\footnote{
-If $b = 0$ then the equality writes $0 = H(x - M)$, but $x < M$ so that $H(x - M) = 0$, thus verified, while if $b = 1$ then the equality writes $H(x) = H(x)$, again verified.} that:
-\eqline{b \in \{0, 1\}, x \in ]-M, M[  \Rightarrow b \, H(x) = H(x - (1 - b) \, M),}
-for both values of $b$, while $\max(|\beta - p_l|, |\beta - p_r) \le 1$; this is developed and generalized in the sequel.
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
-\subsubsection{Direction choices}
+Given this controler the design reduces to navigation direction choice, i.e.,
+control the $q_p$ variable.
 
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
@@ -150,7 +131,7 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
           q_p = \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{then} 1 \mbox{ else } 0 \\
       \end{array}}
      \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-       q_p  &\leftarrow& H(\upsilon \, q_p + (\eta - g_e))\\
+       q_p  &\leftarrow& H(\omega \, q_p + (\eta - g_e))\\
    \end{array}} where: \eqline{\begin{array}{rcll}
       c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
       s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
@@ -194,131 +175,199 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
         c_{cb} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lb} = 1 \mbox{ or } c_{rb} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else } c_{cb} \\
         c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{lr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
         \multicolumn{3}{l}{\mbox{Set the direction according to the cue}} \\
-        q_c &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_c \\
+        q_p &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_c \\
    \end{array}} \end{description}
 
-\subsubsection{Task 3: Cued environment decision} \begin{description}
+\subsubsection{Task 3: Valued environment decision} \begin{description}
    \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increse than the former.
-    \item[Internal variable] \eqline{\begin{array}{lll}
-    \end{array}}
-    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+   \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+       q_p &\leftarrow& \mbox{if } \underbrace{g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\parbox{4cm}{energy increase\\ just stopped.}}}
+       \mbox{ and }  \underbrace{g_{c2} > g_{c1}}_{\mbox{\parbox{4cm}{previous energy \\ increase is higher.}}}
+       \mbox{ then } 1 - q_p \mbox{ else } q_p \\
     \end{array}} \end{description}
 
-\hrulefill
+\section{Programmatoid computation} \label{programmatoid}
 
-\paragraph{Programmatoid solution}:
+We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on numerical value expressions using an LN-system with the step-function as non-linearity, this writing:
+\eqline{o_n[t] \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}), n \in \{1, N\}}
+where $i_m[t]$ is the $m$-th input at a discrete $t$ and $o_n[t]$ is the $n$-th output, including recurrent system with some outpout corresponding to inputs, while $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
+
+The step-function, also called Heaviside function, implements the computation of the sign of a value:
 \eqline{\begin{array}{rcl}
-    \lambda &=& \lambda + \Delta\lambda_1 + \Delta\lambda_2 + \Delta\lambda_3 + \cdots \\
-    \Delta\lambda_1 &=& (\lambda - 1) \, H(\alpha - \varepsilon) \\
-    \Delta\lambda_2 &=& (\lambda - 1) \, H(\iota - I_{\mbox{left blue color sensor}}) \\
-    \Delta\lambda_3 &=& (\lambda - 1) \, (\Upsilon_{\mbox{again red color}} + \Upsilon_{\mbox{again yellow color}} + \cdots) \\
-    \cdots &&\\
-    \Upsilon_{\mbox{again this color}} &=& \Upsilon_{\mbox{seen this color}} \, H(\iota - I_{\mbox{left this color sensor}}) \\
-    \Upsilon_{\mbox{seen this color}} &=& \Upsilon_{\mbox{seen this color}}  + (1 - \Upsilon_{\mbox{seen this color}}) \, H(\iota - I_{\mbox{this color sensor}}) \\
-    \cdots &&\\
+    H(x) &\defq& \left\{ \begin{array}{rcl} 1 &\mbox{if}& x > 0\\ 1/2 &\mbox{if}& x = 0\\ 0 &\mbox{if}& x < 0\\ \end{array}\right. \\
+    &=& \mbox{if } x > 0 \mbox{ then } 1 \mbox{ elif } x = 0 \mbox{ then } 1/2 \mbox{ else } 0. \\
 \end{array}}
-where: \begin{description}
-  \item[$\alpha$] is a the energy threshold, corresponding to the energy consumption during one turn.
-  \item[$\iota$] is some color detection threshold.
-  \item[$\Delta\lambda_1$] raises to one if the energy decreases below a threshold.
-  \item[$\Delta\lambda_2$] raises to one if the blue color is seen on the left.
-  \item[$\Delta\lambda_3$] raises to one if some color is seen again.
-  \item[$\Upsilon_{\mbox{\normalfont again this color}}$] raises to one  a previously seen color is seen again on the left.
-  \item[$\Upsilon_{\mbox{\normalfont seen this color}}$] raises to one  a color is seen for the first time.
-  \item[$I_{\mbox{\normalfont left this color sensor}}$] combines color sensor input.
-  \item[$I_{\mbox{\normalfont this color sensor}}$] combines left and right color sensor input.
-\end{description}
+The design choice of $H(0) = 1/2$, instead for instance $H(0)=0$, this latter simplifying some formula, is due the neuronoid approximation developed in the sequel.
 
-\hrulefill
+By extension, we use,  for any property ${\cal P}$, the notation:
+\eqline{H({\cal P}) \defq \mbox{if } {\cal P} \mbox{ then } 1 \mbox{ else } 0}
 
-\paragraph{Neuronoid implementation}: The mollification of this system uses 3 neuronoids and writes:
+\subsection{Comparison implementation}
+
+Given two numerical variables $v_1$ and $v_2$, using the notation ,
+we have the equivalence\footnote{
+Considering the pseudo truth table, with $H(0) = 1/2$:
+\eqline{\begin{array}{c|c|c|l|}
+                                                             &H(v_1 > v_2) &H(v_1 = v_2) & H(v_1 < v_2) \\\hline
+    H(v_1 - v_2)                                      & 1                  &   1/2           & 0 \\
+    2\,H(v_1 - v_2) - 3/2                         & 1/2              &   -1/2         & -3/2 \\
+    H(2\, H(v_1 - v_2) - 3/2)                    & 1                  &   0              & 0 \\
+    H(H(v_1 - v_2))                                 & 1                 &   1              & 0 \\
+    H(H(v_2 - v_1))                                 & 0                 &   1              & 1 \\
+    H(H(v_1 - v_2)) +H(H(v_2 - v_1))-1   & 0                 &   1              & 0 \\ \hline
+\end{array}}  we obtain the expected results.}, considering $true$ as $1$ and $false$ as $0$:
+\eqline{\begin{array}{|c|c|c|l}
+    H(v_1 > v_2)                        & H(v_1 \le v_2)        & H(v_1 = v_2)                                        \\  \hline
+    H(2\, H(v_1 - v_2) - 3/2)           & H(H(v_1 - v_2))      & \begin{array}{l}H(H(v_1 - v_2))+\\H(H(v_2 - v_1)) - 1\end{array}  & \mbox{with } H(0) = 1/2\\ \hline
+    H(v_1 - v_2)                        & 1 - H(v_1 - v_2)      & \begin{array}{r}1 - H(v_1 - v_2)\\+H(v_2 - v_1)  \end{array}   & \mbox{with } H(0) = 0\\
+\hline\end{array}}
+while $H(v_1 \ne v_2) = 1 - H(v_1 = v_2)$, we thus can implement any numerical comparison as a programmatoid.
+
+Let us notice that all arguments $x$ of the step function $H(\cdot)$, except the term $H(v_1 - v_2)$, verify $|x| \ge 1/2$, this will be reused.
+
+\subsection{Boolean expression implementation}
+
+Given binary variables $b_n \in \{0_{{false}}, 1_{{true}}\}, n \in \{1, N\}$ we have the obvious\footnote{Easy to verify with, e..g., a truth table, and by induction for the generalized formula.} correspondence:
+\eqline{\begin{array}{|c|c|c|c|} \hline
+    b_1               & b_1 \mbox{ and } b_2                &  b_1 \mbox{ or } b_2   & \mbox{ not } b_1 \\ \hline
+    H(b_1 - 1/2) & b_1 \, b_2 = H(b_1 + b_ 2 - 3/2)  & H(b_1 + b_ 2 - 1/2)       & 1 - b_1  = H(1/2 - b_1) \\ \hline
+\end{array}} and more generally:
 \eqline{\begin{array}{rcl}
-    d\theta &=& h\left(\gamma \, (\theta_l - \theta_r)+ \frac{\pi}{2} \, (\Delta\theta_r - \Delta\theta_l)\right)\\
-    \Delta\theta_r &=& h(W_\infty \, (\beta - \theta_r) + 2\, W_\infty \, (\lambda - 1)) \\
-    \Delta\theta_l &=& h(W_\infty \, (\beta - \theta_l) - 2\, W_\infty \, \lambda) \\
+    \mbox{and}_{n \in \{1, N\}} &=& H\left(\sum_{n \in \{1, N\}} b_n - N + 1/2\right) = \prod_{n \in \{1,  N\}} H(b_n - 1/2) = \prod_{n \in \{1,  N\}} b_n \\
+    \mbox{or}_{n \in \{1, N\}} &=& H\left(\sum_{n \in \{1, N\}} b_n - 1/2\right) \\
 \end{array}}
-as easily verified considering the four cases $\beta \lessgtr \theta_*$ versus $\lambda \in \{0, 1\}$.
 
-With respect to the programmatoid solution, the output value is ``saturated'' by the $h(\cdot)$ function while the $\Delta\theta_*$ almost binary values are approximated by the mollification of the step function. This part of the system is feed-forward thus without convergence or stability issue.
+An interesting consequence is that binary variable products can be translated to a programmatoid.
 
-\hrulefill
+Let us also notice that all arguments $x$ of the step function $H(\cdot)$ still verify $|x| \ge 1/2$.
 
-\subsubsection{Computation unit: neuronoid}
+\subsection{Conditional expression implementation}
+
+A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  writes: \eqline{\begin{array}{rcl}
+     v &\rightarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
+    &=& (1 - b_1) \, v_0  + b_1 \, v_1 \\
+    \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
+    &=& H(v_0 + (1 - b_1) - 3/2) + H(v_1 + b_1 - 3/2) \\ &=& H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2) \\ &=& H(H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2)) \\
+\end{array}}
+as easy to verify, using for instance a truth table. Here:
+\\- products with $(1 - b_1)$ and $b_1$ behaves as switches between $v_o$ and $v_1$
+\\ - when $v_i$ are binary, we are left with a two layer computation, the first layer being built from two programmatoid,
+and the second layer from either another programmatoid or a simple linear unit, i.e., a linear combination of values.
+        
+This generalizes to conditional expressions on variables on any numerical type $v_n, n \in \{0, N\}$: \footnote{
+By induction, considering the second line, one one hand, due to the products, if $b_n = 0, n \in \{1, N\}$ we obtain $v_0$.
+On the other hand, if $b_k = 0, k < K$ and $b_K = 1$, due the products, we obtain $v_K$, which is precisely the semantic
+of the conditional expression of the first line. \\
+The 3rd line is dediced from the second line, transforming the binary products on the corresponding programmatoid while:
+\eqline{\begin{array}{rcl}
+    h_0 &\defq& H(\sum_{n' \in \{1,  N\}} (1 - b_{n'}) - N + 1/2) \\ &=& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})\\
+    h_n &\defq& H(b_n + \sum_{n' \in \{1,  N\}, n' \ne n} (1 - b_{n'})  - N + 1/2) \\ &=& H(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \\
+\end{array}}
+The 4rd line integrates the $v_n$ variables in the programmatoid sum, since they are binary,
+and provides the same obvious algebraic reduction as for the 3rd line.}: \eqline{\begin{array}{rcl}
+v &\rightarrow& \mbox{if } b_1 \mbox{ then } v_1 \left[ \mbox{ elif } b_n \mbox{ then } v_n \right]_{n \in \{2, N\}} \mbox{ else } v_0 \\
+    &=& \prod_{n' \in \{1,  N\}} (1 - b_{n'}) \, v_0  \\&+& \sum_{n \in \{1, N\}} \, b_n \, \prod_{\small \begin{array}{c}n' \in \{1,  N\}, \\ n' \ne n \\ \end{array}} (1 - b_{n'})  \, v_n  \\
+   &=& \sum_{n \in \{0, N\}} h_n \, v_n \\
+\mbox{ with } h_0 &\defq& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})  \in \{0, 1\}\\
+\mbox{ and } h_n &\defq&  H(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \in \{0, 1\}, n \in \{1, N\} \\
+    &&\\ \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, N\}$: }} \\
+    &=& H(v_0 - \sum_{n' \in \{1,  N\}} b_{n'} - 1/2)  \\ &+& \sum_{n \in \{1, N\}} H(v_n + b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 3/2). \\
+\end{array}}
+
+Let us also notice that all arguments $x$ of the step function $H(\cdot)$ again verify $|x| \ge 1/2$.
+
+\begin{quotation}
+As a consequence,
+\\\tab - {\em A $N$-term conditional expression on binary variables reduces to a two layers programmatoid of $N$ and $1$ unit, the former unit being either linear of with a step-wise function.}
+\\ \tab - {\em A $N$-term conditional expression on numerical variables reduces to a  two layers system of $N$ programmatoid and an output unit with $h_n$ exclusive switches.}
+\end{quotation}
+  
+\section{Neuronoid computation} \label{neuronoid}
+
+\subsection{Neuronoid unit}
 
 By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
-\eqline{\begin{array}{cc}
+\eqline{\begin{array}{cl}
   \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
-  z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i}\right), \\
-  h(v) \defq \frac{1}{1+\exp(-4\,v)}, &
-  H(v) \defq \left\{\begin{array}{rcl} 1 &\mbox{if}& v > 0\\ 0 &\mbox{if}& v < 0\\ \end{array}\right. \\
+  z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right), \\
+  h(x) \defq \frac{1}{1+\exp(-4\,x)} & = \frac{1 + \tanh(2 \, x)}{2}, \\
 \end{array}}
 where $v_i$ is the membrane potential, so that:
 \eqline{\begin{array}{rcl} v(t)
-  &=& 1/\tau \, \int_0^t z(s) \, exp(-(t-s)/\tau) \, ds + v(0) \, exp(-t/\tau) \\
-  &=& \left. z(0) + (v(0) - z(0)) \, e^{-t/\tau} \right|_{z(t)= z(0)}. \\
-  &=& \left. z(t) \right|_{\tau = 0} \\
+  &=& 1/\tau \, \int_0^t e^{-(t-s)/\tau} \, z(s) \, ds + v(0) \, e^{-t/\tau} \\
+  &=& \left. z(0) + e^{-t/\tau} \, (v(0) - z(0)) \right|_{z(t)= z(0)} \mbox{ (constant input)}\\
+    &=& \left. z(t) \right|_{\tau = 0} \mbox{ (no leak),}\\
+  \multicolumn{3}{l}{\mbox{and the corresponding discrete approximation using an Euler schema writes:}} \\
   &\simeq&  (1-\gamma) \, v(t-\Delta t) + \gamma \, z(t-\Delta t)) \\
-  &=& \sum_{s=0}^{t-1} z(s) \, \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
-  &=& \left. z(0) + (v(0) - z(0)) \,  (1-\gamma)^t \right|_{z(t)= z(0)} \\
-  &=& \left. z(t) \right|_{\gamma = 1}. \\
+  &=& \sum_{s=0}^{t-1} \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
+  &=& \left. z(0) + (1-\gamma)^t \, (v(0) - z(0)) \right|_{z(t)= z(0)} \mbox{ (constant input)}\\
+  &=& \left. z(t) \right|_{\gamma = 1} \mbox{ (no leak)}. \\
 \end{array}}
-writing also the  corresponding discrete approximation using an Euler schema with $0 < \gamma < 1, 0 < \tau$:
-\eqline{\begin{array}{c}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)) \\  \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0. \end{array}}
+with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
+\eqline{\begin{array}{l}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)), \\  \mbox{while} \\ \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0 . \end{array}}
+Here,  $h(\cdot)$ is the normalized sigmoid with \eqline{h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1, h(x) = 1 - h(-x)}
+All this is just very standard derivations of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
 
-Here,  $h(\cdot)$ is the normalized sigmoid with $h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1$, linearly related to the hyperbolic function:
-\eqline{h(v) = \frac{1 + \tanh(2 \, v)}{2}.}
+\subsection{Step-function mollification}
 
-It is the mollification of the step function, called also Heaviside function, $H(\cdot)$, as detailed below.
-
-It is thus a very common 1st order ``neuronoid'' model, but with an adjustable bias (or offset) $w_{i}$.
-
-\subsection{Programmatoid and neuronoid computation}
-
-\subsubsection{Programmatoid  computation}
-
-We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing test operator on numerical value expressions using the step function, considering $1$ as the true value and $0$ as the false value. The $H(v)$ implements the test of the positive sign of $v$, while for $v_i \in \{0, 1\}$:
-\begin{description}
-  \item[programmatoid conjunction]  The $v_0 = H(v_1 + v_2 + \cdots)$ formula performs a {\em or} operation.
-  \item[programmatoid disjunction]  The $v_0 = v_1 \, v_2 \cdots$ formula performs a {\em and} operation.
-  \item[programmatoid negation]  The $v_0 = (1- v_1)$ formula performs a negation.
-\end{description}
-so that we can combine any boolean expression on any test of value sign, thus value comparison, and value interval inclusion, switches between two expressions, etc. This defines \href{https://en.wikipedia.org/wiki/Real_algebraic_geometry}{real semi-algebraic} sets of degree 1.
-
-Using local feedback we can also design several functions detailed in the Appendix of this section, while we also can combine neuronoid and programmatoid functions to design temporal functions.
-
-\subsubsection{Mollification of the step function}
-
-The step function is related to a conditional expression by a simple relation:
-\eqline{H(v) = conditional\;value > 0 \mbox{ ? } 1 \mbox{ : } conditional\;value < 0 \mbox{ ? } 0 \mbox{ : } H(0),}
-where $condition \mbox{ ? } value\;if\;true \mbox{ : } value\;if\;false$ is a conditional expression.
-
-The step function approximates sigmoid with huge slope at zero, i.e.:
-\eqline{\forall v \ne 0, H(v) = \lim_{W_{\infty}  \rightarrow +\infty} h(W_{\infty} \, v), \left. h'(W_{\infty} \, v)  \right|_{v = 0} =  W_{\infty}}
+The step-function approximates sigmoid with a huge slope at zero, i.e.:
+\eqline{\forall x \ne 0, H(x) = \lim_{\omega  \rightarrow +\infty} h(\omega \, x), \left. h'(\omega \, x)  \right|_{x = 0} =  \omega}
 while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
-More precisely:
-\eqline{|H(\cdot) - h(\cdot)|_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{W_{\infty}}}
-and, for $0 < \epsilon_\infty \ll 1 < v_\infty$:
-\eqline{h(W_{\infty} \, v_\infty ) = 1 - \epsilon_\infty
-  \Leftrightarrow v_\infty  =
- \frac{\log(1-\epsilon_\infty) -\log(\epsilon_\infty)}{4\,W_\infty} =
- \frac{-\log(\epsilon_\infty)}{4\,W_\infty} + O\left(\epsilon_{\infty}\right).}
+More precisely, the ${\cal L}_1$ error magnitude, on $]-\infty, +\infty[$, writes:
+\eqline{|\epsilon_{H,\omega}(x) |_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{\omega}, \epsilon_{H,\omega}(x) \defq H(x) - h(\omega \, x)}
 
-Numerically, the convergence is very fast, e.g. $W_\infty = 2$, for $\epsilon_\infty = 0.1\%$:
-\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
-  $\epsilon_\infty$ & $10^{-1}$ & $10^{-2}$ & $10^{-3}$ & $10^{-6}$ \\ \hline
-  $W_\infty$ & 0.55 & 1.15 & 1.73 & 3.46 \\
-  \hline \end{tabular}}
-  
-A step further, the local variation of sigmoid writes:
-\eqline{\begin{array}{rcl} h(v)
-    &=& h(v_0) + \left[ 4 \, \exp(-8 \, v_0)+ O\left(\exp(-12 \, v_0))\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\
-    &\simeq& h(v_0) + 4 \, \exp(-8 \, v_0)  \, (v - v_0). \\ \end{array}}
-Numerically, values decrease very rapidly:
-\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
-  $v_0$                                      & $1$          & $2$           & $5$          & $10$ \\ \hline
-  $4 \, \exp(-8 \, v_0) \simeq$ & $10^{-1}$ & $10^{-3}$ & $10^{-8}$ & $10^{-17}$ \\
-  \hline \end{tabular}}
+It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is neglictible as soon as, say, $\omega \ge 10$:
+\eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
+  \omega & 1 & 2 & 5 & 10 & 20 & 50 \\ \hline
+  \epsilon_\omega(\pm1/2) & 0.119 &  0.0180 &  0.455 \, 10^{-4} &  0.206 \, 10^{-10} &  0.426 \, 10^{-19} &  0.372 \, 10^{-45} \\ \hline
+\end{array}}
+
+\subsection{Approximation of the identify function}
+
+We also use a sigmoid to approximate the indentity function defining:
+\eqline{l_{\omega}(x) \defq \omega \, (h(x/\omega) - 1/2), \mbox{ with an error } \epsilon_{l,\omega}(x) \defq x - l_{\omega}(x)}
+so that, the ${\cal L}_1$ error magnitude on $[-M, +M]$:
+\eqline{\int_{x=-M}^{x=+M}|\epsilon_{l,\omega}(x)| \, dx = \frac{2}{3} \, \frac{M^4}{\omega^2} + O\left(\frac{1}{\omega^4}\right)}
+and the related ${\cal L}_0$ error magnitude:
+\eqline{\max(|\epsilon_{l,\omega}(x)|), x \in [-M, M] = \epsilon_{l,\omega}(M)  = \frac{4}{3} \, \frac{M^3}{\omega^2} + O\left(\frac{1}{\omega^4}\right)}
+
+Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0$ error magnitude:
+\eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
+\omega & 10 & 50 & 100 & 200 & 500 & 1000  \\ \hline
+\epsilon_{l,\omega}(1) & 0.0131 &  0.533 \, 10^{-3} &  0.133 \, 10^{-3} &  0.333 \, 10^{-4} &  0.54\, 10^{-7} &  0.12\, 10^{-7}  \\ \hline
+\end{array}}
+
+
+\section{The explog function} \label{explog}
+
+The maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
+\\ - The series  at $\mu \rightarrow 0^+$ is easily obtained from any symbolic calculator writing, e.g.:
+\\\centerline{{\tt series(log(sum(exp(mu * p[k]), k = 1..K)) / mu, mu = 0, 2);}} \\
+\\- There is no obvious series development at $\mu \rightarrow +\infty$ but, considering $p[1] \le p[2] \le \cdots \le p[K]$, without loss of generality,
+i.e., that -for the notation- index's order correspond to decreasing values, we obtain from straightforward algebra:\eqline{\begin{array}{c}
+    \log\left(\sum_{k \in \{1\cdots K\}}  \, \exp(\mu \, p[k])\right) / \mu = p[1] + \rho / \mu\\
+    \rho \defq \log\left(1 + \sum_{k \in \{2\cdots K\}}  \, \exp(-\mu \, (p[1] - p[k]))\right) \\
+    \mbox{ with } 0 \le \rho \le \log\left(1 + (K-1) \, \exp(-\mu \, (p[1] - p[2]))\right) \le \log(K) \\
+\end{array}}
+so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding the expected result.}: \eqline{\begin{array}{rcl}
+    p_{\dagger} &\leftarrow& \log\left(\sum_{k \in K}  \, \exp(\mu \, p[k])\right) / \mu \\
+    &=& \frac{1}{K} \sum_k p_k + \log(K) / \mu + O(\mu) \\
+    &=& \max_k(p[k]) + o\left(\frac{1}{\mu}\right) \\
+\end{array}}
+  where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
+  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators, as shown in Fig.~\ref{explog}.
+\begin{figure}[htbp]
+  \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$, from top to bottom. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
+        \label{explog}
+    \end{minipage}
+\end{figure}
+
+=> NEURNOID APPROXIMATION
+
+\clearpage
 
 \subsubsection{Neuronoid  implementation of programmatoid computation}
 
@@ -475,4 +524,5 @@ The `challenge\_callback\_1.py`  file contains the support routines
 
 \end{verbatim}
 
+\bibliographystyle{apalike}\bibliography{AIDE}
 \end{document}

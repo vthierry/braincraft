@@ -1,0 +1,29 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+
+## Sigmoid function and properties
+> h := x -> 1/(1+exp(-4*x)):
+
+### Computed error
+> int(abs(Heaviside(x)-h(w*x)), x=-infinity..infinity) assuming w > 0;
+                                       ln(2)
+                                   1/2 -----
+                                         w
+
+
+### Approximation at x=1/2
+> Digits:=3: latex(LinearAlgebra[Transpose](Matrix(map(w->[w,evalf(h(-w/2))],[1,2,5,10,20,50]))));
+\left[\begin{array}{cccccc}
+1 & 2 & 5 & 10 & 20 & 50 
+\\
+  0.119 &  0.0180 &  0.0000455 &  2.06\times 10^{-9} &  4.26\times 10^{-18} &  3.72\times 10^{-44} 
+\end{array}\right]
+
+
+
+
+> quit
+memory used=67.2MB, alloc=116.3MB, time=0.36

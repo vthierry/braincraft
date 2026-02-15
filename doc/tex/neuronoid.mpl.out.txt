@@ -1,0 +1,71 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+
+## Sigmoid function and properties
+> h := x -> 1/(1+exp(-4*x)):
+
+## Linear relation with tanh
+> ok := evalb(0 = convert(h(x) - (1+tanh(2 * x))/2, exp));
+                                   ok := true
+
+
+## Approximation by arctan
+> h_err := x-> (2*h(x/2)-1) - (arctan(Pi/2*x)/(Pi/2)):
+> ok := evalb(infinity = int(h_err(x),x=0..infinity));
+                                   ok := true
+
+#####plot([tanh, x->2*h(x/2)-1, x->arctan(Pi/2*x)/(Pi/2)],color=[blue,green,red]);
+
+### Basic sigmoid values
+> h__ := limit(h(x),x=-infinity), h(0), D(h)(0), limit(h(x),x=+infinity);
+                              h__ := 0, 1/2, 1, 1
+
+> evalb(simplify(expand(h(x) = 1 - h(-x))));
+                                      true
+
+
+## First order continous differential equation and discrete approximation, with variable and fixed input
+> dsolve({tau * D(v)(t) + v(t) = z(t), v(0) = v0}, {v(t)});
+                      /   t            _z1           \
+                      |  /  z(_z1) exp(---)          |
+                      | |              tau           |        t
+               v(t) = | |   --------------- d_z1 + v0| exp(- ---)
+                      | |         tau                |       tau
+                      |/                             |
+                      \  0                           /
+
+> dsolve({tau * D(v)(t) + v(t) = z0, v(0) = v0}, {v(t)});
+                                           t
+                        v(t) = z0 + exp(- ---) (v0 - z0)
+                                          tau
+
+> rsolve({v(t+1) = (1-g) * v(t) + g * z(t), v(0) = v0}, {v(t)});
+                                /  t                               \
+                                |-----                             |
+                            t   | \            (t - t0)            |
+          {v(t) = v0 (1 - g)  + |  )    (1 - g)         g z(t0 - 1)|}
+                                | /                                |
+                                |-----                             |
+                                \t0 = 1                            /
+
+> rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
+                                      t                  t
+                    {v(t) = v0 (1 - g)  + z0 - z0 (1 - g) }
+
+
+### Continous/discrete correspondence
+> simplify(solve({(1-g)^t = exp(-t/tau)}, g) assuming 0 < g, g < 1);
+                                          1
+                             {g = -exp(- ---) + 1}
+                                         tau
+
+> simplify(solve({(1-g)^t = exp(-t/tau)}, tau) assuming 0 < g, g < 1);
+                                           1
+                              {tau = - ---------}
+                                       ln(1 - g)
+
+> quit
+memory used=98.8MB, alloc=80.3MB, time=0.43
