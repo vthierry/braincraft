@@ -7,23 +7,20 @@
 \newcommand{\tab}{\hphantom{4mm}}
 
 \title{Programmatoid and neuronoid computations}
-\begin{document}
-\maketitle
-\tableofcontents
 
-In progress : \begin{itemize}
+\begin{document} \maketitle \tableofcontents
 
-\item Ajouter tous les liens vers les fichiers maple
+\section*{In progress} \begin{itemize}
 
 \item Commener le compilateur qui
   \\- liste les variables (y a la fonction indets)
   \\- ajoute recursivement des variables pour applatir un ensemble d equations
   \\- substitue les fonctions booleennes etc... en progid puis neuroid
 
-\item Sortir la doc du logiciel et faire lien vers doc
-
-\item Creer section sur more mechanisms aec R/S memory etc.....
+\item Analyse situation de recurrence
   
+\item Neuronoid approximation of the explog
+
  \end{itemize}
 
 \section{The braincraft challenge}
@@ -326,7 +323,9 @@ where $v_i$ is the membrane potential, so that:
 with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
 \eqline{\begin{array}{l}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)), \\  \mbox{while} \\ \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0 . \end{array}}
 Here,  $h(\cdot)$ is the normalized sigmoid with \eqline{h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1, h(x) = 1 - h(-x)}
-All this is just very standard derivations of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
+All this is just very standard derivations, available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/neuronoid.mpl.out.txt}{{\tt Maple} code}, of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
+
+We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
 
 \subsection{Step-function mollification}
 
@@ -336,13 +335,19 @@ while the convergence is also obtained for $v=0$ in the distribution sense with 
 More precisely, the ${\cal L}_1$ error magnitude, on $]-\infty, +\infty[$, writes:
 \eqline{|\epsilon_{H,\omega}(x) |_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{\omega}, \epsilon_{H,\omega}(x) \defq H(x) - h(\omega \, x)}
 while:
-\eqline{|\epsilon_{H,\omega}(x)| = e^{-4\,w}+O\left(e^{-8\,w}\right)}
+\eqline{|\epsilon_{H,\omega}(x)| = e^{-4\,\omega}+O\left(e^{-8\,\omega}\right)}
 
 It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is neglictible as soon as, say, $\omega \ge 10$:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
   \omega & 1 & 2 & 5 & 10 & 20 & 50 \\ \hline
   \epsilon_\omega(\pm1/2) & 0.119 &  0.0180 &  0.455 \, 10^{-4} &  0.206 \, 10^{-10} &  0.426 \, 10^{-19} &  0.372 \, 10^{-45} \\ \hline
 \end{array}}
+
+\begin{quotation}
+{\em Any programmatoid  computation involving the $H(\cdot)$ function can thus be approximated by a neuronoid, with $\tau = 0$, and sufficiently large $\omega$.}
+\end{quotation}
+  
+Derivations are available \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/mollificatio.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{Approximation of the identify function}
 
@@ -360,6 +365,8 @@ Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0
 \end{array}}
 with a negligible error for, say, $\omega'  \le 100$.
 
+Derivations are available \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
+
 \subsection{Approximation of switch mechanisms}
 
 Given normalized floating point variables $v_n \in [-1, 1], n \in \{1, N\}$ and binary variables $b_n \in \{0, 1\}, n \in \{1, N\}$, conditional expressions and related mechanisms require the implementation of formula of the form\footnote{We easily verifies that:
@@ -372,7 +379,11 @@ Given normalized floating point variables $v_n \in [-1, 1], n \in \{1, N\}$ and 
 
 The implementation as neuronoid, thus allows to implement more formula than only using programmatoid.
 
-\section{The explog function} \label{explog}
+\section{Examples of neuronoid computation}
+
+A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc.
+
+\subsection{The explog function} \label{explog}
 
 The maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
 \\ - The series  at $\mu \rightarrow 0^+$ is easily obtained from any symbolic calculator writing, e.g.:
@@ -398,59 +409,49 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
     \end{minipage}
 \end{figure}
 
-=> NEURNOID APPROXIMATION
+Derivations are available \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
 
-\clearpage
+\subsection{RS input/output gate}
 
-\subsubsection{Neuronoid  implementation of programmatoid computation}
-
-We call ``neuronoid'' computation the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
-
-By successive combination, any programmatoid  computation involving the $H(\cdot)$ function can be approximated by a neuronoid, with $\tau \simeq 0$.
-
-A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc. (not detailed here because not used at this stage,  see appendix).
-
-\paragraph{Neuronoid implementation}: The mollification uses 3 neuronoids for cases 1 and 2 plus 3 neuronoids by color for case 3. The derivation of the neuronoid equations is straightforward after the previous one.
-
-\subsection{Appendix: a few programmatoid and neuronoid components}
-
-\subsubsection{RS input/output gate}
-
-For an input $v_i(t) \in \{0, 1\}$, an output $v_o(t) \in \{0, 1\}$, and a control $v_l \in \{0, 1\}$, the equation:
-\eqline{\begin{array}{rcl}  v_o(t+1)
-    &=& v_l(t) == 1 \mbox{ ? } v_o(t) \mbox{ : } v_i(t), \\
-    &=& v_l(t) \, v_o(t)  + (1- v_l(t)) \, v_i(t) \\
-    &=& H(v_{o}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta) + H(v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)  \\
-    &\simeq& h(W'_\infty \, (W_\omega \, v_{o}(t) - W_\sigma \, (1 - v_l(t)) - W_\delta)) \\ &+& h(W'_\infty \, (W_\omega  \, v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)). \\
+For a data input $i(t)$, a control $i_l(t) \in \{0, 1\}$, and an output $o(t)$, the equation:
+\eqline{\begin{array}{rcl}
+    o(t) &\leftarrow& \mbox{if } i_l(t) = 1 \mbox{ then } o(t - 1) \mbox{ else } i(t) \\
 \end{array}}
-implements a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
+implements, if $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$, a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
 
-The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level, but not necessarily at the neuronoid level, since we have a continous equation.  More precisely:
-\eqline{\begin{array}{c}v_o(t+1) = h(W'_\infty \, W_\omega \, v_{o}(t) - W_\beta(t)) + h_\beta(t), \\ \left\{\begin{array}{rcl} W_\beta &\defq& W_\sigma \, (1 - v_l(t)) + W_\delta \\ h_\beta(t) &\defq&  h(W'_\infty \, (W_\omega  \, v_{i}(t) - W_\sigma \, v_l(t) - W_\delta)) \in [-1, 1] \end{array} \right. \end{array}}
-with a non contracting recurrent function, since:
-\eqline{h'(W'_\infty \, W_\omega \, v) > 1$ for $|v| \leq W'_\infty \, W_\omega.}
-        
-  
+The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level,
+but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l(t) = 1$:
+\eqline{\begin{array}{rcl}
+     \multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$ at the programmatoid level:}} \\
+     o(t) &\leftarrow& H(i(t) - i_l(t) - 1/2) + H(o(t - 1) + i_l(t) - 3/2) \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$:}} \\
+     o(t) &\leftarrow& h(\omega \, (i(t) - i_l(t) - 1/2) ) + h(\omega \, (o(t - 1) + i_l(t) - 3/2)) \\
+    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o(t - 1) (t) - 1/2)) \right|_{i_l(t) = 1} \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in [-1, 1]$, $o(t) \in [-1, 1]$:}} \\
+    o(t) &\leftarrow& \omega' \, (h(i(t)/\omega' -  \omega \, i_l(t)) + h(o(t - 1) (t)/\omega' -  \omega \, (1 - i_l(t))) \\
+    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o(t - 1) (t)/\omega') \right|_{i_l(t) = 1} \\
+\end{array}}
 
+The former equation is exact, so totaly stable entirely stable during iterations.
 
-\begin{description}
-  \item[monostable binary value] The $v_0 = v_0  + (1 - v_0) \, H(v_1)$ formula sets $v_0$ to 1 for ever, as soon $v_1$ has raised once to 1.
-\end{description}
-and by combination RS gates,  bistable mechanisms, etc. (not detailed here because not used at this stage, see appendix).
+For the second equation, assuming without loss of generality that $o(0) = 1$, since the situation is entirely symmetric, we obtain, in the worst case where $i(t) = 1$
+\eqline{\begin{array}{rcl}
+    o(t) &\leftarrow& h(-\omega/2)  + h(\omega \, 1/2) \\
+\end{array}}
 
-To be done.
+AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
 
-%\subsubsection{Monostable binary value}
-
+ %\subsection{Monostable binary value (delay)}
 %avec l = l/2 + h() si neuronoid pour avoir v fini
-
-%\subsubsection{Bistable binary value}
-
+%\subsection{Bistable binary value (divider by 2)}
 %Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
+%\subsection{Bistable astable value (oscillator)}
 
 \section{Using the braincraft challenge setup}
 
-Reference: \href{https://github.com/rougier/braincraft}{The braincraft challenge}.
+This documentation allows to use the braincraft challenge for a programmatic implementation, or for a programmatoid/neuronoid implementation using code translator (not yet available).
+
+Here is braincraft challenge original documentation \href{https://github.com/rougier/braincraft/blob/master/README.md}{original documentation}.
 
 You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
 
@@ -467,16 +468,13 @@ You must be familiar with basic {\tt git} usage and basic {\tt python} programma
 
 \subsection{Running at the programmatic level}
 
-\href{https://raw.githack.com/vthierry/braincraft/master/braincraft/doc/challenge_callback.html}{API doc}
+When running at the programmatic level,
+\\- the \href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/challenge_callback.html#next_output_from_network}{{\tt  next\_output\_from\_network(context)}} callback is to be implemented, and
+\\- to be called by the ``callback'' version of the \href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/challenge_callback.html#evaluate}{{\tt evaluate($\cdots$)}} method.
 
-The `challenge\_callback\_1.py`  file contains the support routines 
-
-
-%The {\tt def next(input)} function that takes the {\tt input = depth\_l, color\_l, depth\_r, color\_r, energy} date structure and output the {\tt d\_o} where a stands for the orientation is to be defined.
-
-%The {\tt programmatic.py} code provides all functions to evaluate the implementation, without training phase.
+The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challenge_callback.py}{{\tt challenge\_callback\_1.py}} source file includes all documented methods.
   
-\subsection{Running at the artificial neural network level}
+% \subsection{Running at the artificial neural network level}
 
 %The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
 

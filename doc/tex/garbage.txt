@@ -1,0 +1,127 @@
+\documentclass{article}
+\usepackage{graphicx} \usepackage[export]{adjustbox}
+\usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
+\usepackage{amsmath,amssymb,amsfonts}
+\newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
+\newcommand{\defq}{\stackrel {\rm def}{=}}
+\newcommand{\tab}{\hphantom{4mm}}
+
+\begin{document}
+
+\subsubsection{Neuronoid  approxcimation of programmatoid}
+...
+and, for $0 < \epsilon_\infty \ll 1 < v_\infty$:
+\eqline{h(\omega \, v_\infty ) = 1 - \epsilon_\infty
+  \Leftrightarrow v_\infty  =
+ \frac{\log(1-\epsilon_\infty) -\log(\epsilon_\infty)}{4\,w_\infty} =
+ \frac{-\log(\epsilon_\infty)}{4\,w_\infty} + O\left(\epsilon_{\infty}\right).}
+
+Numerically, the convergence is very fast, e.g. $w_\infty = 2$, for $\epsilon_\infty = 0.1\%$:
+\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
+  $\epsilon_\infty$ & $10^{-1}$ & $10^{-2}$ & $10^{-3}$ & $10^{-6}$ \\ \hline
+  $w_\infty$ & 0.55 & 1.15 & 1.73 & 3.46 \\
+  \hline \end{tabular}}
+  
+A step further, the local variation of sigmoid writes:
+\eqline{\begin{array}{rcl} h(v)
+    &=& h(v_0) + \left[ 4 \, \exp(-8 \, v_0)+ O\left(\exp(-12 \, v_0))\right) \right] \, (v - v_0) + O\left((v - v_0)^2\right) \\
+    &\simeq& h(v_0) + 4 \, \exp(-8 \, v_0)  \, (v - v_0). \\ \end{array}}
+Numerically, values decrease very rapidly:
+\\\centerline{\begin{tabular}{|l|c|c|c|c|} \hline
+  $v_0$                                      & $1$          & $2$           & $5$          & $10$ \\ \hline
+  $4 \, \exp(-8 \, v_0) \simeq$ & $10^{-1}$ & $10^{-3}$ & $10^{-8}$ & $10^{-17}$ \\
+  \hline \end{tabular}}
+
+\begin{verbatim}
+### Local behavior of h() at v0
+h_v0 := series(h(v), v = v0, 2);
+### Local behavior of h() at infinity
+h_v0_1 := simplify(series(coeff(h_v0, v - v0, 1), v0=infinity, 1));
+lprint(map(v0_->[v0_,evalf(subs(v0=v0_,convert(h_v0_1,polynom)))], [1,2,5,10]));
+
+
+### Link with Heavide function
+d_Hv_1 := int(abs(Heaviside(v)-h(w*v)), v=-infinity..infinity) assuming w > 0;
+
+#### Heaviside approximation for v_oo
+v_oo := simplify(solve(h(W_oo * v_oo) = 1 - e_oo, v_oo)) assuming 0 < e_oo, e_oo < 1;
+v_oo_ := series(v_oo, e_oo = 0, 2)  assuming 0 < e_oo, e_oo < 1;
+map(e_oo_->[e_oo_,evalf(subs(W_oo=1,e_oo=e_oo_,v_oo))], [1/10,1/100,1/1000,1/1000000]);
+\end{verbatim}
+
+\begin{verbatim}
+## Conditional expression
+
+### Verification in the programmatoid case
+
+ok := {}:
+for v_l in 1,0 do
+  for v_1 in 0,1 do
+    for v_0 in 0,1 do
+       ok := ok union {evalb(v_l * v_1 + (1 -v_l) * v_0 = Heaviside(v_1 - W_s * (1 - v_l) - W_d)+Heaviside(v_0 - W_s * v_l - W_d))} assuming 0 < W_d, W_d < 1, 1 < W_s:
+    od
+  od
+ od:
+ok;
+
+### Inequalities in the neuronoid case
+
+#### Inequalities of the neuronoid mechanism
+ineqs := {}:
+for v_l in 0,e,1-e,1 do
+  for v_1 in 0,e,1-e,1 do
+    ineqs := ineqs union {expand(W_w * v_1 - W_s * (1 - v_l) - W_d) * signum(subs(e = 0, v_l * v_1 - 1/2)) > 0}
+  od:
+  for v_0 in 0,e,1-e,1 do
+     ineqs := ineqs union {expand(W_w * v_0 - W_s * v_l - W_d) * signum(subs(e = 0, (1 - v_l) * v_0 - 1/2)) > 0}
+  od
+od:
+ineqs;
+
+#### Verification of particular solution
+eqs0 := {W_d = 1, W_w = 2, W_s = 4, e = 1/8}:
+#####ok := map(evalb, subs(eqs0, ineqs));
+
+#### Verification of the canonical form
+assume(
+  0 < W_d, 0 < W_s, 0 < W_w, 0 < e, e < 1,
+  W_d < W_w, W_d < W_s, W_w < W_s,
+  W_w * e < W_d, W_s * e < W_d, W_d + e * (W_s + W_w) < W_w,
+  0 < mu, mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w,
+# these two inequalities are redundant, but maple requires them  
+  W_d + e * W_w < W_w, mu < W_d, mu + W_d < W_w): 
+#####ok := map(e -> evalb(op(1, e) < signum(op(2, e))), ineqs);
+ 
+#### Verification of the margin
+#####ok := map(e -> evalb(op(1, e) < signum(op(2, e) - mu)), ineqs);
+mu0 := solve(subs(eqs0, {mu + W_s * e < W_d, mu + W_d + e * (W_s + W_w) < W_w}), mu);
+
+## Binary memory
+
+### Recurrent equation convergence
+fixpoint := proc(f, v_0)
+  local v1 := 1e111, v0 := v_0, maxiter := 111, epsilon := 1e-6, result := op([]):
+  for t to maxiter while abs(v1 - v0) > 1e-3 do v1 := v0: v0 := evalf(f(v1)): result := result, v0: od:
+  [result]
+end:
+
+fixpoint(v->2*h(5*v)-1, -0.9);
+fixpoint(v->2*h(5*v)-1, 0.9);
+fixpoint(v->h(10*(2*v-1)), -0.1);
+fixpoint(v->h(5*(2*v-1)), -0.001);
+fixpoint(v->h(1.0*(2*v-1)), -0.001);
+\end{verbatim}
+
+\begin{verbatim}
+Heaviside(0) := 1/2: H := Heaviside:
+upsilon := 2: nu := 1/3:
+# Checks the Task 1 programmatoid equations
+eq := {
+ q_p_ = 'if q_p = 1 or nu > g_e then  1 else 0 fi'
+ } = {
+ q_p_ = H(upsilon * q_p + (nu - g_e))
+ };
+ok := {}: for g_e in {0,1/4,1/2,3/4,1} do for q_p in {0,1} do ok := ok union {evalb(eq)} od od: ok;
+\end{verbatim}
+
+\end{document}
