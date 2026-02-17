@@ -12,6 +12,8 @@
 
 \section*{In progress} \begin{itemize}
 
+\item Creer un doc/index.html manuel
+
 \item Commener le compilateur qui
   \\- liste les variables (y a la fonction indets)
   \\- ajoute recursivement des variables pour applatir un ensemble d equations
@@ -304,21 +306,23 @@ As a consequence,
 
 By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
+We define the equation\footnote{
+We also have: \eqline{h(x) \defq \frac{1}{1+\exp(-4\,x)} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
 \eqline{\begin{array}{cl}
   \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
   z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right), \\
-  h(x) \defq \frac{1}{1+\exp(-4\,x)} & = \frac{1 + \tanh(2 \, x)}{2}, \\
+  h(x) \defq \frac{1}{1+\exp(-4\,x)} & = h(x_0) + sech(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), \\
 \end{array}}
 where $v_i$ is the membrane potential, so that:
-\eqline{\begin{array}{rcl} v(t)
+\eqline{\begin{array}{rcll} v(t)
   &=& 1/\tau \, \int_0^t e^{-(t-s)/\tau} \, z(s) \, ds + v(0) \, e^{-t/\tau} \\
-  &=& \left. z(0) + e^{-t/\tau} \, (v(0) - z(0)) \right|_{z(t)= z(0)} \mbox{ (constant input)}\\
-    &=& \left. z(t) \right|_{\tau = 0} \mbox{ (no leak),}\\
-  \multicolumn{3}{l}{\mbox{and the corresponding discrete approximation using an Euler schema writes:}} \\
+  &=& \left. z(0) + e^{-t/\tau} \, (v(0) - z(0)) \right|_{z(t)= z(0)} & \mbox{ (constant input)}\\
+    &=& \left. z(t) \right|_{\tau = 0} & \mbox{ (no leak),}\\
+  \multicolumn{4}{l}{\mbox{and the corresponding discrete approximation using an Euler schema writes:}} \\
   &\simeq&  (1-\gamma) \, v(t-\Delta t) + \gamma \, z(t-\Delta t)) \\
   &=& \sum_{s=0}^{t-1} \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
-  &=& \left. z(0) + (1-\gamma)^t \, (v(0) - z(0)) \right|_{z(t)= z(0)} \mbox{ (constant input)}\\
-  &=& \left. z(t) \right|_{\gamma = 1} \mbox{ (no leak)}. \\
+  &=& \left. z(0) + (1-\gamma)^t \, (v(0) - z(0)) \right|_{z(t)= z(0)} & \mbox{ (constant input)}\\
+  &=& \left. z(t) \right|_{\gamma = 1} & \mbox{ (no leak)}. \\
 \end{array}}
 with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
 \eqline{\begin{array}{l}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)), \\  \mbox{while} \\ \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0 . \end{array}}
@@ -351,7 +355,7 @@ Derivations are available \href{https://raw.githubusercontent.com/vthierry/brain
 
 \subsection{Approximation of the identify function}
 
-We also use a sigmoid to approximate the indentity function defining:
+We also have to use a sigmoid to approximate the identity function defining:
 \eqline{l_{\omega'}(x) \defq \omega' \, (h(x/\omega') - 1/2), \mbox{ with an error } \epsilon_{l,\omega'}(x) \defq x - l_{\omega'}(x)}
 so that, the ${\cal L}_1$ error magnitude on $[-M, +M]$:
 \eqline{\int_{x=-M}^{x=+M}|\epsilon_{l,\omega'}(x)| \, dx = \frac{2}{3} \, \frac{M^4}{\omega'^2} + O\left(\frac{1}{\omega'^4}\right)}
@@ -383,6 +387,57 @@ The implementation as neuronoid, thus allows to implement more formula than only
 
 A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc.
 
+\subsection{Memory gate}
+
+For a data input $i(t)$, a control $i_l(t) \in \{0, 1\}$, and an output $o(t)$, the equation:
+\eqline{\begin{array}{rcl}
+    o(t) &\leftarrow& \mbox{if } i_l(t) = 1 \mbox{ then } o(t - 1) \mbox{ else } i(t) \\
+\end{array}}
+implements, if $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$, a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
+
+The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level,
+but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l(t) = 1$:
+\eqline{\begin{array}{rcl}
+     \multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$ at the programmatoid level:}} \\
+     o(t) &\leftarrow& H(i(t) - i_l(t) - 1/2) + H(o(t - 1) + i_l(t) - 3/2) \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$:}} \\
+     o(t) &\leftarrow& h(\omega \, (i(t) - i_l(t) - 1/2) ) + h(\omega \, (o(t - 1) + i_l(t) - 3/2)) \\
+    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o(t - 1) (t) - 1/2)) \right|_{i_l(t) = 1} \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in [-1, 1]$, $o(t) \in [-1, 1]$:}} \\
+    o(t) &\leftarrow& \omega' \, (h(i(t)/\omega' -  \omega \, i_l(t)) + h(o(t - 1) (t)/\omega' -  \omega \, (1 - i_l(t))) \\
+    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o(t - 1) (t)/\omega') \right|_{i_l(t) = 1} \\
+\end{array}}
+
+The former equation is exact, so totaly stable entirely stable during iterations.
+
+For the second equation, memorizing $o(0) \in \{0, 1 \}$, thus with $i_l(t) = 1$, for
+\eqline{\epsilon(t) \defq \left\{\begin{array}{cc} o(t) &\left.\right|_{o(0) = 0} \\ 1 - o(t)&\left.\right|_{o(0) = 1} \end{array} \right.}
+we obtain\footnote{
+For $o(0) = 0$ the derivation is straightforward. For $o(0) = 1$ and $i(t) = 0$:
+\eqline{\begin{array}{rcll}
+    \epsilon(t)
+    &=& 1 - o(t) \\
+    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (1 - \epsilon(t-1) + 1 - 3/2)) \\
+    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (-\epsilon(t-1) + 1/2)) \\
+    &=& - h(-3/2 \, \omega) + h(\omega \, (\epsilon(t-1) - 1/2)) & \mbox{ since $h(x) = 1 - h(-x)$} \\
+  \end{array}} with a similar derivation for $o(0) = 1$ and $i(t) = 1$.
+  }
+\eqline{\begin{array}{rcl}
+  \epsilon(t) &=& \beta_{i(t),o(0)} + h( \omega \, (\epsilon(t-1) - 1/2)), \\ \mbox{ with } \beta_{i(t),o(0)} &\defq&
+  \begin{array}{|c|c|c|} \hline
+                       & o(0) = 0                                                                             & o(0) = 1 \\ \hline
+           i(t) = 0 & h(-3/2 \, \omega) &  - h(-3/2 \, \omega) \\ \hline
+           i(t) = 1 & h(-1/2 \, \omega) & - h(-1/2 \, \omega)  \\ \hline
+    \end{array} \\ \end{array}}
+
+AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
+
+ %\subsection{Monostable binary value (delay)}
+%avec l = l/2 + h() si neuronoid pour avoir v fini
+%\subsection{Bistable binary value (divider by 2)}
+%Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
+%\subsection{Bistable astable value (oscillator)}
+
 \subsection{The explog function} \label{explog}
 
 The maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
@@ -411,41 +466,24 @@ so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding 
 
 Derivations are available \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
 
-\subsection{RS input/output gate}
+\section{Comparing {\tt tanh} and {\tt arctan} non linearities}
 
-For a data input $i(t)$, a control $i_l(t) \in \{0, 1\}$, and an output $o(t)$, the equation:
-\eqline{\begin{array}{rcl}
-    o(t) &\leftarrow& \mbox{if } i_l(t) = 1 \mbox{ then } o(t - 1) \mbox{ else } i(t) \\
-\end{array}}
-implements, if $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$, a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
+We have $h(x) = \frac{1 + \tanh(2 \, x)}{2}$ thus based on the {\tt tanh} non linearity.
+We also could have choose:
+\eqline{\bar{h}(x)  = \frac{1}{2} + \frac{\mbox{arctan}\left(\pi  \, x\right)}{\pi},}
+we have another normalized sigmoid:
+\eqline{\bar{h}(-\infty) = 0, \bar{h}(0) = 1/2, \bar{h}'(0) = 1, \bar{h}(+\infty) = 1, \bar{h}(x) = 1 - \bar{h}(-x)}
+with:
+\eqline{h(x) > \bar{h}(x), x > 0, |h(x)-\bar{h}(x)|_{{\cal L}_1} = +\infty, |h(x)-\bar{h}(x)|_{{\cal L}_0} \simeq 0.082,}
 
-The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level,
-but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l(t) = 1$:
-\eqline{\begin{array}{rcl}
-     \multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$ at the programmatoid level:}} \\
-     o(t) &\leftarrow& H(i(t) - i_l(t) - 1/2) + H(o(t - 1) + i_l(t) - 3/2) \\
-    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in \{0, 1\}$, $o(t) \in \{0, 1\}$:}} \\
-     o(t) &\leftarrow& h(\omega \, (i(t) - i_l(t) - 1/2) ) + h(\omega \, (o(t - 1) + i_l(t) - 3/2)) \\
-    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o(t - 1) (t) - 1/2)) \right|_{i_l(t) = 1} \\
-    &&\\\multicolumn{3}{l}{\mbox{For $i(t) \in [-1, 1]$, $o(t) \in [-1, 1]$:}} \\
-    o(t) &\leftarrow& \omega' \, (h(i(t)/\omega' -  \omega \, i_l(t)) + h(o(t - 1) (t)/\omega' -  \omega \, (1 - i_l(t))) \\
-    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o(t - 1) (t)/\omega') \right|_{i_l(t) = 1} \\
-\end{array}}
-
-The former equation is exact, so totaly stable entirely stable during iterations.
-
-For the second equation, assuming without loss of generality that $o(0) = 1$, since the situation is entirely symmetric, we obtain, in the worst case where $i(t) = 1$
-\eqline{\begin{array}{rcl}
-    o(t) &\leftarrow& h(-\omega/2)  + h(\omega \, 1/2) \\
-\end{array}}
-
-AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
-
- %\subsection{Monostable binary value (delay)}
-%avec l = l/2 + h() si neuronoid pour avoir v fini
-%\subsection{Bistable binary value (divider by 2)}
-%Then: emporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, 
-%\subsection{Bistable astable value (oscillator)}
+However, it is less efficient to approximate the step function, as visible in the Figure~\ref{sigmoidatan}.
+\begin{figure}[htbp]
+  \includegraphics[width=0.5\textwidth,valign=c]{./sigmoidatan.jpg}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+      \caption{Comparision between  the {\tt tanh} and {\tt arctan} non linearities, showing that the former is sharper. The maximal difference is about $8\%$ at $x \simeq 0.85$.}
+        \label{sigmoidatan}
+    \end{minipage}
+\end{figure}
 
 \section{Using the braincraft challenge setup}
 

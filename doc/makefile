@@ -1,8 +1,6 @@
 
 # The doc files to build
 
-all : clean build
-
 build : api/challenge_callback.html  tex/index.html logs
 
 clean :

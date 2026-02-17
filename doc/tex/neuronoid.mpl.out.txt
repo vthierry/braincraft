@@ -12,19 +12,41 @@
                                    ok := true
 
 
-## Approximation by arctan
-> h_err := x-> (2*h(x/2)-1) - (arctan(Pi/2*x)/(Pi/2)):
-> ok := evalb(infinity = int(h_err(x),x=0..infinity));
-                                   ok := true
+### Series around huge values
+> simplify(series(h(x), x = x0, 2));
+                    1                    2                      2
+              -------------- + sech(2 x0)  (x - x0) + O((x - x0) )
+              1 + exp(-4 x0)
 
-#####plot([tanh, x->2*h(x/2)-1, x->arctan(Pi/2*x)/(Pi/2)],color=[blue,green,red]);
 
 ### Basic sigmoid values
-> h__ := limit(h(x),x=-infinity), h(0), D(h)(0), limit(h(x),x=+infinity);
-                              h__ := 0, 1/2, 1, 1
+> limit(h(x),x=-infinity), h(0), D(h)(0), limit(h(x),x=+infinity);
+                                  0, 1/2, 1, 1
 
 > evalb(simplify(expand(h(x) = 1 - h(-x))));
                                       true
+
+
+## Approximation by arctan
+> h_a := x->1/2+arctan(Pi*x)/Pi:
+> plots[setcolors](map(c->"Black",[$1..16])):
+> plotsetup(jpeg, plotoutput="sigmoidatan.jpg", plotoptions="width=600,height=600");
+> plot([x->h(x), x->h_a(x)]);
+> plotsetup(x11);
+> ok := evalb(infinity = int(h(x) - h_a(x),x=0..infinity));
+                                   ok := true
+
+> limit(h_a(x),x=-infinity), h_a(0), D(h_a)(0), limit(h_a(x),x=+infinity);
+                                  0, 1/2, 1, 1
+
+> evalb(simplify(expand(h_a(x) = 1 - h_a(-x))));
+                                      true
+
+> x_max := fsolve(diff(h(x)-h_a(x), x), x = 0.5..2);
+                             x_max := 0.8596330270
+
+> e_max := evalf(h(x_max)-h_a(x_max));
+                             e_max := 0.0817699348
 
 
 ## First order continous differential equation and discrete approximation, with variable and fixed input
@@ -67,5 +89,6 @@
                               {tau = - ---------}
                                        ln(1 - g)
 
+
 > quit
-memory used=98.8MB, alloc=80.3MB, time=0.43
+memory used=110.9MB, alloc=144.3MB, time=0.59
