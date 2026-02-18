@@ -18,6 +18,9 @@
               -------------- + sech(2 x0)  (x - x0) + O((x - x0) )
               1 + exp(-4 x0)
 
+> simplify(series(h(x), x = infinity, 2));
+                          1 - exp(-4 x) + O(exp(-8 x))
+
 
 ### Basic sigmoid values
 > limit(h(x),x=-infinity), h(0), D(h)(0), limit(h(x),x=+infinity);
@@ -25,28 +28,6 @@
 
 > evalb(simplify(expand(h(x) = 1 - h(-x))));
                                       true
-
-
-## Approximation by arctan
-> h_a := x->1/2+arctan(Pi*x)/Pi:
-> plots[setcolors](map(c->"Black",[$1..16])):
-> plotsetup(jpeg, plotoutput="sigmoidatan.jpg", plotoptions="width=600,height=600");
-> plot([x->h(x), x->h_a(x)]);
-> plotsetup(x11);
-> ok := evalb(infinity = int(h(x) - h_a(x),x=0..infinity));
-                                   ok := true
-
-> limit(h_a(x),x=-infinity), h_a(0), D(h_a)(0), limit(h_a(x),x=+infinity);
-                                  0, 1/2, 1, 1
-
-> evalb(simplify(expand(h_a(x) = 1 - h_a(-x))));
-                                      true
-
-> x_max := fsolve(diff(h(x)-h_a(x), x), x = 0.5..2);
-                             x_max := 0.8596330270
-
-> e_max := evalf(h(x_max)-h_a(x_max));
-                             e_max := 0.0817699348
 
 
 ## First order continous differential equation and discrete approximation, with variable and fixed input
@@ -74,8 +55,8 @@
                                 \t0 = 1                            /
 
 > rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
-                                      t                  t
-                    {v(t) = v0 (1 - g)  + z0 - z0 (1 - g) }
+                                      t             t
+                    {v(t) = v0 (1 - g)  - z0 (1 - g)  + z0}
 
 
 ### Continous/discrete correspondence
@@ -91,4 +72,4 @@
 
 
 > quit
-memory used=110.9MB, alloc=144.3MB, time=0.59
+memory used=89.0MB, alloc=84.3MB, time=0.44

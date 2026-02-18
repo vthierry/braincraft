@@ -31,9 +31,8 @@
 
 
 ## Plot the function for some µ	
-> plots[setcolors](map(c->"Black",[$1..16])):
 > plotsetup(jpeg, plotoutput="explog.jpg", plotoptions="width=600,height=600"):
-> plot(map(mu_->subs(p[1]=x, p[2]=1/2,mu=mu_,expand(subs(K=2, el))),[1,2,100]),x=0..1);
+> plot(map(mu_->subs(p[1]=x, p[2]=1/2,mu=mu_,expand(subs(K=2, el))),[1,2,100]),x=0..1,color=["Red","Green","Blue"]);
 > plotsetup(x11):
 
 
@@ -47,4 +46,4 @@
 
 
 > quit
-memory used=42.6MB, alloc=46.3MB, time=0.20
+memory used=42.2MB, alloc=46.3MB, time=0.21

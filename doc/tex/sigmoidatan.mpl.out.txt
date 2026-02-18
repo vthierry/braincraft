@@ -1,0 +1,104 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+
+# Approximation of the sigmoid by arctan
+
+# Both functions plot
+> h := x -> 1/(1+exp(-4*x)):
+> h_a := x->1/2 + arctan(Pi*x)/Pi:
+> h_e := x->1/2 + erf(sqrt(Pi)*x)/2:
+> h_s := x-> 1/2 + x/(1+abs(2*x)):
+
+> plotsetup(jpeg, plotoutput="sigmoidatan.jpg", plotoptions="width=600,height=600"):
+> plot([h, h_a, h_e,h_s], color=["Red","Blue","Green","Orange"]);
+> plotsetup(x11):
+
+# Verifies  basic properties
+> limit(h_a(x),x=-infinity), h_a(0), D(h_a)(0), limit(h_a(x),x=+infinity);
+                                  0, 1/2, 1, 1
+
+> evalb(simplify(expand(h_a(x) = 1 - h_a(-x))));
+                                      true
+
+
+> limit(h_e(x),x=-infinity), h_e(0), D(h_e)(0), limit(h_e(x),x=+infinity);
+                                  0, 1/2, 1, 1
+
+> evalb(simplify(expand(h_e(x) = 1 - h_e(-x))));
+                                      true
+
+
+> limit(h_s(x),x=-infinity), h_s(0), limit(D(h_s)(x), x = 0), limit(h_s(x),x=+infinity);
+                                  0, 1/2, 1, 1
+
+> evalb(simplify(expand(h_s(x) = 1 - h_s(-x))));
+                                      true
+
+
+# L1 norm
+> L1_a := 2*int(h(x) - h_a(x), x = 0..infinity);
+                                L1_a := infinity
+
+> L1_e := 2*int(h(x) - h_e(x), x = 0..infinity); evalf(%);
+                                        Pi ln(2) - 2
+                           L1_e := -1/2 ------------
+                                             Pi
+
+                                 -0.02826370420
+
+> L1_s := 2*int(h(x) - h_s(x), x = 0..infinity);
+                                L1_s := infinity
+
+
+# L0 norm
+> x_max_a := fsolve(diff(h(x)-h_a(x), x), x = 0.2..2);
+                            x_max_a := 0.8596330270
+
+> e_max_a := evalf(h(x_max_a)-h_a(x_max_a));
+                            e_max_a := 0.0817699348
+
+> x_max_e := fsolve(diff(h(x)-h_e(x), x), x = 0.2..2);
+                            x_max_e := 0.6909002442
+
+> e_max_e := evalf(h(x_max_e)-h_e(x_max_e));
+                            e_max_e := -0.0176711885
+
+> x_max_s := fsolve(diff(h(x)-h_s(x), x), x = 0.2..2);
+                            x_max_s := 0.8080687569
+
+> e_max_s := evalf(h(x_max_s)-h_s(x_max_s));
+                            e_max_s := 0.1531523928
+
+
+# Max curvatures
+> max_c_x_h := evalf(solve({D[1,1,1](h)(x), x > 0}, x));
+                        max_c_x_h := {x = 0.3292394742}
+
+> max_c_h := evalf(subs(max_c_x_h, abs(D[1,1](h)(x))));
+                             max_c_h := 1.539600719
+
+> max_c_x_h_a := evalf(solve({D[1,1,1](h_a)(x), x > 0}, x));
+                       max_c_x_h_a := {x = 0.1837762984}
+
+> max_c_h_a  := evalf(subs(max_c_x_h_a, abs(D[1,1](h_a)(x))));
+                            max_c_h_a := 2.040524286
+
+> max_c_x_h_e := evalf(solve({D[1,1,1](h_e)(x), x > 0}, x));
+                       max_c_x_h_e := {x = 0.3989422802}
+
+> max_c_h_e  := evalf(subs(max_c_x_h_e, abs(D[1,1](h_e)(x))));
+                            max_c_h_e := 1.520346901
+
+> h_s_d := simplify([D[1](h_s)(x), D[1,1](h_s)(x), D[1,1,1](h_s)(x)]) assuming x > 0;
+                              1             4           24
+                h_s_d := [----------, - ----------, ----------]
+                                   2             3           4
+                          (1 + 2 x)     (1 + 2 x)   (1 + 2 x)
+
+> max_c_x_h_s := {x = 0}:
+> max_c_h_s  := 4:
+> quit
+memory used=104.7MB, alloc=108.3MB, time=0.52

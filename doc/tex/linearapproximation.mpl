@@ -4,9 +4,11 @@ h := x -> 1/(1+exp(-4*x)):
 
 ## Linear approximation
 l := x -> w * (h(x/w) - 1/2) :
+l_s := series(l(x), x, 5);
 
 ## Study, in [-1, 1]
-##### plot(map(w_->subs(w=w_,l(x)), [1,2,5,10,20,50]), x = -1..1);
+plotsetup(jpeg, plotoutput="linearapproximation.jpg", plotoptions="width=600,height=600"):
+plot(map(w_->subs(w=w_,l(x)), [1,2,5,10,20,50]), x = -1..1, color=["Red","Black","Black","Black","Black","Green"]);
 
 ## Error L1 magnitude in [-M, M], M = R * w
 
@@ -28,8 +30,6 @@ ok_oo_2 := evalb(simplify(convert(err1_oo, polynom) = subs(R=M/w,err1_oo_2)));
 
 err0 := M - w * (h(M/w) - 1/2):
 err0_oo := series(err0, w=infinity,4):
-
-evalb(0 = simplify(err0_oo - err1_oo));
 
 err0_oo_1 := 4/3 * (M^3/w^2):
 err0_oo_2 := 4/3 * R^2 * M:
