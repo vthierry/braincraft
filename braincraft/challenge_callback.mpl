@@ -1,6 +1,15 @@
 # Implements the translation of equations to python code
 
-challenge_callback := proc(name:: String, prog :: list(`=`)):: list(`=`);
+printf("Reading \"%s\" …\n", filename):
+input := FileTools[Text][ReadFile](cat(filename, ".prgmd")):
+input := StringTools[RegSubs]("#[^\n]*\n" = "", input):
+printf("Parsing \"%s\" …\n", filename):
+prgmd := parse(input):
+
+lprint(prgmd):
+
+
+challenge_callback := proc(name:: String, prgmd :: list(`=`)):: list(`=`);
 ## Reads the input file if not given as input
 ## Creates the indets list
 ## Susbtitute derivable functions, including programmatoid if required
@@ -8,4 +17,4 @@ challenge_callback := proc(name:: String, prog :: list(`=`)):: list(`=`);
 ## Detects unkown functions
 end:
 
-print("ok");
+printf("\n… done\n"):
