@@ -3,6 +3,7 @@
 
 sync:
 	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc
+	rm -f `find -name 'nohup.out' -o -name '*~'`
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
 git:
