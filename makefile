@@ -8,7 +8,7 @@ sync:
 git:
 	$(BROWSER) https://github.com/vthierry/braincraft
 
-doc:
+show:
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
 
 # Installation/re-installation commands
