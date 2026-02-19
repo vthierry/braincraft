@@ -72,4 +72,4 @@
 
 
 > quit
-memory used=89.0MB, alloc=84.3MB, time=0.44
+memory used=88.9MB, alloc=84.3MB, time=0.49
