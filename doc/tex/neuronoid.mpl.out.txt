@@ -55,8 +55,8 @@
                                 \t0 = 1                            /
 
 > rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
-                                      t             t
-                    {v(t) = v0 (1 - g)  - z0 (1 - g)  + z0}
+                                      t                  t
+                    {v(t) = v0 (1 - g)  + z0 - z0 (1 - g) }
 
 
 ### Continous/discrete correspondence
@@ -72,4 +72,4 @@
 
 
 > quit
-memory used=88.9MB, alloc=84.3MB, time=0.49
+memory used=88.9MB, alloc=84.3MB, time=0.45

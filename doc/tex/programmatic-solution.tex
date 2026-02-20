@@ -442,7 +442,7 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
 
 \subsection{Multistable mechanisms}
 
-The previous developments leads to solutions for several temporal systems, as briefly given now
+The previous developments leads to solutions for several temporal systems, as briefly given now.
 
 \subsubsection{Bistable mechanisms}
 
@@ -452,7 +452,7 @@ The previous developments leads to solutions for several temporal systems, as br
       \caption{With: \eqline{\begin{array}{rcl}
              o[t] &\leftarrow& \mbox{ if } o[t] = 0 \mbox{ and } i_1[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 1 \mbox{ and } i_0[t] = 1 \mbox{ then } 0 \\&& \mbox{ else } o[t -1] \\
          \end{array}}
-         a bistable system with two $1$ and $0$ inputs, is implemented.
+        a bistable system with two $1$ and $0$ inputs, is implemented.
         }
         \label{bistable2}
     \end{minipage}
@@ -466,7 +466,7 @@ The previous developments leads to solutions for several temporal systems, as br
              i_1[t] &\leftarrow& \mbox{ if } i_1[t] = 0 \mbox{ and } i[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 0 \mbox{ then } 0  \\&& \mbox{ else } i_1[t -1] \\
              i_0[t] &\leftarrow& \mbox{ if } i_0[t] = 0 \mbox{ and } i[t] = 0 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 1 \mbox{ then } 0  \\&& \mbox{ else } i_0[t -1] \\
          \end{array}}
-         a bistable system with one two-way switch is implemented, using internal variables $i_0[t]$ and $i_1[t]$ .
+         a bistable system with one two-way switch is implemented, using internal variables $i_0[t]$ and $i_1[t]$. This corresponds to a frequency divider by 2.
         }
         \label{bistable1}
     \end{minipage}
@@ -495,15 +495,14 @@ The previous developments leads to solutions for several temporal systems, as br
              o[t] &\leftarrow& \mbox{ if } v[t] > 1/2 \mbox{ then } 1 \mbox{ else } 0 \\
              v[t] &\leftarrow& (1-\gamma) \, v[t-1] + \gamma \, i[t] \\ 
          \end{array}}
-         Generation of the delayed output from an input.}
+        a delayed output is implemented. Assuming that $v[t] = 0$, when $i[t]=1$ and remains at this value, we obtain for the delay $T$:
+        \eqline{T = -\frac{\log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - e^{-\frac{\log(2)}{T}}.}
+        Here we assume that $i[t] = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.}
         \label{delay1}
     \end{minipage}
 \end{figure}
 
-Assuming that $v[t] = 0$ when $i[t]$ becomes one, from previous developments, we obtain the delay $T$ writing:
-\eqline{v[t] = 1 - (1-\gamma)^T = 1/2 \Leftrightarrow T = -\frac{\log(2)}{\log(1 - \gamma)} > 0}
-
-Here we assume that $i[t] = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.
+Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/delayastable.mpl.out.txt}{{\tt Maple} code}.
 
 \subsubsection{Oscillation}
 
@@ -512,15 +511,15 @@ Here we assume that $i[t] = 1, t \in [0, T]$ but it is very easy to avoid this c
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
              o[t] &\leftarrow& \mbox{ if } v[t] < 1/3 \mbox{ then } 0 \\&& \mbox{ elif } v[t] > 2/3 \mbox{ then } 1 \\&& \mbox{ else } o[t-1] \\
-             v[t] &\leftarrow& (1-\gamma) \, v[t-1] + \gamma \, (1 - o[t]) \\ 
+             v[t] &\leftarrow& (1-\gamma) \, v[t-1] + \gamma \, (1 - o[t]) \, i[t] \\ 
          \end{array}}
-         Generation of an oscillation.}
+        an binary oscillator is implemented. It is stopped if $i[t]=0$ and running for $i[t] = 1$. We obtain for the period $T$:
+        \eqline{T = -\frac{2 \, \log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - 2 \, e^{-\frac{\log(2)}{T}}.}}
         \label{astable1}
     \end{minipage}
 \end{figure}
 
-From previous developments, we obtain the period $T$ writing:
-\eqline{v[t] = 1 - (1-\gamma)^T = 1/3 \Leftrightarrow T = -\frac{\log(3)}{\log(1 - \gamma)} > 0}
+Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/delayastable.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{The explog function} \label{explog}
 
@@ -633,6 +632,26 @@ When running at the programmatic level,
 
 The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challenge_callback.py}{{\tt challenge\_callback\_1.py}} source file includes all documented methods.
   
+\subsection{Running at the programmatoid level}
+
+At the programmatoid level, the system is defined by a set of equations ….
+
+For binary variables $\mbox{{\tt b\_i}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_i}} \in [-1, 1]$, while the parameter $\mbox{{\tt T}} > 0$, the following
+functions, defined previously, are implemented: \\\centerline{\begin{tabular}{ll}
+  {\tt If(b\_1, v\_1, …, v\_0)} & Conditional expression with an odd number of arguments.\\
+  {\tt And(v\_1, …)} & Conjunction with a variable number of arguments.\\
+  {\tt Or(v\_1, …)} & Disjunction with a variable number of arguments.\\
+  {\tt Not(v\_1)} & Negation. \\
+  {\tt Bprod(b\_1, v\_1, …)} & Sum of binary products, with an even number of arguments.\\
+  {\tt Bistable(i\_0, i\_1)} & Two inputs bistable latch. \\
+  {\tt Bistable(i\_1)} & One input bistable latch. \\
+  {\tt Spikeup(i\_1)} & Spike generation on input rising front. \\
+  {\tt Delay(i\_1, T)} & Delayed output. The delay {\tt T} is given in number of global clock event.\\
+  {\tt Oscillator(i\_1, T)} & Oscillatory output. The period {\tt T} is given in number of global clock event.\\
+\end{tabular}} \\
+In the present version the {\tt explog} mechanism is still to be implemented.
+    
+
 % \subsection{Running at the artificial neural network level}
 
 %The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
