@@ -1,0 +1,11 @@
+# Softmax transform i[1..K] -> o between average and max
+
+## Sigmoid function and softmax function
+h := x -> 1/(1+exp(-4*x)):
+
+s := (K * g - g + 1)/K * sum(omega_ * h(i[k] / omega_ + g * omega * (1 - h(omega * sum(h(omega  * (i[k] - i[l])), l = 1..K) - K - 1))), k = 1..K):
+
+## Plot the function for some g	
+plotsetup(jpeg, plotoutput="softmax.jpg", plotoptions="width=600,height=600"):
+plot(map(g_->subs(omega_=100,omega=10,i[1]=x, i[2]=1/2,g=g_,eval(subs(K=2, s))),[0,1/4,1/2,3/4,1]),x=-1..1,color=["Black", "Orange", "Red","Green","Blue"]);
+plotsetup(x11):

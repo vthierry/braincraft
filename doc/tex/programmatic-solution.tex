@@ -588,7 +588,7 @@ Another track is to consider the programatoid implementation of the maximium ope
     && b_k \defq H\left(\sum_{l \in \{1, K\}, l \ne k} H(i_k - i_l) - K - 1/2\right)  & \mbox{Programmatoid definition}\\
     &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, b_k \right) & \mbox{Switch mechanism}\\
     &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, h_k \right) &\\
-    && h_k \defq h\left(\omega \, \left(\sum_{l \in \{1, K\}, l \ne k} H(i_k - i_l) - K - 1/2\right)\right) & \mbox{$b_k$ mollification}\\
+    && h_k \defq h\left(\omega \, \left(\sum_{l \in \{1, K\}, l \ne k} h(\omega* (i_k - i_l)) - K - 1/2\right)\right) & \mbox{$b_k$ mollification}\\
 \end{array}}
 
 Let us now consider the modified definition, with $g \in [0, 1]$: \eqline{\begin{array}{rclcl}
@@ -597,9 +597,17 @@ Let us now consider the modified definition, with $g \in [0, 1]$: \eqline{\begin
       &=& \left.\frac{1}{K} \, \sum_k \omega' \, h\left(\frac{i_k}{\omega'}\right)\right|_{g = 0} &\simeq& \frac{\sum_k i_k}{K} \\
  \end{array}} 
 
-With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions.
+With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}.
 
-\section{Comparing {\tt tanh} with othernon linearities}
+\begin{figure}[htbp]
+   \includegraphics[width=0.5\textwidth,valign=c]{./softmax.jpg}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $g = 0$ it is closed to linear average, whereas for $g = 1$ it is close to $\max(x, 1/2)$.}
+        \label{softmax}
+    \end{minipage}
+\end{figure}
+
+\section{Comparing {\tt tanh} with other non linearities}
 
 We have $h(x) = \frac{1 + \tanh(2 \, x)}{2}$ thus based on the {\tt tanh} non linearity. This corresponds most common activation function
 when deriving a rate-based reduced neural network from bio-physical elements  \cite{cessac_neuron_2007}. This is far from being the only choice,
