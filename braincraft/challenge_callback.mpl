@@ -3,7 +3,7 @@
 if type(filename, name) then printf("%s", "\n\tDo not run this maple script directly but use challenge_callback.sh.\n\n"): `quit`(1) fi:
 
 printf("Reading \"%s\" …\n", filename):
-input := FileTools[Text][ReadFile](cat(filename, ".prgmd")):
+input := FileTools[Text][ReadFile](cat(filename, ".mpl")):
 input := StringTools[RegSubs]("#[^\n]*\n" = "", input):
 printf("Parsing \"%s\" …\n", filename):
 prgmd := parse(input):

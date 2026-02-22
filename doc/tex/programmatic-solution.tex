@@ -1,5 +1,5 @@
 \documentclass[a4]{article}
-\usepackage[left=1cm,right=1cm,top=1cm,bottom=1cm]{geometry}
+\usepackage[left=2cm,right=3cm,top=1cm,bottom=1cm]{geometry}
 \usepackage{graphicx} \usepackage[export]{adjustbox}
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
@@ -20,17 +20,16 @@ Let us consider the following digital experimental setup, as described in \href{
 \centerline{\includegraphics[width=0.9\textwidth]{../../data/debug.png}}
 
 \href{https://github.com/rougier/braincraft}{The braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
-
-\begin{tabular}{|ll|l|}
-  \hline\multicolumn{3}{|c|}{{\bf Input variables}}\\\hline
-  $p_l \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[$ && \parbox{5cm}{Leftward proximity, {\small max value of the [0, +30°] range 32 left sensors.}} \\\hline 
-  $p_r \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[$ && \parbox{5cm}{Rightward proximity, {\small max value of the [-30°, 0] range 32 right sensors. }} \\\hline 
-  $c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$ && \parbox{5cm}{Leftward binary red and blue color detectors.}\\\hline 
-  $c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}$ && \parbox{5cm}{Rightward binary red and blue color detectors.} \\\hline 
-  $g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}]$ && Energy gauge value. \\\hline 
-  \hline \multicolumn{3}{|c|}{{\bf Output variable}}\\\hline
-  $d_o \in [-5, 5]$ && Orientation difference, saturated at  $\pm$ 5°.\\\hline 
- \end{tabular} 
+\eqline{\begin{array}{|ll|l|}
+  \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
+  p_l \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[ && \mbox{\parbox{5cm}{~\\Leftward proximity, {\small max value of the [0, +30°] range 32 left sensors.\\}}} \\\hline 
+  p_r \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[ && \mbox{\parbox{5cm}{~\\Rightward proximity, {\small max value of the [-30°, 0] range 32 right sensors.\\}}} \\\hline 
+  c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
+  c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
+  g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
+  \hline \multicolumn{3}{|c|}{\mbox{{\bf Output variable}}}\\\hline
+  d_o \in [-5, 5] && \mbox{\parbox{5cm}{~\\Orientation difference, saturated at  $\pm$ 5°.\\}}\\\hline 
+ \end{array}}
 
 With respect to the original braincraft challenge:
 \\ \tab - we consider two leftward and rightward ``average'' sensors only,
@@ -42,7 +41,7 @@ With respect to the original braincraft challenge:
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
 \item[Implementation] A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
-We also can use the explog function as derived in Appendix~\ref{explog}, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
+We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
 \end{description}
 
 \subsubsection{Color sensors}\begin{description}
@@ -112,7 +111,7 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
     \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
     \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter submut the former.}}} \\
     \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
-    \omega &=& 10 & \mbox{\parbox{8cm}{Transform a boolean product to a step-function threshold.}} \\
+    \omega &=& 10 & \mbox{\parbox{8cm}{Constant to transform a boolean product to a step-function threshold.}} \\
 \end{array}} while: \eqline{\begin{array}{rclcl}
  t_l =1&\mbox{iff}& q_p = 0 &\mbox{and while}& \beta < p_l \\
  t_r =1&\mbox{iff}& q_p = 1 &\mbox{and while}& \beta < p_r \\
@@ -132,7 +131,7 @@ control the $q_p$ variable.
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
   \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
       At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.\eqline{\begin{array}{l}
-          q_p = \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{then} 1 \mbox{ else } 0 \\
+          q_p \leftarrow \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{then} 1 \mbox{ else } 0 \\
       \end{array}}
      \item[Programmatoid solution] \eqline{\begin{array}{rcl}
        q_p  &\leftarrow& H(\omega \, q_p + (\eta - g_e))\\
@@ -248,7 +247,7 @@ Let us also notice that all arguments $x$ of the step function $H(\cdot)$ still 
 \subsection{Conditional expression implementation}
 
 A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  with a binary variable $b_1 \in \{0, 1\}$ writes: \eqline{\begin{array}{rcl}
-     v &\rightarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
+     v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
     &=& (1 - b_1) \, v_0  + b_1 \, v_1 \\
     \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
     &=& H(v_0 + (1 - b_1) - 3/2) + H(v_1 + b_1 - 3/2) \\ &=& H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2) \\ &=& H(H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2)) \\
@@ -269,7 +268,7 @@ The 3rd line is dediced from the second line, transforming the binary products o
 \end{array}}
 The 4rd line integrates the $v_n$ variables in the programmatoid sum, since they are binary,
 and provides the same obvious algebraic reduction as for the 3rd line.}: \eqline{\begin{array}{rcl}
-v &\rightarrow& \mbox{if } b_1 \mbox{ then } v_1 \left[ \mbox{ elif } b_n \mbox{ then } v_n \right]_{n \in \{2, N\}} \mbox{ else } v_0 \\
+v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \left[ \mbox{ elif } b_n \mbox{ then } v_n \right]_{n \in \{2, N\}} \mbox{ else } v_0 \\
     &=& \prod_{n' \in \{1,  N\}} (1 - b_{n'}) \, v_0  \\&+& \sum_{n \in \{1, N\}} \, b_n \, \prod_{\small \begin{array}{c}n' \in \{1,  N\}, \\ n' \ne n \\ \end{array}} (1 - b_{n'})  \, v_n  \\
    &=& \sum_{n \in \{0, N\}} h_n \, v_n \\
 \mbox{ with } h_0 &\defq& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})  \in \{0, 1\}\\
@@ -293,12 +292,12 @@ As a consequence,
 By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
 We define the equation\footnote{
-We also have: \eqline{h(x) \defq \frac{1}{1+\exp(-4\,x)} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
+We also have: \eqline{h(x) \defq \frac{1}{1+e^{-4\,x}} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
 \eqline{\begin{array}{cl}
   \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
   z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right), \\
-  h(x) \defq \frac{1}{1+\exp(-4\,x)} & = h(x_0) + sech(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), \\
-                                                          & = 1 - exp(-4 x) + O(exp(-8 x)) \\
+  h(x) \defq \frac{1}{1+e^{-4\,x}} & = h(x_0) + sech(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), \\
+                                                          & = 1 - e^{-4 \,x} + O(e^{-8 \, x)}) \\
 \end{array}}
 where $v_i$ is the membrane potential, so that:
 \eqline{\begin{array}{rcll} v(t)
@@ -312,7 +311,7 @@ where $v_i$ is the membrane potential, so that:
   &=& \left. z(t) \right|_{\gamma = 1} & \mbox{ (no leak)}. \\
 \end{array}}
 with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
-\eqline{\begin{array}{l}\gamma \defq 1 - \exp(-1/\tau) \Leftrightarrow \tau = 1/\log(1/(1-\gamma)), \\  \mbox{while} \\ \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0 . \end{array}}
+\eqline{\gamma \defq 1 - e^{\frac{1}{\tau}} \Leftrightarrow \tau = -\frac{1}{\log\left(1-\gamma\right)},  \mbox{while} \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0.}
 Here,  $h(\cdot)$ is the normalized sigmoid with \eqline{h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1, h(x) = 1 - h(-x)}
 All this is just very standard derivations, available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/neuronoid.mpl.out.txt}{{\tt Maple} code}, of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
 
@@ -381,59 +380,59 @@ A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we 
 
 \subsection{Memory gate}
 
-For a data input $i[t]$, a control $i_l[t] \in \{0, 1\}$, and an output $o[t]$, the equation:
+For a data input $i$, a control $i_l \in \{0, 1\}$, and an output $o$, the equation:
 \eqline{\begin{array}{rcl}
-    o[t] &\leftarrow& \mbox{if } i_l[t] = 1 \mbox{ then } o[t - 1] \mbox{ else } i[t] \\
+    o &\leftarrow& \mbox{if } i_l = 1 \mbox{ then } o \mbox{ else } i \\
 \end{array}}
-implements, if $i[t] \in \{0, 1\}$, $o[t] \in \{0, 1\}$, a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
+implements, if $i \in \{0, 1\}$, $o \in \{0, 1\}$, a 1 bit memory, i.e., also called a RS gate, and reusing the previous conditional instruction parameters.
 
 The key point is that it is now a recurrent system, which stability is obvious at the programmatoid level,
-but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l[t] = 1$.
+but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l = 1$.
 \eqline{\begin{array}{rcl}
-     \multicolumn{3}{l}{\mbox{For $i[t] \in \{0, 1\}$, $o[t] \in \{0, 1\}$ at the programmatoid level:}} \\
-     o[t] &\leftarrow& H(i[t] - i_l[t] - 1/2) + H(o[t - 1] + i_l[t] - 3/2) \\
-    &&\\\multicolumn{3}{l}{\mbox{For $i[t] \in \{0, 1\}$, $o[t] \in \{0, 1\}$:}} \\
-     o[t] &\leftarrow& h(\omega \, (i[t] - i_l[t] - 1/2) ) + h(\omega \, (o[t - 1] + i_l[t] - 3/2)) \\
-    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o[t - 1] [t] - 1/2)) \right|_{i_l[t] = 1} \\
-    &&\\\multicolumn{3}{l}{\mbox{For $i[t] \in [-1, 1]$, $o[t] \in [-1, 1]$:}} \\
-    o[t] &\leftarrow& \omega' \, (h(i[t]/\omega' -  \omega \, i_l[t]) + h(o[t - 1] /\omega' -  \omega \, (1 - i_l[t])) \\
-    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o[t - 1]/\omega') \right|_{i_l[t] = 1} \\
+     \multicolumn{3}{l}{\mbox{For $i \in \{0, 1\}$, $o \in \{0, 1\}$ at the programmatoid level:}} \\
+     o &\leftarrow& H(i - i_l - 1/2) + H(o + i_l - 3/2) \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i \in \{0, 1\}$, $o \in \{0, 1\}$:}} \\
+     o &\leftarrow& h(\omega \, (i - i_l - 1/2) ) + h(\omega \, (o + i_l - 3/2)) \\
+    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o  - 1/2)) \right|_{i_l = 1} \\
+    &&\\\multicolumn{3}{l}{\mbox{For $i \in [-1, 1]$, $o \in [-1, 1]$:}} \\
+    o &\leftarrow& \omega' \, (h(i/\omega' -  \omega \, i_l) + h(o /\omega' -  \omega \, (1 - i_l)) \\
+    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o/\omega') \right|_{i_l = 1} \\
 \end{array}}
 
 \begin{itemize}
   \item The former equation is exact, so entirely stable during iterations.
- \item For the second equation, memorizing $o[0] \in \{0, 1 \}$, thus with $i_l[t] = 1$, for
-\eqline{\epsilon[t] \defq \left\{\begin{array}{cc} o[t] &\left.\right|_{o[0] = 0} \\ 1 - o[t]&\left.\right|_{o[0] = 1} \end{array} \right.}
+ \item For the second equation, memorizing $\left.o\right|_{t=0} \in \{0, 1 \}$, thus with $i_l = 1$, for
+\eqline{\epsilon \defq \left\{\begin{array}{cc} o &\left.\right|_{\left.o\right|_{t=0} = 0} \\ 1 - o&\left.\right|_{\left.o\right|_{t=0} = 1} \end{array} \right.}
 we obtain\footnote{
-For $o[0] = 0$ the derivation is straightforward. For $o[0] = 1$ and $i[t] = 0$:
+For $\left.o\right|_{t=0} = 0$ the derivation is straightforward. For $\left.o\right|_{t=0} = 1$ and $i = 0$:
 \eqline{\begin{array}{rcll}
-    \epsilon[t]
-    &=& 1 - o[t] \\
-    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (1 - \epsilon(t-1) + 1 - 3/2)) \\
-    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (-\epsilon(t-1) + 1/2)) \\
-    &=& - h(-3/2 \, \omega) + h(\omega \, (\epsilon(t-1) - 1/2)) & \mbox{ since $h(x) = 1 - h(-x)$} \\
-  \end{array}} with a similar derivation for $o[0] = 1$ and $i[t] = 1$. }:
+    \epsilon
+    &\leftarrow& 1 - o \\
+    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (1 - \epsilon + 1 - 3/2)) \\
+    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (-\epsilon + 1/2)) \\
+    &=& - h(-3/2 \, \omega) + h(\omega \, (\epsilon - 1/2)) & \mbox{ since $h(x) = 1 - h(-x)$} \\
+  \end{array}} with a similar derivation for $\left.o\right|_{t=0} = 1$ and $i = 1$.}:
 \eqline{\begin{array}{rcl}
-    \epsilon[t] &=& (1 - 2 \, o[0]) \,  h(-(3/2 - i[t]) \, \omega) + h( \omega \, (\epsilon[t-1] - 1/2)) \\
+    \epsilon &\leftarrow& (1 - 2 \, \left.o\right|_{t=0}) \,  h(-(3/2 - i) \, \omega) + h( \omega \, (\epsilon - 1/2)) \\
     &=& \left\{\begin{array}{lrcll}
-      0 &\epsilon[t-1]&=& 0 & \mbox{ if $o[0] = 1$}\\
-      e^{-2 \, \omega} + O\left(e^{-4 \, \omega}\right) &\epsilon[t-1]&=& \varepsilon \, e^{-2 \, \omega}& \mbox{otherwise}\\
+      0 &\epsilon&=& 0 & \mbox{ if $\left.o\right|_{t=0} = 1$}\\
+      e^{-2 \, \omega} + O\left(e^{-4 \, \omega}\right) &\epsilon&=& \varepsilon \, e^{-2 \, \omega}& \mbox{otherwise}\\
    \end{array}\right. \\
 \end{array}}
-In words : the iteration remains stable, and the error at the order of magnitude of $O\left(e^{-2 \, \omega}\right)$. In particular the previous bias $\varepsilon$ only impacts the $O\left(e^{-4 \, \omega}\right)$ terms. Furthermore, if $o[0] = 1$, the positive bias yields a convergence towards $1$ without any bias if $i[t] = 1$, and with a exponentially decreasing bias if 
-$i[t] = 0$.
+In words : the iteration remains stable, and the error at the order of magnitude of $O\left(e^{-2 \, \omega}\right)$. In particular the previous bias $\varepsilon$ only impacts the $O\left(e^{-4 \, \omega}\right)$ terms. Furthermore, if $\left.o\right|_{t=0} = 1$, the positive bias yields a convergence towards $1$ without any bias if $i = 1$, and with a exponentially decreasing bias if 
+$i = 0$.
 
-\item For the third equation, memorizing $o[0] \in [-1, 1]$, thus with $i_l[t] = 1$, while $i[t]  \in [-1, 1]$, we obtain:
+\item For the third equation, memorizing $\left.o\right|_{t=0} \in [-1, 1]$, thus with $i_l = 1$, while $i  \in [-1, 1]$, we obtain:
 \eqline{\begin{array}{rcl}
-    o[t] &\leftarrow& \omega' \, (h(i[t]/\omega' -  \omega \, i_l[t]) + h(o[t - 1] /\omega' -  \omega \, (1 - i_l[t])) \\
-    \multicolumn{3}{l}{\mbox{while, since $i_l[t] = 1$:}} \\
-    &=& \omega' \, (h(i[t]/\omega' -  \omega) + h(o[t - 1] /\omega') \\
-    \multicolumn{3}{l}{\mbox{while, when neglecting $|i[t]/\omega'| < 1/\omega' \ll \omega$:}} \\
-    &=& \omega' \, (h(-\omega) + h(o[t - 1] /\omega') \\
+    o &\leftarrow& \omega' \, (h(i/\omega' -  \omega \, i_l) + h(o /\omega' -  \omega \, (1 - i_l)) \\
+    \multicolumn{3}{l}{\mbox{while, since $i_l = 1$:}} \\
+    &=& \omega' \, (h(i/\omega' -  \omega) + h(o /\omega') \\
+    \multicolumn{3}{l}{\mbox{while, when neglecting $|i/\omega'| < 1/\omega' \ll \omega$:}} \\
+    &=& \omega' \, (h(-\omega) + h(o /\omega') \\
     \multicolumn{3}{l}{\mbox{while, using previous series formula:}} \\
-    &=& o[t - 1] \pm \frac{4}{3} \, \frac{1}{\omega'^2} + e^{-4 \omega} + O\left(\frac{1}{\omega'^4}\right) + O\left(e^{-8 \omega}\right) \\
+    &=& o \pm \frac{4}{3} \, \frac{1}{\omega'^2} + e^{-4 \omega} + O\left(\frac{1}{\omega'^4}\right) + O\left(e^{-8 \omega}\right) \\
      \multicolumn{3}{l}{\mbox{while, considering only the larger term:}} \\
-    &\simeq& o[t - 1] \pm \frac{4}{3} \, \frac{1}{\omega'^2}  = o[0] \pm t \, \frac{4}{3} \, \frac{1}{\omega'^2} \\
+    &\simeq& o \pm \frac{4}{3} \, \frac{1}{\omega'^2}  = \left.o\right|_{t=0} \pm t \, \frac{4}{3} \, \frac{1}{\omega'^2} \\
  \end{array}}
 The memorization is thus impaired by a linear bias only, thanks to the fact that linear unit has been normalized. Because $O\left(e^{-4 \omega}\right) \ll O\left(\frac{1}{\omega'^2}\right)$, fro the chosen values, the bias due the use of a neuronoid approximation of a programmatoid is negligible with respect to the bias due to the use of a neuronoid approximation of a linear unit.
 \end{itemize}
@@ -450,7 +449,7 @@ The previous developments leads to solutions for several temporal systems, as br
    \includegraphics[width=0.5\textwidth,valign=c]{./bistable2.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
-             o[t] &\leftarrow& \mbox{ if } o[t] = 0 \mbox{ and } i_1[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 1 \mbox{ and } i_0[t] = 1 \mbox{ then } 0 \\&& \mbox{ else } o[t -1] \\
+             o &\leftarrow& \mbox{ if } o = 0 \mbox{ and } i_1 = 1 \mbox{ then } 1 \\&& \mbox{ elif } o = 1 \mbox{ and } i_0 = 1 \mbox{ then } 0 \\&& \mbox{ else } o \\
          \end{array}}
         a bistable system with two $1$ and $0$ inputs, is implemented.
         }
@@ -462,11 +461,11 @@ The previous developments leads to solutions for several temporal systems, as br
    \includegraphics[width=0.5\textwidth,valign=c]{./bistable1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
-             o[t] &\leftarrow& \mbox{ if } o[t] = 0 \mbox{ and } i_1[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 1 \mbox{ and } i_0[t] = 1 \mbox{ then } 0 \\&& \mbox{ else } o[t -1] \\
-             i_1[t] &\leftarrow& \mbox{ if } i_1[t] = 0 \mbox{ and } i[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 0 \mbox{ then } 0  \\&& \mbox{ else } i_1[t -1] \\
-             i_0[t] &\leftarrow& \mbox{ if } i_0[t] = 0 \mbox{ and } i[t] = 0 \mbox{ then } 1 \\&& \mbox{ elif } o[t] = 1 \mbox{ then } 0  \\&& \mbox{ else } i_0[t -1] \\
+             o &\leftarrow& \mbox{ if } o = 0 \mbox{ and } i_1 = 1 \mbox{ then } 1 \\&& \mbox{ elif } o = 1 \mbox{ and } i_0 = 1 \mbox{ then } 0 \\&& \mbox{ else } o \\
+             i_1 &\leftarrow& \mbox{ if } i_1 = 0 \mbox{ and } i = 1 \mbox{ then } 1 \\&& \mbox{ elif } o = 0 \mbox{ then } 0  \\&& \mbox{ else } i_1 \\
+             i_0 &\leftarrow& \mbox{ if } i_0 = 0 \mbox{ and } i = 0 \mbox{ then } 1 \\&& \mbox{ elif } o = 1 \mbox{ then } 0  \\&& \mbox{ else } i_0 \\
          \end{array}}
-         a bistable system with one two-way switch is implemented, using internal variables $i_0[t]$ and $i_1[t]$. This corresponds to a frequency divider by 2.
+         a bistable system with one two-way switch is implemented, using internal variables $i_0$ and $i_1$. This corresponds to a frequency divider by 2.
         }
         \label{bistable1}
     \end{minipage}
@@ -478,10 +477,10 @@ The previous developments leads to solutions for several temporal systems, as br
    \includegraphics[width=0.5\textwidth,valign=c]{./spike1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
-             o[t] &\leftarrow& \mbox{ if } r[t] = 0 \mbox{ and } i[t] = 1 \mbox{ then } 1 \\&& \mbox{ else } 0 \\
-             r[t] &\leftarrow& \mbox{ if } o[t] = 1 \mbox{ then } 1 \\&& \mbox{ elif } i[t] = 0 \mbox{ then } 0  \\&& \mbox{ else } r[t -1] \\
+             o &\leftarrow& \mbox{ if } r = 0 \mbox{ and } i = 1 \mbox{ then } 1 \\&& \mbox{ else } 0 \\
+             r &\leftarrow& \mbox{ if } o = 1 \mbox{ then } 1 \\&& \mbox{ elif } i = 0 \mbox{ then } 0  \\&& \mbox{ else } r \\
          \end{array}}
-         a spike generation detecting signal rising, with an internal variable $r[t]$ registering if already detected.}
+         a spike generation detecting signal rising, with an internal variable $r$ registering if already detected.}
         \label{spike1}
     \end{minipage}
 \end{figure}
@@ -492,12 +491,12 @@ The previous developments leads to solutions for several temporal systems, as br
    \includegraphics[width=0.5\textwidth,valign=c]{./delay1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
-             o[t] &\leftarrow& \mbox{ if } v[t] > 1/2 \mbox{ then } 1 \mbox{ else } 0 \\
-             v[t] &\leftarrow& (1-\gamma) \, v[t-1] + \gamma \, i[t] \\ 
+             o &\leftarrow& \mbox{ if } v > 1/2 \mbox{ then } 1 \mbox{ else } 0 \\
+             v &\leftarrow& (1-\gamma) \, v + \gamma \, i \\ 
          \end{array}}
-        a delayed output is implemented. Assuming that $v[t] = 0$, when $i[t]=1$ and remains at this value, we obtain for the delay $T$:
+        a delayed output is implemented. Assuming that $v = 0$, when $i=1$ and remains at this value, we obtain for the delay $T$:
         \eqline{T = -\frac{\log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - e^{-\frac{\log(2)}{T}}.}
-        Here we assume that $i[t] = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.}
+        Here we assume that $i = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.}
         \label{delay1}
     \end{minipage}
 \end{figure}
@@ -510,10 +509,10 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
    \includegraphics[width=0.5\textwidth,valign=c]{./astable1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
-             o[t] &\leftarrow& \mbox{ if } v[t] < 1/3 \mbox{ then } 0 \\&& \mbox{ elif } v[t] > 2/3 \mbox{ then } 1 \\&& \mbox{ else } o[t-1] \\
-             v[t] &\leftarrow& (1-\gamma) \, v[t-1] + \gamma \, (1 - o[t]) \, i[t] \\ 
+             o &\leftarrow& \mbox{ if } v < 1/3 \mbox{ then } 0 \\&& \mbox{ elif } v > 2/3 \mbox{ then } 1 \\&& \mbox{ else } o \\
+             v &\leftarrow& (1-\gamma) \, v + \gamma \, (1 - o) \, i \\ 
          \end{array}}
-        an binary oscillator is implemented. It is stopped if $i[t]=0$ and running for $i[t] = 1$. We obtain for the period $T$:
+        an binary oscillator is implemented. It is stopped if $i=0$ and running for $i = 1$. We obtain for the period $T$:
         \eqline{T = -\frac{2 \, \log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - 2 \, e^{-\frac{\log(2)}{T}}.}}
         \label{astable1}
     \end{minipage}
@@ -521,35 +520,43 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
 
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/delayastable.mpl.out.txt}{{\tt Maple} code}.
 
+\section{Softmax mechanisms} \label{softmax}
+
 \subsection{The explog function} \label{explog}
 
-The maximal and the average operators can be combined, e.g.\footnote{Let us derive the formula:
-\\ - The series  at $\mu \rightarrow 0^+$ is easily obtained from any symbolic calculator writing, e.g.:
-\\\centerline{{\tt series(log(sum(exp(mu * p[k]), k = 1..K)) / mu, mu = 0, 2);}} \\
-\\- There is no obvious series development at $\mu \rightarrow +\infty$ but, considering $p[1] \le p[2] \le \cdots \le p[K]$, without loss of generality,
-i.e., that -for the notation- index's order correspond to decreasing values, we obtain from straightforward algebra:\eqline{\begin{array}{c}
-    \log\left(\sum_{k \in \{1\cdots K\}}  \, \exp(\mu \, p[k])\right) / \mu = p[1] + \rho / \mu\\
-    \rho \defq \log\left(1 + \sum_{k \in \{2\cdots K\}}  \, \exp(-\mu \, (p[1] - p[k]))\right) \\
-    \mbox{ with } 0 \le \rho \le \log\left(1 + (K-1) \, \exp(-\mu \, (p[1] - p[2]))\right) \le \log(K) \\
+The maximal and the average operators can be easily combined. For instance, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, let us define:\eqline{\begin{array}{rcll}
+    o &\defq& \frac{1}{\mu} \, \log\left(\frac{1}{K} \, \sum_{k \in \{1\cdots K\}}  \, \exp(\mu \, i_k)\right) \\
+      &=& \frac{1}{K} \sum_k i_k + O(\mu) & \mbox{(average)} \\
+    &=& \max_k(i_k) - \frac{\log(K)}{\mu} + \frac{O\left(e^{-\nu\,\mu}\right)}{\mu}, \nu > 0 & \mbox{(max)} \\
+    &=& \left.i_1\right|_{i_i = i_2 \cdots = i_K} \\
+    &\in& [-1, 1]\\
 \end{array}}
-so that $\lim_{\mu \rightarrow +\infty} \rho = 0$ and $\rho = o(\mu)$, yielding the expected result.}: \eqline{\begin{array}{rcl}
-    p_{\dagger} &\leftarrow& \log\left(\sum_{k \in K}  \, \exp(\mu \, p[k])\right) / \mu \\
-    &=& \frac{1}{K} \sum_k p_k + \log(K) / \mu + O(\mu) \\
-    &=& \max_k(p[k]) + o\left(\frac{1}{\mu}\right) \\
-\end{array}}
-  where $K$ stands for the left or right sensor related indexes, $p[k]$ stands for the sensor proximity value,
-  and  $\mu > 0$ parameterizes the balance between the max (for large $\mu$) and the average (for small $\mu$)  operators, as shown in Fig.~\ref{explog}.
+with  $\mu > 0$ parameterizing the balance between:
+\\\tab - the average, for small $\mu$, line 2 above,
+\\\tab - the maximun, for large $\mu$, line 3 above, up to an offset $-\log(K)/\mu$,
+\\ as shown in Figure~\ref{explog}.
 \begin{figure}[htbp]
    \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $p[2] = 1/2$, with $p[1] \in [0, 1]$ and $\mu \in \{1, 2, 100\}$, from top to bottom. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
+        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $\mu \in \{0.01, 0.1, 1, 10, 100\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
         \label{explog}
     \end{minipage}
 \end{figure}
 
+From Figure~\ref{explog}, we observe that for $i_k \in [-1, 1]$, $\mu \in [0.01, 100]$ is a reasonable range to approximate the different profiles, so that:
+\\\tab - The $\exp(\cdot)$ function range is in $[-100, 100]$.
+\\\tab - The $\log(\cdot)$ function range is in $[e^{-100} \simeq 1, e^{100}]$.
+These are huge ranges but we may consider the following renormalization:\eqline{\begin{array}{rcll}
+   o &=& \frac{N_i}{\mu} \, \left(\log\left(\frac{1}{K\, N_o} \, \sum_{k \in \{1\cdots K\}}  \, \exp(\mu \,  \frac{i_k}{N_i})\right) + \log(N_o)\right)\\
+   &&N_i = \max_\mu, N_o = \frac{e^{\max_\mu}}{N_l} \\
+\end{array}}
+so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is now $[1, N_l]$, with a small arbitrary value of $N_l$, allowing an implementation with not so big function's range. This is fine, providing that we can implement the $\exp(\cdot)$ and the $\log(\cdot)$ functions with a sufficient numerical precision.
+
+Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
+
 \subsection{Neuronoid approximation of {\tt exp} and {\tt log}}
 
-Taking benefit of the fact that sigmoid is convex ad the exponential function and concave as the logarithm function in some range, we can easily design the following approximations, obtained by some manual intuitive choice of the sigmoid combination and numerical adjustment of the parameters.
+Taking benefit of the fact that sigmoid is convex as the exponential function in some range, and concave as the logarithm function in some range, we can easily design the following approximations, obtained by some manual intuitive choice of the sigmoid combination and numerical adjustment of the parameters. Two examples are given in Figure~\ref{expneuronoid} and Figure~\ref{logneuronoid}. We share these examples to illustrate fact we really can approximate several bounded non-linear function with neuronoid, but we will use another track, to 
 
 \begin{figure}[htbp]
   \includegraphics[width=0.5\textwidth,valign=c]{./expneuronoid.jpg}
@@ -567,9 +574,30 @@ Taking benefit of the fact that sigmoid is convex ad the exponential function an
     \end{minipage}
 \end{figure}
 
-Combining these two approximations leads to a neuronoid implementation of the explog function.
+Given these two approximations, we can implement an approximation of the renormalized {\tt explog} function proposed previously, with $N_l = 1$ in this case.
 
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
+
+\subsection{Neuronoid approximation a softmax operator}
+
+Another track is to consider the programatoid implementation of the maximium operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$: \eqline{\begin{array}{rcll}
+    o &\defq& \max_k(i_k) \\
+     &=& \forall_k \mbox{if }_{\forall l \in \{1, K\}, l \ne k} i_k > i_l \mbox{ then }  i_k \mbox{ else } 0 & \mbox{Max symmetric definition}\\
+     &=& \sum_k And_{l \in \{1, K\}, l \ne k} \left(H(i_k > i_l), …\right) \, i_k & \mbox{Logical implementation}\\
+    &=& \sum_k b_k \, i_k &\\
+    && b_k \defq H\left(\sum_{l \in \{1, K\}, l \ne k} H(i_k - i_l) - K - 1/2\right)  & \mbox{Programmatoid definition}\\
+    &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, b_k \right) & \mbox{Switch mechanism}\\
+    &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, h_k \right) &\\
+    && h_k \defq h\left(\omega \, \left(\sum_{l \in \{1, K\}, l \ne k} H(i_k - i_l) - K - 1/2\right)\right) & \mbox{$b_k$ mollification}\\
+\end{array}}
+
+Let us now consider the modified definition, with $g \in [0, 1]$: \eqline{\begin{array}{rclcl}
+   o &\defq& \multicolumn{3}{l}{\frac{K \, g - g + 1}{K} \, \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + g \, \omega - g \, \omega \, h_k \right)} \\
+      &=& \left.\sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, h_k \right)\right|_{g = 1} &\simeq& \max_k(i_k) \\
+      &=& \left.\frac{1}{K} \, \sum_k \omega' \, h\left(\frac{i_k}{\omega'}\right)\right|_{g = 0} &\simeq& \frac{\sum_k i_k}{K} \\
+ \end{array}} 
+
+With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions.
 
 \section{Comparing {\tt tanh} with othernon linearities}
 
@@ -613,16 +641,18 @@ Here is braincraft challenge original documentation \href{https://github.com/rou
 
 You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
 
-\subsection{Installation of the setup}
-~
-\\- Connect to {\tt https://github.com} with your login.
-\\- Go to the \href{https://github.com/rougier/braincraft}{braincraft challenge} and create a new fork:
+\subsection{Installation of the setup in four steps}
+\begin{enumerate}
+\item Connect to {\tt https://github.com} with your login.
+\item Go to the \href{https://github.com/vthierry/braincraft}{braincraft challenge} and create a new fork:
 \\\centerline{\includegraphics[width=0.9\textwidth]{tuto1.png}}
-\\- Download the repository in SSH read/write mode:
+\item  Download the repository in SSH read/write mode:
 \\\centerline{\includegraphics[width=0.9\textwidth]{tuto2.png}}
-\\-In the braincraft local git directory, run {\tt make test}
-\\~~~~~ + You may have to run {\tt make install}, before.
-\\~~~~~ + You are advised to use a virtual environment, running {\tt make venv}
+\item In the braincraft local git directory, run \\ {\tt make demo}
+\end{enumerate}
+Note: You may have to install:
+\\ \tab {\tt sudo apt install python3-tqdm}\\
+while using a virtual environment, is advised, but not mandatory.
 
 \subsection{Running at the programmatic level}
 
@@ -638,19 +668,21 @@ At the programmatoid level, the system is defined by a set of equations ….
 
 For binary variables $\mbox{{\tt b\_i}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_i}} \in [-1, 1]$, while the parameter $\mbox{{\tt T}} > 0$, the following
 functions, defined previously, are implemented: \\\centerline{\begin{tabular}{ll}
-  {\tt If(b\_1, v\_1, …, v\_0)} & Conditional expression with an odd number of arguments.\\
+  {\tt If\_b(b\_1, b'\_1, …, b'\_0)} & Binary expression with an odd number of arguments.\\
+  {\tt If\_v(b\_1, v\_1, …, v\_0)} & Valued expression with an odd number of arguments.\\
   {\tt And(v\_1, …)} & Conjunction with a variable number of arguments.\\
   {\tt Or(v\_1, …)} & Disjunction with a variable number of arguments.\\
   {\tt Not(v\_1)} & Negation. \\
+  {\tt Latch\_b(b\_1, i\_l)} & Binary memory latch.\\
+  {\tt Latch\_v(v\_1, i\_l)} & Valued memory latch.\\
   {\tt Bprod(b\_1, v\_1, …)} & Sum of binary products, with an even number of arguments.\\
   {\tt Bistable(i\_0, i\_1)} & Two inputs bistable latch. \\
   {\tt Bistable(i\_1)} & One input bistable latch. \\
   {\tt Spikeup(i\_1)} & Spike generation on input rising front. \\
   {\tt Delay(i\_1, T)} & Delayed output. The delay {\tt T} is given in number of global clock event.\\
   {\tt Oscillator(i\_1, T)} & Oscillatory output. The period {\tt T} is given in number of global clock event.\\
+  {\tt Softmax(v\_1, …, g)} & Mean-max operator, with $g \in [0, 1]$, $g=0$ for average, $g=1$ for maximum \\
 \end{tabular}} \\
-In the present version the {\tt explog} mechanism is still to be implemented.
-    
 
 % \subsection{Running at the artificial neural network level}
 

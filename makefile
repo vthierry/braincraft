@@ -1,4 +1,6 @@
 
+dft : demo
+
 # Git synchronisation commands
 
 sync:
@@ -12,13 +14,17 @@ git:
 show:
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
 
-# Installation/re-installation commands
+# This is still in development, do not use
 
-install:
+demo: show
+
+# This is only to be used by vthierry
+
+vthierry-install:
 #	sudo apt install python3-tqdm
 #	git remote add master git@github.com:rougier/braincraft.git
 	git fetch master
-	git commit -a -m 'sync from makefile to fetech'
+	git commit -a -m 'sync from makefile to fetch'
 	git merge master/master
 	cd ../braincraft ; sedgrep -name '*.py' -in atan2 -out arctan2
 

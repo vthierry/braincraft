@@ -1,9 +1,0 @@
-# Task1 implementation as a programmatoid
-{
-  ## Constants values
-  ## Navigation equations
-  d_o = gamma * (p_l - p_r) + alpha * (t_l - t_r),
-  t_l = If(q = 1, H(beta - p_l), 0),
-  t_r = If(q = 0, H(beta - p_r), 0)
-}
-
