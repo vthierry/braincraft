@@ -9,10 +9,8 @@ subs(
   c = 1/1000,	         	### Energy consumption at each step.
   s = 1/100,              	###  Speed: location increment at each steps.
   b = 3/2,	      	 	###  Distance bound between the starting point and the putative energy sources.
-### General constant values
-  omega  = 10, 	        ###  Constant to transforms a neuronoid or a boolean product to a step-function threshold.
-  omega_ = 1000 	        ###  Constant to transforms a neuronoid to the dentity function.
 ,[
+  prgm_options = { omega = 100, neuronoid = false },
   ## Navigation equations
   d_o = gamma * (p_l - p_r) + alpha * (t_l - t_r),
   t_l = If_b(q_p = 1, H(beta - p_l), 0),

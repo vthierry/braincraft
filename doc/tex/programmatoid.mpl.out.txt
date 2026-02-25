@@ -1,0 +1,167 @@
+    |\^/|     Maple 2025 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+# Implementation of the programmatoid mechanisms
+
+## Compiles a set of equation as a piece of code
+### Syntax : prgm_compile(eqs::list(`=`), [prgm_option, …])
+### prgm_options can also be given as the 1st line of the prgm_input
+#### omega = 1000, the default value of omega (used for both Id() function and H() mollification)
+#### all_neuronoid = (true, false}, whether H() functions are mollified to remain with neuronoid only
+
+> prgm_compile := proc(prgm_input)
+>   global Heaviside, prgm_functions, prgm_current_options, prgm_default_options:
+>   local eqs := prgm_input:
+>   prgm_check_syntax(eqs):
+>   Heaviside(0) := 1/2:
+>   # Sets current options after default values, from the proc arguments, then from the prgm_input
+>      prgm_current_options := prgm_default_options:
+>      for o in args[2..nargs] do if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi od:
+>      if op(1, op(1, eqs)) = prgm_options then
+>        map(o -> if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi, op(2, op(1, eqs))):
+>        eqs := [op(2..nops(eqs))]:
+>      fi 
+>   # Modifies iteratively the equation-list toward a fixed point
+>   (proc(eqs :: list(`=`))
+>      local eqs0 := [], eqs1 := eqs, max_iterations := 10:
+>      for t to max_iterations while eqs0 <> eqs1 do
+>        eqs1 := eqs0: eqs0 := prgm_expand_inner_functions(eval(subs(prgm_functions, eqs1)))
+>      od
+>    end)(eqs_input)
+> end:
+Warning, (in prgm_compile) `o` is implicitly declared local
+|../tex/programmatoid.mpl:16|
+Warning, (in prgm_compile) if-then with no else part used as expression
+|../tex/programmatoid.mpl:17|
+Warning, (in anonymous procedure within prgm_compile) `t` is implicitly declared
+local |../tex/programmatoid.mpl:24|
+> prgm_default_options := table(["omega" = 1000, "all_neuronoid" = false]):
+> prgm_current_options := prgm_default_options:
+
+## Defines expandable functions
+
+> prgm_functions := {
+>    h = (v ->
+>        if type(v, constant) then 1/(1+exp(-4*x))
+>        else  'procname(args)'
+>        fi),
+>    Id = (v-> omega * h(v/omega)),
+>    H = (v ->
+>        if type(v, `<=`) then H(H(op(1,v) - op(2,v)))
+>       elif type(v, `>=`) then H(op(2,v) <= op(1,v))
+>       elif type(v, `<`) then Not(H(op(2,v) <= op(1,v)))
+>       elif type(v, `>`) then Not(H(op(1,v) <= op(2,v)))
+>       elif type(v, `=`) then And(H(op(1,v) <= op(2,v)), H(op(2,v) <= op(1,v)))
+>       elif type(v, `<>`) then Not(H(op(1, v) = op(2, v)))
+>       elif type(v, constant) then Heaviside(v)
+>       elif prgm_current_options["all_neuronoid"] then h(omega * v - 1/2)
+>       else 'procname(args)'
+>       fi),
+>   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
+>   Or   = (() -> H(sum(a,rgs[k], k = 1..nargs) + 1/2)),
+>   Not = ((v) -> H(1 - v)),
+>   If_b = ((c, b1, b0) ->
+>     if nargs = 3 then H(b0 - c - 1/2) + H(b1 + c - 3/2)
+>     else If_b(c, b1, If_b(args[3..nargs]))
+>     fi),
+>   If_v = ((c, v1, v0) ->
+>     if nargs = 3 then Bprod(c, v1,(1 - c), v0)
+>     else If_v(c, v1, If_v(args[3..nargs]))
+>     fi),
+>  Bprod = (() ->
+>      if type(nargs, odd) then Bprod(args, 0)
+>      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
+>      fi),
+#  {\tt Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{average}, 1_{maximum}]$ controls the mean-max balance.\\
+>   Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1, o, b_1)),
+>   Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1, o, b_1)),
+>   Bistable = (proc(o, i)
+>        if nargs = 3 then
+>          o = If(And(o = 0, args[2] = 1), 1, And(o = 1, args[3] = 0), 0, o)
+>        else
+>          (proc(o, i)
+>             local i0 := prgm_new_symbol("i0"): i1 := prgm_new_symbol("i1"):
+> 	    o = If(And(o = 0, i1 = 1), 1, And(o = 1, i0 = 0), 0, 0),
+>             i1 = If(And(i1 = 0, i = 1), 1, o = 0, 0, i1),
+>             i0 = If(And(i0 = 0, i = 0), 1, o = 1, 0, i0)
+> 	 end)(o, i)
+>        fi
+>        end),
+>   Spikeup= (proc(o, i)
+>       local r:= prgm_new_symbol("r"):
+>       o = If(And(r = 0, i = 1),  1, 0),
+>       r = If(o = 1, 1, i = 0, 0, r)
+>      end),
+>   Delay= (proc(o, i, T)
+>       local v := prgm_new_symbol("v"), g := if T > 0 then 1 - pow(2, -1/T) else 1 fi:
+>       o = If (v > 1/2, 1, 0),
+>       v = (1 - g) * v + g * i
+>      end),
+>  Oscillator= (proc(o, c, T)
+>      local v := prgm_new_symbol("v"), gamma := if T > 0 then 2 - pow(2, 1-1/T) else 2 fi:
+>      o = If (v < 1/3, 0, 0, v > 2/3, 1, o),
+>      v = (1 - g) * v + g * (1 - o) * c
+>      end)
+> }:
+Warning, (in anonymous procedure within anonymous procedure) `i1` is implicitly
+declared local |../tex/programmatoid.mpl:74|
+> prgm_functions_only_neuronoid := false:
+
+## Expands inner function appending new equations
+
+> prgm_expand_inner_functions := proc(eqs::list(`=`))
+>    global prgm_functions:
+>    local eq1, eq2 := []:
+>    eq1 := map(eq -> if type(op(2, eq), function) then
+>       op(1, eq) = map(proc(a)
+>          local n:
+>          if type(a, function) then 
+> 	    n := prgm_new_symbol():
+> 	    eq2 := [op(eq2), op(prgm_expand_inner_functions([n = a]))]:
+> 	    n
+> 	 else
+> 	    a
+> 	  fi
+>        end, op(2, eq)) fi, eqs):
+>      [op(eq1),op(eq2)]
+> end:
+
+## Checks the syntax of an equation-list
+
+> prgm_check_syntax := proc(eqs)
+>   global prgm_functions:
+>   local function_names := map(eq -> op(1, eq), prgm_functions):
+>   if not type(eq, list) then
+>     error "The  input is not a list (of equations)" fi:
+>  map(proc(l)
+>      global eqs: local eq := eqs[l]:
+>      if not type(eq, `=`) then
+>        error cat("This line number '", l, "' of the input '", eq, "' is not a an equation") fi:
+>      if op(1, eq) = 'prgm_options' then
+>        if i > 1 then
+>      	  error cat("prgm_options '", eq, "' given at line number '", l, "' of the input, instead of the 1st line") fi:
+>        if not ((type(op(2, eq), list) or type(op(2, eq), set)) and convert(map(e -> type(e, name) or (type(e, `=`) and type(op(1, e), name)), op(2, eq)), `and`)) then
+>      	  error cat("prgm_options '", eq, "' given at line number '", l, "' of the input, must be of type `[name = value, ...]` or `{name = value, ...}`") fi:
+>      fi:  
+>      if not type(op(1, eq), name) then
+>          error cat("The left hand side of '", eq, "', line number '", l, "' is not a name") fi:
+>      if type(op(2, eq), function) and not (op(0, op(2, eq)) in function_names) then
+>          error cat("The right hand side of '", eq, "', line number '", l, "' is not a known function") fi:
+>   end, eqs):
+> end:
+>    
+## Creates a new variable, when expanding the code
+
+> prgm_new_symbol := proc(prefix:: String)
+>    global prgm_new_symbol_table:
+>    local name := cat(prefix, '_', nops(op(prgm_new_symbol_table))):
+>    if unassigned(prgm_new_symbol_table[name]) then prgm_new_symbol_table[name] := true: convert(name, name) else prgm_new_symbol(cat(prefix, "_")) fi
+>  end:
+> prgm_new_symbol_table := table():
+
+> save prgm_compile, prgm_default_options, prgm_current_options, prgm_functions, prgm_functions_only_neuronoid, prgm_expand_inner_functions, prgm_check_syntax, prgm_new_symbol, prgm_new_symbol_table, "../../braincraft/programmatoid.mw":
+
+> quit
+memory used=1.1MB, alloc=8.3MB, time=0.03

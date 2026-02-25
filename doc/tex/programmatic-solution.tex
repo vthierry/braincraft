@@ -192,8 +192,11 @@ control the $q_p$ variable.
 \section{Programmatoid computation} \label{programmatoid}
 
 We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on numerical value expressions using an LN-system with the step-function as non-linearity, this writing:
-\eqline{o_n[t] \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}), n \in \{1, N\}}
-where $i_m[t]$ is the $m$-th input at a discrete $t$ and $o_n[t]$ is the $n$-th output, including recurrent system with some outpout corresponding to inputs, while $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
+\eqline{o_n[t] = H(\sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}), n \in \{1, N\}}
+where $i_m[t]$ is the $m$-th input at a discrete $t$ and $o_n[t]$ is the $n$-th output, including recurrent system with some output corresponding to inputs, while $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
+
+For the sake of simplicity if the left hand size correspond to a value at time $t$ and right-hand size to values at $t-1$, which will be always here, and if not informative, temporal indexes are omitted, i.e. the previous equation will be written: 
+\eqline{o_n  \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
 
 The step-function, also called Heaviside function, implements the computation of the sign of a value:
 \eqline{\begin{array}{rcl}
@@ -213,20 +216,16 @@ Considering the pseudo truth table, with $H(0) = 1/2$:
 \eqline{\begin{array}{c|c|c|l|}
                                                              &H(v_1 > v_2) &H(v_1 = v_2) & H(v_1 < v_2) \\\hline
     H(v_1 - v_2)                                      & 1                  &   1/2           & 0 \\
-    2\,H(v_1 - v_2) - 3/2                         & 1/2              &   -1/2         & -3/2 \\
-    H(2\, H(v_1 - v_2) - 3/2)                    & 1                  &   0              & 0 \\
     H(H(v_1 - v_2))                                 & 1                 &   1              & 0 \\
     H(H(v_2 - v_1))                                 & 0                 &   1              & 1 \\
     H(H(v_1 - v_2)) +H(H(v_2 - v_1))-1   & 0                 &   1              & 0 \\ \hline
 \end{array}}  we obtain the expected results.}, considering $true$ as $1$ and $false$ as $0$:
-\eqline{\begin{array}{|c|c|c|l}
-    H(v_1 > v_2)                        & H(v_1 \le v_2)        & H(v_1 = v_2)                                        \\  \hline
-    H(2\, H(v_1 - v_2) - 3/2)           & H(H(v_1 - v_2))      & \begin{array}{l}H(H(v_1 - v_2))+\\H(H(v_2 - v_1)) - 1\end{array}  & \mbox{with } H(0) = 1/2\\ \hline
-    H(v_1 - v_2)                        & 1 - H(v_1 - v_2)      & \begin{array}{r}1 - H(v_1 - v_2)\\+H(v_2 - v_1)  \end{array}   & \mbox{with } H(0) = 0\\
+\eqline{\begin{array}{|c|c|c|c|l}
+    H(v_1 > v_2)                            & H(v_1 \le v_2)                        & H(v_1 = v_2)                                                    & H(v_1 \ne v_2)         \\  \hline
+    \mbox{ not } H(v_1 \le v_2)   & H(H(v_1 - v_2))                      & H(v_1 \le v_2)  \mbox{ and } H(v_2 \le v_1)   & \mbox{ not } H(v_1 = v_2)                  & \mbox{with } H(0) = 1/2\\ \hline
+    H(v_1 - v_2)                            & \mbox{ not } H(v_1 - v_2)     & \mbox{ not } H(v_1 \ne v_2)                          &H(v_1 > v_2) \mbox{ or } H(v_2> v_1)  & \mbox{with } H(0) = 0\\
 \hline\end{array}}
-while $H(v_1 \ne v_2) = 1 - H(v_1 = v_2)$, we thus can implement any numerical comparison as a programmatoid.
-
-Let us notice that all arguments $x$ of the step function $H(\cdot)$, except the term $H(v_1 - v_2)$, verify $|x| \ge 1/2$, this will be reused.
+while $H(v_1 < v_2) = H(v_2 > v_1)$ and $H(v_1 \ge v_2) = H(v_2 \le v_1)$. We thus can implement any numerical comparison as a programmatoid, providing that we can implement boolean expressions, as given now.
 
 \subsection{Boolean expression implementation}
 
@@ -358,7 +357,7 @@ Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0
 \omega' & 10 & 50 & 100 & 200 & 500 & 1000  \\ \hline
 \epsilon_{l,\omega'}(1) & 0.0131 &  0.533 \, 10^{-3} &  0.133 \, 10^{-3} &  0.333 \, 10^{-4} &  0.54\, 10^{-7} &  0.12\, 10^{-7}  \\ \hline
 \end{array}}
-with a negligible error for, say, $\omega'  \le 100$.
+with a negligible error for, say, $\omega'  \ge 100$.
 
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
 
@@ -495,7 +494,7 @@ The previous developments leads to solutions for several temporal systems, as br
              v &\leftarrow& (1-\gamma) \, v + \gamma \, i \\ 
          \end{array}}
         a delayed output is implemented. Assuming that $v = 0$, when $i=1$ and remains at this value, we obtain for the delay $T$:
-        \eqline{T = -\frac{\log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - e^{-\frac{\log(2)}{T}}.}
+        \eqline{T = -\frac{\log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - 2^{-\frac{1}{T}}.}
         Here we assume that $i = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.}
         \label{delay1}
     \end{minipage}
@@ -513,7 +512,7 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
              v &\leftarrow& (1-\gamma) \, v + \gamma \, (1 - o) \, i \\ 
          \end{array}}
         an binary oscillator is implemented. It is stopped if $i=0$ and running for $i = 1$. We obtain for the period $T$:
-        \eqline{T = -\frac{2 \, \log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - 2 \, e^{-\frac{\log(2)}{T}}.}}
+        \eqline{T = -\frac{2 \, \log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  2 - 2^{1-\frac{1}{T}}.}}
         \label{astable1}
     \end{minipage}
 \end{figure}
@@ -649,7 +648,7 @@ Here is braincraft challenge original documentation \href{https://github.com/rou
 
 You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
 
-\subsection{Installation of the setup in four steps}
+\subsection{Installation of the setup}
 \begin{enumerate}
 \item Connect to {\tt https://github.com} with your login.
 \item Go to the \href{https://github.com/vthierry/braincraft}{braincraft challenge} and create a new fork:
@@ -674,23 +673,25 @@ The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challeng
 
 At the programmatoid level, the system is defined by a set of equations ….
 
-For binary variables $\mbox{{\tt b\_i}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_i}} \in [-1, 1]$, while the parameter $\mbox{{\tt T}} > 0$, the following
-functions, defined previously, are implemented: \\\centerline{\begin{tabular}{ll}
-  {\tt If\_b(b\_1, b'\_1, …, b'\_0)} & Binary expression with an odd number of arguments.\\
-  {\tt If\_v(b\_1, v\_1, …, v\_0)} & Valued expression with an odd number of arguments.\\
-  {\tt And(v\_1, …)} & Conjunction with a variable number of arguments.\\
-  {\tt Or(v\_1, …)} & Disjunction with a variable number of arguments.\\
-  {\tt Not(v\_1)} & Negation. \\
-  {\tt Latch\_b(b\_1, i\_l)} & Binary memory latch.\\
-  {\tt Latch\_v(v\_1, i\_l)} & Valued memory latch.\\
-  {\tt Bprod(b\_1, v\_1, …)} & Sum of binary products, with an even number of arguments.\\
-  {\tt Bistable(i\_0, i\_1)} & Two inputs bistable latch. \\
-  {\tt Bistable(i\_1)} & One input bistable latch. \\
-  {\tt Spikeup(i\_1)} & Spike generation on input rising front. \\
-  {\tt Delay(i\_1, T)} & Delayed output. The delay {\tt T} is given in number of global clock event.\\
-  {\tt Oscillator(i\_1, T)} & Oscillatory output. The period {\tt T} is given in number of global clock event.\\
-  {\tt Softmax(v\_1, …, g)} & Mean-max operator, with $g \in [0, 1]$, $g=0$ for average, $g=1$ for maximum \\
-\end{tabular}} \\
+For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
+functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\
+  {\tt v\_o = h(v\_i)} & The normalized sigmoid. \\
+  {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{<0}, 1/2_{1/2}, 1_{>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
+  {\tt b\_ o = If\_b(b\_1, b'\_1, …, b'\_0)} & Binary conditional expression, \\& Implements {\tt if b\_1 then b'\_1 …}. \\
+  {\tt v\_o = If\_v(b\_1, v\_1, …, v\_0)} & Valued conditional expression, \\& Implements {\tt if b\_1 then v\_1 …}. \\
+  {\tt b\_o = And(b\_1, …)} & Conjunction with a variable number of binary  arguments.\\& Implements {\tt b\_1 and b\_2 …} \\
+  {\tt b\_o = Or(b\_1, …)} & Disjunction with a variable number of binary arguments.\\& Implements {\tt b\_1 or b\_2 …} \\
+  {\tt b\_o = Not(b)} & Negation of a binary value. \\& Implements {\tt not b} \\
+  {\tt v\_o = Bprod(b\_1, v\_1, …)} & Sum of binary products\\& Implements {\tt b\_1 \, v\_1 + …}.\\& Default missing value is $0$.\\
+  {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{average}, 1_{maximum}]$ controls the mean-max balance.\\
+  {\tt Latch\_b(b\_o, b\_i, b\_c)} & Binary memory latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
+  {\tt Latch\_v(b\_o, v\_i, b\_c)} & Valued memory latch. \\& {\tt b\_o} is the  output, \\& {\tt v\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
+  {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bistable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
+  {\tt Bistable(b\_o, b\_i)} & One input bistable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the two-way input.\\
+  {\tt Spikeup(b\_o, b\_i)} & Spike generation on input rising front. \\& {\tt b\_i} is the input, which rising front is detected.\\
+  {\tt Delay(b\_o, b\_i, T)} & Delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the delayed input.\\
+  {\tt Oscillator(b\_o, b\_c, T)} & Oscillatory output. \\& $\mbox{{\tt T}} > 0$ is the period, in number of global clock event. \\& {\tt b\_o} is the  output, \\& $\mbox{{\tt b\_c}} \in \{0_{stop}, 1_{run}\}$ is the control.\\
+\end{tabular}}
 
 % \subsection{Running at the artificial neural network level}
 

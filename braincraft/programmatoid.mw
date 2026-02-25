@@ -1,0 +1,68 @@
+prgm_compile := proc (prgm_input) local eqs, o; global Heaviside, 
+prgm_functions, prgm_current_options, prgm_default_options; eqs := prgm_input;
+prgm_check_syntax(eqs); Heaviside(0) := 1/2; prgm_current_options := 
+prgm_default_options; for o in _passed[2 .. _npassed] do if type(o,`=`) then 
+prgm_current_options[op(1,o)] := op(2,o) else prgm_current_options[o] := true 
+end if end do; (if op(1,op(1,eqs)) = prgm_options then map(o -> if type(o,`=`)
+then prgm_current_options[op(1,o)] := op(2,o) else prgm_current_options[o] := 
+true end if,op(2,op(1,eqs))); eqs := [op(2 .. nops(eqs))] end if)(proc (eqs::
+list(`=`)) local eqs0, eqs1, max_iterations, t; eqs0 := []; eqs1 := eqs; 
+max_iterations := 10; for t to max_iterations while eqs0 <> eqs1 do eqs1 := 
+eqs0; eqs0 := prgm_expand_inner_functions(eval(subs(prgm_functions,eqs1))) end
+do end proc)(eqs_input) end proc;
+prgm_default_options := table([("all_neuronoid")=false,("omega")=1000]);
+prgm_current_options := prgm_default_options;
+prgm_functions := {And = (() -> H(sum(_passed[k],k = 1 .. _npassed)-_npassed+1/
+2)), Bprod = (() -> if type(_npassed,odd) then Bprod(_passed,0) else sum(omega*
+h(_passed[2*i]/omega+omega(_passed[2*i]-1)),k = 1 .. 1/2*_npassed) end if), 
+Delay = proc (o, i, T) local v, g; v := prgm_new_symbol("v"); g := if 0 < T 
+then 1-pow(2,-1/T) else 1 end if; o = If(1/2 < v,1,0), v = (1-g)*v+g*i end proc
+, H = (v -> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`>=`) then H
+(op(2,v) <= op(1,v)) elif type(v,`<`) then Not(H(op(2,v) <= op(1,v))) elif type
+(v,`>`) then Not(H(op(1,v) <= op(2,v))) elif type(v,`=`) then And(H(op(1,v) <=
+op(2,v)),H(op(2,v) <= op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))
+) elif type(v,constant) then Heaviside(v) elif prgm_current_options[
+"all_neuronoid"] then h(omega*v-1/2) else 'procname(_passed)' end if), Id = (v
+-> omega*h(v/omega)), If_b = ((c, b1, b0) -> if _npassed = 3 then H(b0-c-1/2)+H
+(b1+c-3/2) else If_b(c,b1,If_b(_passed[3 .. _npassed])) end if), If_v = ((c, v1
+, v0) -> if _npassed = 3 then Bprod(c,v1,1-c,v0) else If_v(c,v1,If_v(_passed[3
+.. _npassed])) end if), Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1,o,b_1)), Not =
+(v -> H(1-v)), Or = (() -> H(sum(a,rgs[k],k = 1 .. _npassed)+1/2)), Spikeup = 
+proc (o, i) local r; r := prgm_new_symbol("r"); o = If(And(r = 0,i = 1),1,0), r
+= If(o = 1,1,i = 0,0,r) end proc, h = (v -> if type(v,constant) then 1/(1+exp(-\
+4*x)) else 'procname(_passed)' end if), Bistable = proc (o, i) if _npassed = 3
+then o = If(And(o = 0,_passed[2] = 1),1,And(o = 1,_passed[3] = 0),0,o) else 
+proc (o, i) local i0, i1; i0 := prgm_new_symbol("i0"); i1 := prgm_new_symbol(
+"i1"); o = If(And(o = 0,i1 = 1),1,And(o = 1,i0 = 0),0,0), i1 = If(And(i1 = 0,i
+= 1),1,o = 0,0,i1), i0 = If(And(i0 = 0,i = 0),1,o = 1,0,i0) end proc(o,i) end 
+if end proc, Oscillator = proc (o, c, T) local v, gamma; v := prgm_new_symbol(
+"v"); gamma := if 0 < T then 2-pow(2,1-1/T) else 2 end if; o = If(v < 1/3,0,0,2
+/3 < v,1,o), v = (1-g)*v+g*(1-o)*c end proc};
+prgm_functions_only_neuronoid := false;
+prgm_expand_inner_functions := proc (eqs::list(`=`)) local eq1, eq2; global 
+prgm_functions; eq2 := []; eq1 := map(eq -> if type(op(2,eq),function) then op(
+1,eq) = map(proc (a) local n; if type(a,function) then n := prgm_new_symbol();
+eq2 := [op(eq2), op(prgm_expand_inner_functions([n = a]))]; n else a end if end
+proc,op(2,eq)) end if,eqs); [op(eq1), op(eq2)] end proc;
+prgm_check_syntax := proc (eqs) local function_names; global prgm_functions; 
+function_names := map(eq -> op(1,eq),prgm_functions); if not type(eq,list) then
+error "The  input is not a list (of equations)" end if; map(proc (l) local eq;
+global eqs; eq := eqs[l]; if not type(eq,`=`) then error cat(
+"This line number '",l,"' of the input '",eq,"' is not a an equation") end if;
+if op(1,eq) = 'prgm_options' then if 1 < i then error cat("prgm_options '",eq,
+"' given at line number '",l,"' of the input, instead of the 1st line") end if;
+if not ((type(op(2,eq),list) or type(op(2,eq),set)) and convert(map(e -> type(e
+,name) or type(e,`=`) and type(op(1,e),name),op(2,eq)),`and`)) then error cat(
+"prgm_options '",eq,"' given at line number '",l,"' of the input, must be of ty\
+pe `[name = value, ...]` or `{name = value, ...}`") end if end if; if not type(
+op(1,eq),name) then error cat("The left hand side of '",eq,"', line number '",l
+,"' is not a name") end if; if type(op(2,eq),function) and not op(0,op(2,eq))
+in function_names then error cat("The right hand side of '",eq,
+"', line number '",l,"' is not a known function") end if end proc,eqs) end proc
+;
+prgm_new_symbol := proc (prefix::String) local name; global 
+prgm_new_symbol_table; name := cat(prefix,'_',nops(op(prgm_new_symbol_table)));
+if unassigned(prgm_new_symbol_table[name]) then prgm_new_symbol_table[name] :=
+true; convert(name,name) else prgm_new_symbol(cat(prefix,"_")) end if end proc
+;
+prgm_new_symbol_table := table([]);

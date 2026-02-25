@@ -12,17 +12,20 @@
 
 
 ## Delay calculation
-> solve(subs({v0 = 0, v(t) = 1/2, z0 = 1}, sl), {t});
-                                        ln(2)
-                               {t = - ---------}
-                                      ln(1 - g)
+> eq_t := solve(subs({v0 = 0, v(t) = 1/2, z0 = 1}, sl), {t});
+                                            ln(2)
+                           eq_t := {t = - ---------}
+                                          ln(1 - g)
 
-> solve(subs({v0 = 0, v(t) = 1/2, z0 = 1}, sl), {g});
-                                        ln(2)
-                            {g = -exp(- -----) + 1}
-                                          t
+> eq_g := solve(subs({v0 = 0, v(t) = 1/2, z0 = 1}, sl), {g});
+                                            ln(2)
+                        eq_g := {g = -exp(- -----) + 1}
+                                              t
 
-##### latex(%); latex(%%);
+##### latex(eq_t); latex(eq_g);
+> evalb(expand(eval(subs(eq_g, g = 1 - 2^(-1/t)))));
+                                      true
+
 
 ## Oscillation period
 
@@ -32,16 +35,19 @@
 
 
 ### Period derivation
-> map(u->op(1,u) = 2 * op(2, u), solve(subs({v0 = 1/3, v(t) = 2/3, z0 = 1}, sl), {t}));
-                                       2 ln(2)
-                               {t = - ---------}
-                                      ln(1 - g)
+> eq_t := map(u->op(1,u) = 2 * op(2, u), solve(subs({v0 = 1/3, v(t) = 2/3, z0 = 1}, sl), {t}));
+                                           2 ln(2)
+                           eq_t := {t = - ---------}
+                                          ln(1 - g)
 
-> map(u->op(1,u) = 2 * op(2, u), solve(subs({v0 = 1/3, v(t) = 2/3, z0 = 1}, sl), {g}));
-                                         ln(2)
-                           {g = -2 exp(- -----) + 2}
-                                           t
+> eq_g := map(u->op(1,u) = 2 * op(2, u), solve(subs({v0 = 1/3, v(t) = 2/3, z0 = 1}, sl), {g}));
+                                             ln(2)
+                       eq_g := {g = -2 exp(- -----) + 2}
+                                               t
 
-##### latex(%); latex(%%);
+##### latex(eq_t); latex(eq_g);
+> evalb(expand(eval(subs(eq_g, g = 2 - 2^(1-1/t)))));
+                                      true
+
 > quit
-memory used=18.0MB, alloc=43.3MB, time=0.10
+memory used=18.3MB, alloc=43.3MB, time=0.21
