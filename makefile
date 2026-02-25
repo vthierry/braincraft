@@ -1,17 +1,19 @@
 
 dft : demo
 
-# Git synchronisation commands
+# Git synchronisation command
 
 sync:
 	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc
 	rm -f `find -name 'nohup.out' -o -name '*~'`
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
+# Opening some  web pages
+
 git:
 	$(BROWSER) https://github.com/vthierry/braincraft
 
-show:
+home:
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
 
 # This is still in development, do not use

@@ -8,8 +8,9 @@
 ## Sigmoid function 
 > h := x -> 1/(1+exp(-4*x)):
 
-> read "../../braincraft/programmation.mw":
-Error, unable to read `../../braincraft/programmation.mw`
+> read "../../braincraft/programmatoid.mw":
+Warning, (in prgm_compile) if-then with no else part used as expression
+|../../braincraft/programmatoid.mw:6|
 
 ## Numerical test of a max function
 
@@ -29,4 +30,4 @@ Error, unable to read `../../braincraft/programmation.mw`
 
 
 > quit
-memory used=95.4MB, alloc=144.3MB, time=1.25
+memory used=95.7MB, alloc=144.3MB, time=0.53

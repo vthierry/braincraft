@@ -3,7 +3,7 @@
 ## Sigmoid function 
 h := x -> 1/(1+exp(-4*x)):
 
-read "../../braincraft/programmation.mw":
+read "../../braincraft/programmatoid.mw":
 
 ## Numerical test of a max function
 

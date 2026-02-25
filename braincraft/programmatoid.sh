@@ -1,9 +1,11 @@
-# Implements the translation of equations to python code
+#!/bin/bash
 
-read "../programmatoid.mw":
+if [ -z "$1" ] ; then echo "Usage $0 \$prgmd-name" ; exit -1 ; fi
+if [ \! -f "$1.mpl" ] ; then echo "The file '$1.mpl' is not found" ; exit -2 ; fi
 
-if type(filename, name) then printf("%s", "\n\tDo not run this maple script directly but use challenge_callback.sh.\n\n"): `quit`(1) fi:
-
+cat <<EOF  | maple -q 
+read "./programmatoid.mw":
+filename:= "$1": 
 printf("Reading \"%s\" …\n", filename):
 input := FileTools[Text][ReadFile](cat(filename, ".mpl")):
 input := StringTools[RegSubs]("#[^\n]*\n" = "", input):
@@ -14,3 +16,4 @@ prgm_output := prgm_compile(prgm_input):
 printf("Ouputing \"%s\" …\n", filename):
 print(prgm_output):
 printf("\n… done\n"):
+EOF
