@@ -13,6 +13,7 @@
   \\+ Bug dans softmax
   \\+ Souci dans new variable
   \\+ Valider programmatoid.sh
+
 } \newpage
 
 \section{The braincraft challenge}
@@ -675,7 +676,26 @@ The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challeng
   
 \subsection{Running at the programmatoid level}
 
-At the programmatoid level, the system is defined by a set of equations ….
+At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}
+subs({
+    T = 10, # The delay
+    constantName = constantValue
+},
+[
+  prgm_options = { omega = 10 },
+  a = H(H(b)),
+  Delay(b, , T)
+])\end{verbatim}
+
+\subsubsection{Programmatoid options}
+
+Available options: \\\begin{tabular}{|l|l|l|l|} \hline
+{\bf Name}                & {\bf Type}                & {\bf Default value} & \\ \hline
+{\tt omega}                & large positive float & 1000 & The $\omega$ used for both Id() function and H() mollification \\
+{\tt all\_neuronoid}   & Boolean                   &  false & Wether H() functions are mollified to remain with neuronoid only \\
+\hline \end{tabular}
+
+\subsubsection{Programmatoid functions}
 
 For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
 functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\

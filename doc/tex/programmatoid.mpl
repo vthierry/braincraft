@@ -1,36 +1,11 @@
 # Implementation of the programmatoid mechanisms
 
-## Compiles a set of equation as a piece of code
-### Syntax : prgm_compile(eqs::list(`=`), [prgm_option, …])
-### prgm_options can also be given as the 1st line of the prgm_input
-#### omega = 1000, the default value of omega (used for both Id() function and H() mollification)
-#### all_neuronoid = (true, false}, whether H() functions are mollified to remain with neuronoid only
+## Defines the option list with their default values
 
-prgm_compile := proc(prgm_input)
-  global Heaviside, prgm_functions, prgm_current_options, prgm_default_options:
-  local eqs := prgm_input:
-  prgm_check_syntax(eqs):
-  Heaviside(0) := 1/2:
-  # Sets current options after default values, from the proc arguments, then from the prgm_input
-     prgm_current_options := op(prgm_default_options):
-     map(o -> if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi, [args[2..nargs]]):
-     if op(1, op(1, eqs)) = prgm_options then
-       map(o -> if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi, op(2, op(1, eqs))):
-       eqs := [op(2..nops(eqs), eqs)]:
-     fi:
-     lprint(eqs);
-  # Modifies iteratively the equation-list toward a fixed point
-  eval(subs(prgm_current_options, (proc(eqs)
-     local eqs0 := [], eqs1 := eqs, max_iterations := 10, t:
-     for t to max_iterations do
-        eqs0 := prgm_expand_inner_functions(eval(subs(prgm_functions, eqs1))):
-        if eqs0 = eqs1 then break else eqs1 := eqs0 fi
-     od:
-     eqs0
-   end)(eqs)))
-end:
-prgm_default_options := table([omega = 1000, all_neuronoid = false]):
-prgm_current_options := op(prgm_default_options):
+prgm_default_options := table([
+   omega = 1000,
+   all_neuronoid = false
+]):
 
 ## Defines expandable functions
 
@@ -52,7 +27,7 @@ prgm_functions := {
       else 'procname(args)'
       fi),
   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
-  Or   = (() -> H(sum(a,rgs[k], k = 1..nargs) + 1/2)),
+  Or   = (() -> H(sum(args[k], k = 1..nargs) + 1/2)),
   Not = ((v) -> H(1 - v)),
   If_b = ((c, b1, b0) ->
     if nargs = 3 then H(b0 - c - 1/2) + H(b1 + c - 3/2)
@@ -97,7 +72,71 @@ prgm_functions := {
      v = (1 - g) * v + g * (1 - o) * c
      end)
 }:
-prgm_functions_only_neuronoid := false:
+
+## Compiles a set of equation as a piece of code
+
+prgm_compile := proc(prgm_input:: list)
+  global Heaviside, prgm_functions, prgm_current_options, :
+  Heaviside(0) := 1/2:
+
+  try
+    ## Extracts options from the prgm_input
+    prgm_input := (proc(prgm_input)
+       global prgm_default_options: local prgm_input_ := prgm_input,  prgm_options_ := {}:
+       if type(prgm_input_, list) and nops(prgm_input_) > 0 then
+         if type(op(1, prgm_input_), `=`) and op(1, op(1, prgm_input_)) = prgm_options then
+           if type(op(2, op(1, prgm_input_)), {list,  set}) then
+              prgm_options_ := convert(op(2, op(1, prgm_input_)), set)
+           else
+             error "The prgm_options is not a set or a list, it must." : 
+           fi:
+           prgm_input_  := [op(2..nops(prgm_input_), prgm_input_)]:
+         fi:
+         map(eq -> if type(eq, `=`) and op(1, eq) = prgm_options then error "A prgm_options is not given at the 1st line, it must." fi, prgm_input_)
+       else
+         error "The prgm_input is not a non empty list, it must."
+       fi:
+       map(o -> if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi, prgm_options_):
+       prgm_input_
+     end)(prgm_input):
+
+     ## Checks the syntax of the equaltion list
+     if not (proc(eqs)
+       global prgm_functions:
+       local function_names := map(eq -> op(1, eq), prgm_functions),
+       check := proc(ok)
+         if ok then true else lprint(cat("Syntax error: ", op(map( a-> convert(a, string), [args[2..nops([args])]])))): false fi
+       end:
+       if not check(type(eqs, list), "The  input is not a list (of equations)") then
+         false
+       else   
+         convert(map(proc(l, eqs)
+            local eq := eqs[l]:
+           check(type(eq, `=`) or (type(eq, function) and op(0, eq) in function_names),  "This line number '", l, "' of the input '", eq, "' is not an equation or a known function") and
+           check((not type(eq, `=`)) or type(op(1, eq), name),  "The left hand side of '", eq, "', line number '", l, "' is not a name") and
+           check((not type(eq, `=`) and type(op(2, eq), function)) or op(0, op(2, eq)) in function_names,  "The right hand side of '", eq, "', line number '", l, "' is not a known function")
+         end, [$1..nops(eqs)], eqs), `and`)
+      fi
+     end)() then error "A syntax option has been detected, no compilation" fi:
+  catch
+    return []
+  end try:
+
+  prgm_input 
+
+  # Modifies iteratively the equation-list toward a fixed point
+  (proc(eqs)
+     local eqs0 := [], eqs1 := eqs, t, max_iterations := 10:
+     for t to max_iterations do
+        eqs0 := prgm_expand_inner_functions(eval(subs(prgm_functions, eqs1))):
+	lprint(eqs1, "=>", eqs0):
+        if eqs0 = eqs1 then break else eqs1 := eqs0 fi
+     od:
+     eqs0
+   end)(prgm_input)))
+end:
+prgm_current_options := op(prgm_default_options):
+
 
 ## Expands inner function appending new equations
 
@@ -109,7 +148,7 @@ prgm_expand_inner_functions := proc(eqs::list(`=`))
         op(1, eq) = map(proc(a)
            local n:
            if type(a, function) then 
-	      n := prgm_new_symbol():
+	      n := prgm_new_symbol(""):
 	      eq2 := [op(eq2), op(prgm_expand_inner_functions([n = a]))]:
 	      n
 	   else
@@ -119,48 +158,26 @@ prgm_expand_inner_functions := proc(eqs::list(`=`))
      [op(eq1),op(eq2)]
 end:
 
-## Checks the syntax of an equation-list
 
-prgm_check_syntax := proc(eqs)
-  global prgm_functions:
-  local
-    function_names := map(eq -> op(1, eq), prgm_functions),
-    syntax_error := proc() lprint(cat("Syntax error: ", op(map( a-> convert(a, string), [args])))) end:
-  if not type(eqs, list) then
-    syntax_error("The  input is not a list (of equations)") fi:
- map(proc(l, eqs)
-     local eq := eqs[l]:
-     if type(eq, `=`) and op(1, eq) = prgm_options then
-        if l > 1 then
-     	  syntax_error("prgm_options '", eq, "' given at line number '", l, "' of the input, instead of the 1st line") fi:
-        if not (type(op(2, eq), {list,  set}) and convert(map(e -> type(e, name) or (type(e, `=`) and type(op(1, e), name)), op(2, eq)), `and`)) then
-     	   syntax_error("prgm_options '", eq, "' given at line number '", l, "' of the input, has a wrong syntax") fi:
-     else
-        if not (type(eq, `=`) or (type(eq, function) and op(0, eq) in function_names)) then 
-          syntax_error("This line number '", l, "' of the input '", eq, "' is not an equation or a known function") fi:
- 	if type(eq, `=`) and not type(op(1, eq), name) then
-          syntax_error("The left hand side of '", eq, "', line number '", l, "' is not a name") fi:
-       if type(eq, `=`) and type(op(2, eq), function) and not (op(0, op(2, eq)) in function_names) then
-          syntax_error("The right hand side of '", eq, "', line number '", l, "' is not a known function") fi
-  fi:	  
-  end, [$1..nops(eqs)], eqs):
-end:
-   
 ## Creates a new variable, when expanding the code
 
 prgm_new_symbol := proc(prefix:: string)
-   global prgm_new_symbol_table:
-   local name := convert(cat(prefix, '_', nops(op(prgm_new_symbol_table))), name):
-   if unassigned(prgm_new_symbol_table[name]) then prgm_new_symbol_table[name] := true: name else prgm_new_symbol(cat(prefix, "_")) fi
+   global prgm_new_symbol_count: prgm_new_symbol_count := prgm_new_symbol_count + 1:
+   convert(cat(prefix, '_', prgm_new_symbol_count), name):
  end:
-prgm_new_symbol_table := table():
+prgm_new_symbol_count := 0:
 
-save prgm_compile, prgm_default_options, prgm_current_options, prgm_functions, prgm_functions_only_neuronoid, prgm_expand_inner_functions, prgm_check_syntax, prgm_new_symbol, prgm_new_symbol_table, "../../braincraft/programmatoid.mw":
+## Saves the package
+
+save prgm_default_options,  prgm_functions, prgm_compile, prgm_current_options, prgm_new_symbol, prgm_new_symbol_count, "../../braincraft/programmatoid.mw":
+
+## Functional tests 
 
 prgm_compile([
   prgm_options = { omega = 10 },
   a = H(H(b)),
-  Delay(o_t, i_t, 10)
+  Delay(b, i_t, 10)
  ]);
+ 
  
   

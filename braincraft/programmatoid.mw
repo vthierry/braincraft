@@ -1,18 +1,28 @@
-prgm_compile := proc (prgm_input) local eqs; global Heaviside, prgm_functions,
-prgm_current_options, prgm_default_options; eqs := prgm_input; 
-prgm_check_syntax(eqs); Heaviside(0) := 1/2; prgm_current_options := op(
-prgm_default_options); map(o -> if type(o,`=`) then prgm_current_options[op(1,o
-)] := op(2,o) else prgm_current_options[o] := true end if,[_passed[2 .. 
-_npassed]]); if op(1,op(1,eqs)) = prgm_options then map(o -> if type(o,`=`) 
-then prgm_current_options[op(1,o)] := op(2,o) else prgm_current_options[o] := 
-true end if,op(2,op(1,eqs))); eqs := [op(2 .. nops(eqs),eqs)] end if; lprint(
-eqs); eval(subs(prgm_current_options,proc (eqs) local eqs0, eqs1, 
-max_iterations, t; eqs0 := []; eqs1 := eqs; max_iterations := 10; for t to 
-max_iterations do eqs0 := prgm_expand_inner_functions(eval(subs(prgm_functions,
-eqs1))); if eqs0 = eqs1 then break else eqs1 := eqs0 end if end do; eqs0 end 
-proc(eqs))) end proc;
-prgm_default_options := table([(all_neuronoid)=false,(omega)=1000]);
-prgm_current_options := table([(all_neuronoid)=false,(omega)=1000]);
+prgm_compile := proc (prgm_input::list, prgm_options::set) global Heaviside, 
+prgm_functions, prgm_current_options, prgm_default_options; Heaviside(0) := 1/2
+; if not prgm_check_syntax(prgm_input) then return ["Syntax error, no output"]
+end if; prgm_current_options := op(prgm_default_options); map(o -> if type(o,
+`=`) then prgm_current_options[op(1,o)] := op(2,o) else prgm_current_options[o]
+:= true end if,prgm_options); eval(subs(prgm_current_options,proc (eqs) local 
+eqs0, eqs1, t, max_iterations; eqs0 := []; eqs1 := eqs; max_iterations := 10; 
+for t to max_iterations do eqs0 := prgm_expand_inner_functions(eval(subs(
+prgm_functions,eqs1))); lprint(eqs1,"=>",eqs0); if eqs0 = eqs1 then break else
+eqs1 := eqs0 end if end do; eqs0 end proc(prgm_input))) end proc;
+prgm_extract_options := proc (prgm_input) local prgm_input_, prgm_options_; 
+prgm_input_ := prgm_input; prgm_options_ := {}; if not (type(prgm_input_,list)
+and 0 < nops(prgm_input_)) then error 
+"The prgm_input is not a non empty list, it must." end if; if type(op(1,
+prgm_input_),`=`) and op(1,op(1,prgm_input_)) = prgm_options then if type(op(2,
+op(1,prgm_input_)),{list, set}) then prgm_options_ := convert(op(2,op(1,
+prgm_input_)),set) else error 
+"The prgm_options is not a set or a list, it must." end if; prgm_input_ := [op(
+2 .. nops(prgm_input_),prgm_input_)] end if; map(eq -> if type(eq,`=`) and op(1
+,eq) = prgm_options then error 
+"A prgm_options is not given at the 1st line, it must." end if,prgm_input_); 
+lprint("prgm_extract_options",prgm_input_,prgm_options_); prgm_input_, 
+prgm_options_ end proc;
+prgm_default_options := table([(omega)=1000,(all_neuronoid)=false]);
+prgm_current_options := table([(omega)=1000,(all_neuronoid)=false]);
 prgm_functions := {And = (() -> H(sum(_passed[k],k = 1 .. _npassed)-_npassed+1/
 2)), Bprod = (() -> if type(_npassed,odd) then Bprod(_passed,0) else sum(omega*
 h(_passed[2*i]/omega+omega(_passed[2*i]-1)),k = 1 .. 1/2*_npassed) end if), 
@@ -27,9 +37,9 @@ If_b = ((c, b1, b0) -> if _npassed = 3 then H(b0-c-1/2)+H(b1+c-3/2) else If_b(c
 ,b1,If_b(_passed[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed =
 3 then Bprod(c,v1,1-c,v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])) end if),
 Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1,o,b_1)), Not = (v -> H(1-v)), Or = (()
--> H(sum(a,rgs[k],k = 1 .. _npassed)+1/2)), Spikeup = proc (o, i) local r; r :=
-prgm_new_symbol("r"); o = If(And(r = 0,i = 1),1,0), r = If(o = 1,1,i = 0,0,r) 
-end proc, h = (v -> if type(v,constant) then 1/(1+exp(-4*x)) else 'procname(
+-> H(sum(_passed[k],k = 1 .. _npassed)+1/2)), Spikeup = proc (o, i) local r; r
+:= prgm_new_symbol("r"); o = If(And(r = 0,i = 1),1,0), r = If(o = 1,1,i = 0,0,r
+) end proc, h = (v -> if type(v,constant) then 1/(1+exp(-4*x)) else 'procname(
 _passed)' end if), Bistable = proc (o, i) if _npassed = 3 then o = If(And(o = 0
 ,_passed[2] = 1),1,And(o = 1,_passed[3] = 0),0,o) else proc (o, i) local i0, i1
 ; i0 := prgm_new_symbol("i0"); i1 := prgm_new_symbol("i1"); o = If(And(o = 0,i1
@@ -41,27 +51,23 @@ then 2-pow(2,1-1/T) else 2 end if; o = If(v < 1/3,0,0,2/3 < v,1,o), v = (1-g)*v
 prgm_functions_only_neuronoid := false;
 prgm_expand_inner_functions := proc (eqs::list(`=`)) local eq1, eq2; global 
 prgm_functions; eq2 := []; eq1 := map(eq -> if type(op(2,eq),function) then op(
-1,eq) = map(proc (a) local n; if type(a,function) then n := prgm_new_symbol();
-eq2 := [op(eq2), op(prgm_expand_inner_functions([n = a]))]; n else a end if end
-proc,op(2,eq)) else eq end if,eqs); [op(eq1), op(eq2)] end proc;
-prgm_check_syntax := proc (eqs) local function_names, syntax_error; global 
-prgm_functions; function_names := map(eq -> op(1,eq),prgm_functions); 
-syntax_error := proc () lprint(cat("Syntax error: ",op(map(a -> convert(a,
-string),[_passed])))) end proc; if not type(eqs,list) then syntax_error(
-"The  input is not a list (of equations)") end if; map(proc (l, eqs) local eq;
-eq := eqs[l]; if type(eq,`=`) and op(1,eq) = prgm_options then if 1 < l then 
-syntax_error("prgm_options '",eq,"' given at line number '",l,
-"' of the input, instead of the 1st line") end if; if not (type(op(2,eq),{list,
-set}) and convert(map(e -> type(e,name) or type(e,`=`) and type(op(1,e),name),
-op(2,eq)),`and`)) then syntax_error("prgm_options '",eq,
-"' given at line number '",l,"' of the input, has a wrong syntax") end if else
-if not (type(eq,`=`) or type(eq,function) and op(0,eq) in function_names) then
-syntax_error("This line number '",l,"' of the input '",eq,
-"' is not an equation or a known function") end if; if type(eq,`=`) and not 
-type(op(1,eq),name) then syntax_error("The left hand side of '",eq,
-"', line number '",l,"' is not a name") end if; if type(eq,`=`) and type(op(2,
-eq),function) and not op(0,op(2,eq)) in function_names then syntax_error(
-"The right hand side of '",eq,"', line number '",l,"' is not a known function")
-end if end if end proc,[$ 1 .. nops(eqs)],eqs) end proc;
-prgm_new_symbol := 'prgm_new_symbol';
-prgm_new_symbol_table := table([]);
+1,eq) = map(proc (a) local n; if type(a,function) then n := prgm_new_symbol("")
+; eq2 := [op(eq2), op(prgm_expand_inner_functions([n = a]))]; n else a end if 
+end proc,op(2,eq)) else eq end if,eqs); [op(eq1), op(eq2)] end proc;
+prgm_check_syntax := proc (eqs) local function_names, check; global 
+prgm_functions; function_names := map(eq -> op(1,eq),prgm_functions); check :=
+proc (ok) if ok then true else lprint(cat("Syntax error: ",op(map(a -> convert(
+a,string),[_passed[2 .. nops([_passed])]])))); false end if end proc; if not 
+check(type(eqs,list),"The  input is not a list (of equations)") then true else
+convert(map(proc (l, eqs) local eq; eq := eqs[l]; check(type(eq,`=`) or type(eq
+,function) and op(0,eq) in function_names,"This line number '",l,
+"' of the input '",eq,"' is not an equation or a known function") and check(not
+type(eq,`=`) or type(op(1,eq),name),"The left hand side of '",eq,
+"', line number '",l,"' is not a name") and check(not type(eq,`=`) and type(op(
+2,eq),function) or op(0,op(2,eq)) in function_names,"The right hand side of '",
+eq,"', line number '",l,"' is not a known function") end proc,[$ 1 .. nops(eqs)
+],eqs),`and`) end if end proc;
+prgm_new_symbol := proc (prefix::string) global prgm_new_symbol_count; 
+prgm_new_symbol_count := prgm_new_symbol_count+1; convert(cat(prefix,'_',
+prgm_new_symbol_count),name) end proc;
+prgm_new_symbol_count := 0;

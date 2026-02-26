@@ -6,10 +6,6 @@
 # Implementation of the programmatoid mechanisms
 
 ## Compiles a set of equation as a piece of code
-### Syntax : prgm_compile(eqs::list(`=`), [prgm_option, …])
-### prgm_options can also be given as the 1st line of the prgm_input
-#### omega = 1000, the default value of omega (used for both Id() function and H() mollification)
-#### all_neuronoid = (true, false}, whether H() functions are mollified to remain with neuronoid only
 
 > prgm_compile := proc(prgm_input)
 >   global Heaviside, prgm_functions, prgm_current_options, prgm_default_options:
@@ -103,7 +99,7 @@
 >      end)
 > }:
 Warning, (in anonymous procedure within anonymous procedure) `i1` is implicitly
-declared local |../tex/programmatoid.mpl:77|
+declared local |../tex/programmatoid.mpl:73|
 > prgm_functions_only_neuronoid := false:
 
 ## Expands inner function appending new equations
@@ -161,7 +157,7 @@ declared local |../tex/programmatoid.mpl:77|
 >    if unassigned(prgm_new_symbol_table[name]) then prgm_new_symbol_table[name] := true: name else prgm_new_symbol(cat(prefix, "_")) fi
 >  end:
 Error, (in prgm_new_symbol) local variable `name` is used out of scope
-|../tex/programmatoid.mpl:153|
+|../tex/programmatoid.mpl:149|
 > prgm_new_symbol_table := table():
 
 > save prgm_compile, prgm_default_options, prgm_current_options, prgm_functions, prgm_functions_only_neuronoid, prgm_expand_inner_functions, prgm_check_syntax, prgm_new_symbol, prgm_new_symbol_table, "../../braincraft/programmatoid.mw":
@@ -170,10 +166,10 @@ Warning, unassigned variable `prgm_new_symbol` in save statement
 > prgm_compile([
 >   prgm_options = { omega = 10 },
 >   a = H(H(b)),
->   Delay(o_t, i_t, 10)
+>   Delay(b, i_t, 10)
 >  ]);
-[a = H(H(b)), Delay(o_t,i_t,10)]
-[a = unknown(prgm_new_symbol()), o_t = If(1/2 < prgm_new_symbol("v"), 1, 0),
+[a = H(H(b)), Delay(b,i_t,10)]
+[a = unknown(prgm_new_symbol()), b = If(1/2 < prgm_new_symbol("v"), 1, 0),
 
     prgm_new_symbol("v") =
 
@@ -188,4 +184,4 @@ Warning, unassigned variable `prgm_new_symbol` in save statement
 >  
 >   
 > quit
-memory used=1.2MB, alloc=8.3MB, time=0.03
+memory used=1.2MB, alloc=8.3MB, time=0.01
