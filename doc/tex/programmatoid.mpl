@@ -22,8 +22,8 @@ prgm_functions := {
       #elif type(v, `>`) then Not(H(op(1,v) <= op(2,v)))
       elif type(v, `=`) then And(H(op(1,v) <= op(2,v)), H(op(2,v) <= op(1,v)))
       elif type(v, `<>`) then Not(H(op(1, v) = op(2, v)))
-      elif type(v, constant) then Heaviside(v)
       elif prgm_current_options[all_neuronoid] then h(omega * v - 1/2)
+      elif type(v, constant) then Heaviside(v)
       else H(v)
       fi),
   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
@@ -41,7 +41,12 @@ prgm_functions := {
      if type(nargs, odd) then Bprod(args, 0)
      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
      fi),
-###  {\tt Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{average}, 1_{maximum}]$ controls the mean-max balance.\\
+ Softmax = (proc()
+   local
+     g := args[nargs],
+     b := (k, a) -> H(add(H(a[k]>a[l]), l = 1..k-1) + add(H(a[k]>=a[l]), l = k+1..nops(a)) - nops(a) + 3/2):
+     add((g/nargs + (1-g) * b(k, [args[1..nargs-1]])) * args[k], k = 1..nargs-1)
+     end),
   Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1, o, b_1)),
   Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1, o, b_1)),
   Bistable = (proc(o, i)
@@ -56,17 +61,17 @@ prgm_functions := {
 	 end)(o, i)
        fi
        end),
-  Spikeup= (proc(o, i)
+  Spikeup = (proc(o, i)
       local r:= prgm_new_symbol("r"):
       o = If_b(And(r = 0, i = 1),  1, 0),
       r = If_b(o = 1, 1, i = 0, 0, r)
      end),
-  Delay= (proc(o, i, T)
+  Delay = (proc(o, i, T)
       local v := prgm_new_symbol("v"), g := if T > 0 then 1 - 2^(-1/T) else 1 fi:
       o = If_b(v > 1/2, 1, 0),
       v = (1 - g) * v + g * i
      end),
- Oscillator= (proc(o, c, T)
+ Oscillator = (proc(o, c, T)
      local v := prgm_new_symbol("v"), gamma := if T > 0 then 2 - 2^(1-1/T) else 2 fi:
      o = If_b(v < 1/3, 0, 0, v > 2/3, 1, o),
      v = (1 - g) * v + g * (1 - o) * c
@@ -76,10 +81,8 @@ prgm_functions := {
 ## Compiles a set of equation as a piece of code
 
 prgm_compile := proc(prgm_input:: list)
-  global Heaviside:
   local eqs, result := table():
-  Heaviside(0) := 1/2:
-
+ 
   try
     ### Extracts options from the prgm_input
     eqs := (proc(prgm_input)

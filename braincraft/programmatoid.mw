@@ -6,34 +6,38 @@ Delay = proc (o, i, T) local v, g; v := prgm_new_symbol("v"); g := if 0 < T
 then 1-2^(-1/T) else 1 end if; o = If_b(1/2 < v,1,0), v = (1-g)*v+g*i end proc,
 H = (v -> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`<`) then Not(
 H(op(2,v) <= op(1,v))) elif type(v,`=`) then And(H(op(1,v) <= op(2,v)),H(op(2,v
-) <= op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif type(v,
-constant) then Heaviside(v) elif prgm_current_options[all_neuronoid] then h(
-omega*v-1/2) else H(v) end if), Id = (v -> omega*h(v/omega)), If_b = ((c, b1, 
-b0) -> if _npassed = 3 then H(b0-c-1/2)+H(b1+c-3/2) else If_b(c,b1,If_b(_passed
-[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed = 3 then Bprod(c,
-v1,1-c,v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])) end if), Latch_b = ((o,
-b_1, b_c) -> If_v(b_c = 1,o,b_1)), Not = (v -> H(1-v)), Or = (() -> H(sum(
-_passed[k],k = 1 .. _npassed)+1/2)), Spikeup = proc (o, i) local r; r := 
-prgm_new_symbol("r"); o = If_b(And(r = 0,i = 1),1,0), r = If_b(o = 1,1,i = 0,0,
-r) end proc, h = (v -> if type(v,constant) then 1/(1+exp(-4*x)) else h(v) end 
-if), Bistable = proc (o, i) if _npassed = 3 then o = If_b(And(o = 0,_passed[2]
-= 1),1,And(o = 1,_passed[3] = 0),0,o) else proc (o, i) local i0, i1; i0 := 
-prgm_new_symbol("i0"); i1 := prgm_new_symbol("i1"); o = If_b(And(o = 0,i1 = 1),
-1,And(o = 1,i0 = 0),0,0), i1 = If_b(And(i1 = 0,i = 1),1,o = 0,0,i1), i0 = If_b(
-And(i0 = 0,i = 0),1,o = 1,0,i0) end proc(o,i) end if end proc, Oscillator = 
-proc (o, c, T) local v, gamma; v := prgm_new_symbol("v"); gamma := if 0 < T 
-then 2-2^(1-1/T) else 2 end if; o = If_b(v < 1/3,0,0,2/3 < v,1,o), v = (1-g)*v+
-g*(1-o)*c end proc};
-prgm_compile := proc (prgm_input::list) local eqs, result; global Heaviside; 
-result := table(); Heaviside(0) := 1/2; try eqs := proc (prgm_input) local eqs;
-eqs := prgm_input; if type(prgm_input,list) and 0 < nops(prgm_input) then if 
-type(op(1,prgm_input),`=`) and op(1,op(1,prgm_input)) = prgm_options then if 
-type(op(2,op(1,prgm_input)),{list, set}) then map(proc (o) global 
-prgm_current_options; if type(o,`=`) then prgm_current_options[op(1,o)] := op(2
-,o) else prgm_current_options[o] := true end if end proc,op(2,op(1,prgm_input))
-) else error "Syntax error: The prgm_options is not a set or a list, it must."
-end if; eqs := [op(2 .. nops(prgm_input),prgm_input)] end if; map(eq -> if type
-(eq,`=`) and op(1,eq) = prgm_options then error 
+) <= op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif 
+prgm_current_options[all_neuronoid] then h(omega*v-1/2) elif type(v,constant) 
+then Heaviside(v) else H(v) end if), Id = (v -> omega*h(v/omega)), If_b = ((c,
+b1, b0) -> if _npassed = 3 then H(b0-c-1/2)+H(b1+c-3/2) else If_b(c,b1,If_b(
+_passed[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed = 3 then 
+Bprod(c,v1,1-c,v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])) end if), 
+Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1,o,b_1)), Latch_b = ((o, b_1, b_c) -> 
+If_v(b_c = 1,o,b_1)), Not = (v -> H(1-v)), Or = (() -> H(sum(_passed[k],k = 1
+.. _npassed)+1/2)), Softmax = proc () local g, b, k; g := _passed[_npassed]; b
+:= (k, a) -> local l; H(add(H(a[l] < a[k]),l = 1 .. k-1)+add(H(a[l] <= a[k]),l
+= k+1 .. nops(a))-nops(a)+3/2); add((g/_npassed+(1-g)*b(k,[_passed[1 .. 
+_npassed-1]]))*_passed[k],k = 1 .. _npassed-1) end proc, Spikeup = proc (o, i)
+local r; r := prgm_new_symbol("r"); o = If_b(And(r = 0,i = 1),1,0), r = If_b(o
+= 1,1,i = 0,0,r) end proc, h = (v -> if type(v,constant) then 1/(1+exp(-4*x)) 
+else h(v) end if), Bistable = proc (o, i) if _npassed = 3 then o = If_b(And(o =
+0,_passed[2] = 1),1,And(o = 1,_passed[3] = 0),0,o) else proc (o, i) local i0, 
+i1; i0 := prgm_new_symbol("i0"); i1 := prgm_new_symbol("i1"); o = If_b(And(o =
+0,i1 = 1),1,And(o = 1,i0 = 0),0,0), i1 = If_b(And(i1 = 0,i = 1),1,o = 0,0,i1),
+i0 = If_b(And(i0 = 0,i = 0),1,o = 1,0,i0) end proc(o,i) end if end proc, 
+Oscillator = proc (o, c, T) local v, gamma; v := prgm_new_symbol("v"); gamma :=
+if 0 < T then 2-2^(1-1/T) else 2 end if; o = If_b(v < 1/3,0,0,2/3 < v,1,o), v =
+(1-g)*v+g*(1-o)*c end proc};
+prgm_compile := proc (prgm_input::list) local eqs, result; result := table(); 
+try eqs := proc (prgm_input) local eqs; eqs := prgm_input; if type(prgm_input,
+list) and 0 < nops(prgm_input) then if type(op(1,prgm_input),`=`) and op(1,op(1
+,prgm_input)) = prgm_options then if type(op(2,op(1,prgm_input)),{list, set}) 
+then map(proc (o) global prgm_current_options; if type(o,`=`) then 
+prgm_current_options[op(1,o)] := op(2,o) else prgm_current_options[o] := true 
+end if end proc,op(2,op(1,prgm_input))) else error 
+"Syntax error: The prgm_options is not a set or a list, it must." end if; eqs 
+:= [op(2 .. nops(prgm_input),prgm_input)] end if; map(eq -> if type(eq,`=`) and
+op(1,eq) = prgm_options then error 
 "Syntax error: A prgm_options is not given at the 1st line, it must." end if,
 eqs) else error 
 "Syntax error: The prgm_input is not a non empty list, it must." end if; eqs 

@@ -1,6 +1,6 @@
 \documentclass[a4]{article}
 \usepackage[left=2cm,right=3cm,top=1cm,bottom=1cm]{geometry}
-\usepackage{graphicx} \usepackage[export]{adjustbox}
+\usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
 \newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
@@ -10,10 +10,7 @@
 \title{Programmatoid and neuronoid computations}
 
 \begin{document} \tableofcontents {\tt ~ Ongoing:
-  \\+ Bug dans softmax
-  \\+ Souci dans new variable
-  \\+ Valider programmatoid.sh
-
+  \\+ …/..
 } \newpage
 
 \section{The braincraft challenge}
@@ -87,7 +84,7 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
   but is implementable in the neuronoid framework discussed in the sequel. In brief:
   \eqline{H(x) \, y \simeq \omega' \, h(y/\omega' + \omega \, h(\omega \, x) - \omega)}
   where $h(\cdot)$ is the sigmoid function, and $\omega$ and $\omega'$ are sufficiently large numbers.
-\begin{figure}[htbp]
+\begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
         \caption{Representation of energy profile when cumulating energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
@@ -163,7 +160,7 @@ control the $q_p$ variable.
        \multicolumn{3}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
        g_c &\leftarrow& \mbox{if } g_c = 0  \mbox{ and } \eta > g_e  \mbox{ then } 1 \mbox{ elif } g_c = 1 \mbox{ and } 2 \, \eta < g_e  \mbox{ then } 0 \mbox{ else } g_c \\
     \end{array}} In the sequel, we are going to derive a generic way to compile such an expression with binary values as a programmatoid .
-\begin{figure}[htbp]
+\begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./task1b.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
         \caption{Representation of $g_c$ value at different level of energy with the indication of the direction change.}
@@ -252,9 +249,11 @@ Let us also notice that all arguments $x$ of the step function $H(\cdot)$ still 
 
 A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  with a binary variable $b_1 \in \{0, 1\}$ writes: \eqline{\begin{array}{rcl}
      v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
-    &=& (1 - b_1) \, v_0  + b_1 \, v_1 \\
+    &=& b_1 \, v_1 + (1 - b_1) \, v_0 \\
     \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
-    &=& H(v_0 + (1 - b_1) - 3/2) + H(v_1 + b_1 - 3/2) \\ &=& H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2) \\ &=& H(H(v_ 0 - b_1 - 1/2) + H(v_1 + b_1 - 3/2)) \\
+    &=& H(v_1 + b_1 - 3/2) + H(v_0 + (1 - b_1) - 3/2) \\
+    &=& H(v_1 + b_1 - 3/2) + H(v_0 - b_1 - 1/2) \\
+    &=& H(H(v_1 + b_1 - 3/2) + H(v_0 - b_1 - 1/2)) \\
 \end{array}}
 as easy to verify, using for instance a truth table. Here:
 \\- products with $(1 - b_1)$ and $b_1$ behaves as switches between $v_o$ and $v_1$
@@ -449,7 +448,7 @@ The previous developments leads to solutions for several temporal systems, as br
 
 \subsubsection{Bistable mechanisms}
 
-\begin{figure}[h]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./bistable2.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
@@ -461,7 +460,7 @@ The previous developments leads to solutions for several temporal systems, as br
     \end{minipage}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./bistable1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
@@ -477,7 +476,7 @@ The previous developments leads to solutions for several temporal systems, as br
 
 \subsubsection{Spike generation}
 
-\begin{figure}[h]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./spike1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
@@ -491,7 +490,7 @@ The previous developments leads to solutions for several temporal systems, as br
 
 \subsubsection{Delay}
 
-\begin{figure}[h]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./delay1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
@@ -509,7 +508,7 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
 
 \subsubsection{Oscillation}
 
-\begin{figure}[h]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./astable1.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{With: \eqline{\begin{array}{rcl}
@@ -539,7 +538,7 @@ with  $\mu > 0$ parameterizing the balance between:
 \\\tab - the average, for small $\mu$, line 2 above,
 \\\tab - the maximun, for large $\mu$, line 3 above, up to an offset $-\log(K)/\mu$,
 \\ as shown in Figure~\ref{explog}.
-\begin{figure}[htbp]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
         \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $\mu \in \{0.01, 0.1, 1, 10, 100\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
@@ -562,7 +561,7 @@ Derivations of this section are available as \href{https://raw.githubusercontent
 
 Taking benefit of the fact that sigmoid is convex as the exponential function in some range, and concave as the logarithm function in some range, we can easily design the following approximations, obtained by some manual intuitive choice of the sigmoid combination and numerical adjustment of the parameters. Two examples are given in Figure~\ref{expneuronoid} and Figure~\ref{logneuronoid}. We share these examples to illustrate fact we really can approximate several bounded non-linear function with neuronoid, but we will use another track, to 
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./expneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{Approximation in the $[-1, 1]$ interval of the exponential function, in blue, by a sigmoid combination, in green: \eqline{0.345 + 2.34 \,h(x - 1) + 1.226 \, h(x): } yielding a ${\cal L}_1$ error of $0.05$, the error being drawn in red.}
@@ -570,7 +569,7 @@ Taking benefit of the fact that sigmoid is convex as the exponential function in
     \end{minipage}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./logneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{Approximation in the $[0, 10]$ interval of the logarithm $\log(1 + x)$ function, in blue, by a sigmoid combination, in green: \eqline{-2.48 + 4.42 \,h(x/10) + 0.54 \, h(x/2): } yielding a ${\cal L}_1$ error of $0.05$, the error being drawn in red.}
@@ -584,32 +583,36 @@ Derivations of this section are available as \href{https://raw.githubusercontent
 
 \subsection{Neuronoid approximation a softmax operator}
 
-Another track is to consider the programatoid implementation of the maximium operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$: \eqline{\begin{array}{rcll}
-    o &\defq& \max_k(i_k) \\
-     &=& \forall_k \mbox{if }_{\forall l \in \{1, K\}, l \ne k} i_k > i_l \mbox{ then }  i_k \mbox{ else } 0 & \mbox{Max symmetric definition}\\
-     &=& \sum_k And_{l \in \{1, K\}, l \ne k} \left(H(i_k > i_l), …\right) \, i_k & \mbox{Logical implementation}\\
-    &=& \sum_k b_k \, i_k &\\
-    && b_k \defq H\left(\sum_{l \in \{1, K\}, l \ne k} H(i_k - i_l) - K - 1/2\right)  & \mbox{Programmatoid definition}\\
-    &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, b_k \right) & \mbox{Switch mechanism}\\
-    &\simeq& \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, h_k \right) &\\
-    && h_k \defq h\left(\omega \, \left(\sum_{l \in \{1, K\}, l \ne k} h(\omega* (i_k - i_l)) - K - 1/2\right)\right) & \mbox{$b_k$ mollification}\\
+Another track is to consider the programatoid implementation of the maximum operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, as a weighted sum:
+\eqline{o \defq \max_k(i_k) = \sum_k b_k \, i_k}
+with:
+\eqline{b_k \defq And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l),}
+So that $b_k = 1$ if $i_k$ is the first instanciation of the max value \footnote{
+First, assume that all $i_k$ are different; then $b_k = 1$ if and only if $\forall l \ne k, i_k > i_l$, yielding the expected result.\\
+Then, if more than one value corresponds to $\max_k(i_k)$, let us consider $k_0 = \mbox{ argmin} \{k, k = \max_k(i_k)\}$. \\
+For $k_0$, $And_{l \in \{k_0+1, K\}} H(i_{k_0} \ge i_l) = 1$ because it is a maximum and $And_{l \in \{1, k_0-1\}} H(i_{k_0} >  i_l) =1$ because no previous maximum is encountered, by definition. Then for subsequent values $k_1 = \max_k(i_k)$, because there is $k_0 < k_1$ with $i_{k_0} = i_{k_1}$, then $And_{l \in \{1, k_1-1\}} H(i_{k_1} >  i_l) = 0$, so that we only have one occurrence of $i_k$ which is selected.}, thus with a form similar to the average operator $\mbox{mean}_k(i_k) = 1/K \, \sum_k b_k \, i_k$.
+
+Then, we easily derive:
+\eqline{\begin{array}{rcl}
+    b_k &\defq& And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l) \\
+    \multicolumn{3}{l}{\mbox{while, expanding the $And$ operator}}\\
+    &=&  H\left(\sum_{l \in \{1, k-1\}}  H(i_k >  i_l) + \sum_{l \in \{k+1, K\}} H(i_k \ge i_l) - K + 3/2\right). \\
+    \multicolumn{3}{l}{\mbox{Then introducing a linearly combination of both operators}}\\
+    b_k &\rightarrow& \frac{g}{K} + (1 - g) \, b_k, \;\;\; g \in [0_{maximum}, 1_{\mbox{average}}],\\
+    \multicolumn{3}{l}{\mbox{we now can balance between maximum and average.}}
 \end{array}}
 
-Let us now consider the modified definition, with $g \in [0, 1]$: \eqline{\begin{array}{rclcl}
-   o &\defq& \multicolumn{3}{l}{\frac{K \, g - g + 1}{K} \, \sum_k \omega' \, h\left(\frac{i_k}{\omega'} + g \, \omega - g \, \omega \, h_k \right)} \\
-      &=& \left.\sum_k \omega' \, h\left(\frac{i_k}{\omega'} + \omega - \omega \, h_k \right)\right|_{g = 1} &\simeq& \max_k(i_k) \\
-      &=& \left.\frac{1}{K} \, \sum_k \omega' \, h\left(\frac{i_k}{\omega'}\right)\right|_{g = 0} &\simeq& \frac{\sum_k i_k}{K} \\
- \end{array}} 
+With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}. The formula can also be mollified if required.
 
-With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}.
-
-\begin{figure}[htbp]
+\begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./softmax.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $g = 0$ it is closed to linear average, whereas for $g = 1$ it is close to $\max(x, 1/2)$.}
+        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $g = 1$ it is exactly a linear average, whereas for $g = 0$ it is close to $\max(x, 1/2)$}.
         \label{softmax}
     \end{minipage}
 \end{figure}
+
+Derivations of this subsection are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/softmax.mpl.out.txt}{{\tt Maple} code}.
 
 \section{Comparing {\tt tanh} with other non linearities}
 
@@ -635,7 +638,7 @@ and are drawn in the Figure~\ref{sigmoidatan}.
 \\ - The {Arctan} and {Softsign} profiles are smoother than the Tanh profile, whereas we are looking here for sharper profiles in order to better approxximate the step-function. They also have higher maximal curvatures $\kappa_{max}$ which means that the curvature is more inhomogeneous than for the Tanh profile, and they do not correspond to biologically plausible activation functions \cite{cessac_neuron_2007}, despite the fact they could be of great interest in machine learning \cite{szandala_review_2020}.
 \\ - The \href{https://en.wikipedia.org/wiki/Error_function}{error function}, Erf, based profile is very closed numerically from the Tanh profile, with a finite ${\cal L}_1\simeq -0.028$ small distance magnitude, and a ${\cal L}_0 < 2\%$ small distance magnitude, with similar maximal curvatures $\kappa_{max}$ up to $1\%$, and is also quoted as a biologically plausible activation functions \cite{cessac_neuron_2007}. Though its sharpness is a bit better than fro teh Tanh profile, with a better repartition of the curvature, all algebraic derivations made in this paper would not have as easy as its is now.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./sigmoidatan.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
       \caption{Comparision between  the normalized Tanh profile in red, the Erf profile in green, the Arctan profile in blue and the Softsign in orange, i.e., from the sharpest to the smoothest.}
@@ -707,7 +710,7 @@ functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{l
   {\tt b\_o = Or(b\_1, …)} & Disjunction with a variable number of binary arguments.\\& Implements {\tt b\_1 or b\_2 …} \\
   {\tt b\_o = Not(b)} & Negation of a binary value. \\& Implements {\tt not b} \\
   {\tt v\_o = Bprod(b\_1, v\_1, …)} & Sum of binary products\\& Implements {\tt b\_1 \, v\_1 + …}.\\& Default missing value is $0$.\\
-  {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{average}, 1_{maximum}]$ controls the mean-max balance.\\
+  {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{maximum}, 1_{average}]$ controls the mean-max balance.\\
   {\tt Latch\_b(b\_o, b\_i, b\_c)} & Binary memory latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
   {\tt Latch\_v(b\_o, v\_i, b\_c)} & Valued memory latch. \\& {\tt b\_o} is the  output, \\& {\tt v\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
   {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bistable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
