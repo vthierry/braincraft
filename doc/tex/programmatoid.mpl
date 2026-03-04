@@ -192,10 +192,11 @@ prgm_compile := proc(prgm_input:: list)
 
   result[prgm_flattened] := eqs:
 
-  ## Detects the input
+  ## Detects the input and output
  result[inputs] := indets(eqs, name) minus convert(map(eq -> if type(eq, `=`) then op(1, eq) else eq fi, eqs), set):
+ result[outputs] := convert(map(eq -> if type(eq, `=`) then op(1, eq) fi, result[prgm_inputs] ), set) minus indets(map(eq -> if type(eq, `=`) then op(2, eq) else eq fi, eqs)):
 
- op(result)  
+ op(result)
 end:
 prgm_current_options := op(prgm_default_options):
 
@@ -213,11 +214,11 @@ save prgm_default_options,  prgm_functions, prgm_compile, prgm_current_options, 
 
 ## Functional tests 
 
-prgm_compile([
+r := prgm_compile([
   prgm_options = { omega = 10 },
   a = H(H(b)),
   Delay(b, i_t, 10)
- ]):
+ ]);
  
  
   

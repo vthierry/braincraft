@@ -73,7 +73,9 @@ else a end if; eqs1 := map(eq -> if type(eq,`=`) then op(1,eq) = expand_args(op
 (2,eq)) else eq end if,eqs0); [op(eqs1), op(map(e -> op(1,e),op(op(eqs2))))] 
 end proc(eqs); result[prgm_flattened] := eqs; result[inputs] := indets(eqs,name
 ) minus convert(map(eq -> if type(eq,`=`) then op(1,eq) else eq end if,eqs),set
-); op(result) end proc;
+); result[outputs] := convert(map(eq -> if type(eq,`=`) then op(1,eq) end if,
+result[prgm_inputs]),set) minus indets(map(eq -> if type(eq,`=`) then op(2,eq)
+else eq end if,eqs)); op(result) end proc;
 prgm_current_options := table([(all_neuronoid)=false,(omega)=1000]);
 prgm_new_symbol := proc (prefix::string) global prgm_new_symbol_count; 
 prgm_new_symbol_count := prgm_new_symbol_count+1; convert(cat(prefix,'_',
