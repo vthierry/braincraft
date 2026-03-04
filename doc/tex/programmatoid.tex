@@ -549,11 +549,12 @@ with  $\mu > 0$ parameterizing the balance between:
 From Figure~\ref{explog}, we observe that for $i_k \in [-1, 1]$, $\mu \in [0.01, 100]$ is a reasonable range to approximate the different profiles, so that:
 \\\tab - The $\exp(\cdot)$ function range is in $[-100, 100]$.
 \\\tab - The $\log(\cdot)$ function range is in $[e^{-100} \simeq 1, e^{100}]$.
-These are huge ranges but we may consider the following renormalization:\eqline{\begin{array}{rcll}
-   o &=& \frac{N_i}{\mu} \, \left(\log\left(\frac{1}{K\, N_o} \, \sum_{k \in \{1\cdots K\}}  \, \exp(\mu \,  \frac{i_k}{N_i})\right) + \log(N_o)\right)\\
-   &&N_i = \max_\mu, N_o = \frac{e^{\max_\mu}}{N_l} \\
+\\ These are huge ranges but we may consider the following renormalization:\eqline{\begin{array}{rcll}
+    i_k &\rightarrow& \frac{i_k}{\mu} \\ 
+    o  &\rightarrow& \frac{o}{\mu} \\ 
+   o &=& \log\left(\frac{1}{K} \, \sum_{k \in \{1\cdots K\}}  \, \exp(i_k)\right) \\
 \end{array}}
-so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is now $[1, N_l]$, with a small arbitrary value of $N_l$, allowing an implementation with not so big function's range. This is fine, providing that we can implement the $\exp(\cdot)$ and the $\log(\cdot)$ functions with a sufficient numerical precision.
+so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is now $[1, e]$, allowing an implementation with not so big function's range. This is fine, providing that we can implement the $\exp(\cdot)$ and the $\log(\cdot)$ functions with a sufficient numerical precision, because, we noa are working with small values of $i_k$.
 
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
@@ -564,7 +565,7 @@ Taking benefit of the fact that sigmoid is convex as the exponential function in
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./expneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Approximation in the $[-1, 1]$ interval of the exponential function, in blue, by a sigmoid combination, in green: \eqline{0.345 + 2.34 \,h(x - 1) + 1.226 \, h(x): } yielding a ${\cal L}_1$ error of $0.05$, the error being drawn in red.}
+      \caption{Approximation in the $[-1, 1]$ interval of the exponential function, in blue, by a sigmoid combination, in green: \eqline{0.182 + 2.34 \,h(x - 1) + 1.55 \, h(x/2): } yielding a ${\cal L}_1$ error of $0.01$, the error being drawn in red.}
         \label{expneuronoid}
     \end{minipage}
 \end{figure}
@@ -572,13 +573,31 @@ Taking benefit of the fact that sigmoid is convex as the exponential function in
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./logneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Approximation in the $[0, 10]$ interval of the logarithm $\log(1 + x)$ function, in blue, by a sigmoid combination, in green: \eqline{-2.48 + 4.42 \,h(x/10) + 0.54 \, h(x/2): } yielding a ${\cal L}_1$ error of $0.05$, the error being drawn in red.}
+      \caption{Approximation in the $[1, e]$ interval of the logarithm $\log(x)$ function, in blue, by a sigmoid combination, in green: \eqline{-5.10 + 2.60 \,h(x/2) + 4.70 \, h(x/10): } yielding a ${\cal L}_1$ error of $0.001$, the error being drawn in red.}
         \label{logneuronoid}
     \end{minipage}
 \end{figure}
 
 Given these two approximations, we can implement an approximation of the renormalized {\tt explog} function proposed previously, with $N_l = 1$ in this case.
 
+Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
+
+\subsection{Neuronoid approximation of valued product.}
+
+Let us now consider two values $v_i \in [-1, 1], i \in \{1, 2\}$, and apply the basic formula:
+\eqline{\exp(\log(v_1)+\log(v_2)) = v_1 \, v_2}
+in such a way that the the $\log()$ and $\exp()$ functions are used within the ranges defined previously. We obtain:
+
+\eqline{\begin{array}{rclcl}
+    l(v_i) &\defq& \frac{e-1}{2} \, v_i + \frac{e+1}{2} &\in& [1_{v_i = -1}, e_{v_i = 1}], \\
+    l(v_1, v_2) &\defq& \log(l(v_1)) + \log(l(v_2)) -1 &\in& [-1, 1] , \\
+    b &\defq& \frac{4}{(e -1)^2}  &c& \defq \mbox{coth}\left(\frac{1}{2}\right) \\
+    p(v_1, v_2) &\defq& b \, e^{l(v_1, v_2)} - c \, (v_1 + v_2 + c) \\
+    &=& v_1 \, v_2
+\end{array}}
+
+Therefore,  valued products can be approximated by neuronoids. This for instance quite useful for mechanism of gain control or using adaptative mechanisms, as for instance a softmax mechanism discussed now.
+    
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{Neuronoid approximation a softmax operator}
@@ -592,17 +611,22 @@ First, assume that all $i_k$ are different; then $b_k = 1$ if and only if $\fora
 Then, if more than one value corresponds to $\max_k(i_k)$, let us consider $k_0 = \mbox{ argmin} \{k, k = \max_k(i_k)\}$. \\
 For $k_0$, $And_{l \in \{k_0+1, K\}} H(i_{k_0} \ge i_l) = 1$ because it is a maximum and $And_{l \in \{1, k_0-1\}} H(i_{k_0} >  i_l) =1$ because no previous maximum is encountered, by definition. Then for subsequent values $k_1 = \max_k(i_k)$, because there is $k_0 < k_1$ with $i_{k_0} = i_{k_1}$, then $And_{l \in \{1, k_1-1\}} H(i_{k_1} >  i_l) = 0$, so that we only have one occurrence of $i_k$ which is selected.}, thus with a form similar to the average operator $\mbox{mean}_k(i_k) = 1/K \, \sum_k b_k \, i_k$.
 
-Then, we easily derive:
+We easily derive:
 \eqline{\begin{array}{rcl}
     b_k &\defq& And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l) \\
     \multicolumn{3}{l}{\mbox{while, expanding the $And$ operator}}\\
     &=&  H\left(\sum_{l \in \{1, k-1\}}  H(i_k >  i_l) + \sum_{l \in \{k+1, K\}} H(i_k \ge i_l) - K + 3/2\right). \\
-    \multicolumn{3}{l}{\mbox{Then introducing a linearly combination of both operators}}\\
-    b_k &\rightarrow& \frac{g}{K} + (1 - g) \, b_k, \;\;\; g \in [0_{maximum}, 1_{\mbox{average}}],\\
-    \multicolumn{3}{l}{\mbox{we now can balance between maximum and average.}}
 \end{array}}
 
-With this definition we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}. The formula can also be mollified if required.
+Then, introducing a linearly combination of both operators:
+\eqline{\begin{array}{rcl}
+    o &\defq& g \, \left(\frac{1}{K} \sum_k i_k \right) + (1-g) \, \left(\sum_k b_k \, i_k \right) \\
+   &=& \sum_k \frac{q}{K} \, i_k + \sum_k b_k \, ((1-g)  \, i_k), \\
+\end{array}}
+we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}. The formula can also be mollified if required.
+It is a correct programmatoid mechanism, because $g$ is a constant, so we only have either product with a constant or with a binary value.
+
+We also could have considered $g$ as an input value, yielding product of two valued inputs, thus involving mechanisms discussed previously.
 
 \begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./softmax.jpg}
@@ -702,14 +726,18 @@ Available options: \\\begin{tabular}{|l|l|l|l|} \hline
 
 For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
 functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\
-  {\tt v\_o = h(v\_i)} & The normalized sigmoid. \\
-  {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{<0}, 1/2_{1/2}, 1_{>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
-  {\tt b\_ o = If\_b(b\_1, b'\_1, …, b'\_0)} & Binary conditional expression, \\& Implements {\tt if b\_1 then b'\_1 …}. \\
-  {\tt v\_o = If\_v(b\_1, v\_1, …, v\_0)} & Valued conditional expression, \\& Implements {\tt if b\_1 then v\_1 …}. \\
+  {\tt v\_o = h(v)} & The normalized sigmoid. \\
+  {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{v<0}, 1/2_{v=0}, 1_{v>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
+  {\tt v\_o = Id(v)} & Identity function\\& Converted to a neuronoid approximative identity  when the option {\tt prgm["neuronoid"] =  true}.\\
   {\tt b\_o = And(b\_1, …)} & Conjunction with a variable number of binary  arguments.\\& Implements {\tt b\_1 and b\_2 …} \\
   {\tt b\_o = Or(b\_1, …)} & Disjunction with a variable number of binary arguments.\\& Implements {\tt b\_1 or b\_2 …} \\
   {\tt b\_o = Not(b)} & Negation of a binary value. \\& Implements {\tt not b} \\
-  {\tt v\_o = Bprod(b\_1, v\_1, …)} & Sum of binary products\\& Implements {\tt b\_1 \, v\_1 + …}.\\& Default missing value is $0$.\\
+  {\tt b\_ o = If\_b(b\_1, b'\_1, …, b'\_0)} & Binary conditional expression, \\& Implements {\tt if b\_1 then b'\_1 …}. \\
+  {\tt v\_o = If\_v(b\_1, v\_1, …, v\_0)} & Valued conditional expression, \\& Implements {\tt if b\_1 then v\_1 …}. \\
+  {\tt v\_o = Exp\_v(v\_1)} & Exponential function approximation \\& Implements $v_1 \in [-1, 1], e^{v_1} \in [1/e, e] \simeq [0.368, 2.718]$ \\
+  {\tt v\_o = Log\_v(v\_1)} & Natural logarithm approximation \\& Implements $v_1 \in [1, e], \log(v_1) \in [0, 1]$ \\
+  {\tt v\_o = Prod\_v(v\_1, v\_2)} & Multiplication approximation \\& Implements $v_i \in [-1, 1], i \in \{1, 2\}, v_1 \, v_2 \in  [-1, 1]$ \\
+  {\tt v\_o = Prod\_b(b\_1, v\_1, …)} & Sum of binary weights values\\& Implements {\tt b\_1 \, v\_1 + …}.\\& Default missing value is $0$.\\
   {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{maximum}, 1_{average}]$ controls the mean-max balance.\\
   {\tt Latch\_b(b\_o, b\_i, b\_c)} & Binary memory latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
   {\tt Latch\_v(b\_o, v\_i, b\_c)} & Valued memory latch. \\& {\tt b\_o} is the  output, \\& {\tt v\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\

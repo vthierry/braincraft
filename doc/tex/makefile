@@ -1,4 +1,4 @@
 all:
 	$(MAKE) -C .. tex/index.html
-	atril programmatic-solution.pdf 2>/dev/null
+	atril programmatoid.pdf 2>/dev/null
 

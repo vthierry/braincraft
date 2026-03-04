@@ -14,7 +14,6 @@ prgm_functions := {
        if type(v, constant) then 1/(1+exp(-4*x))
        else  h(v)
        fi),
-   Id = (v-> omega * h(v/omega)),
    H = (v ->
        if type(v, `<=`) then H(H(op(1,v) - op(2,v)))
       #elif type(v, `>=`) then H(op(2,v) <= op(1,v))
@@ -26,6 +25,7 @@ prgm_functions := {
       elif type(v, constant) then Heaviside(v)
       else H(v)
       fi),
+   Id = (v-> omega * h(v/omega)),
   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
   Or   = (() -> H(sum(args[k], k = 1..nargs) + 1/2)),
   Not = ((v) -> H(1 - v)),
@@ -37,7 +37,10 @@ prgm_functions := {
     if nargs = 3 then Bprod(c, v1,(1 - c), v0)
     else If_v(c, v1, If_v(args[3..nargs]))
     fi),
- Bprod = (() ->
+ Exp_v = ((v) -> .1821429756+2.339035264*h(v-1)+1.551573291*h(v/2)),
+ Log_v = ((v) -> -5.103555789+2.597614937*h(v/2)+4.702926636*h(v/10)),
+ Prod_v = ((v1, v2) -> evalf(subs({b=4/(exp(1)-1)^2, c = coth(1/2), l = (v -> Log_v(((exp(1)-1) * v + (exp(1)+1))/2))}, b * Exp_v(l(v1)+l(v2)) - c * (v1 + v2 + c)))),
+ Prod_b = (() ->
      if type(nargs, odd) then Bprod(args, 0)
      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
      fi),
@@ -47,8 +50,8 @@ prgm_functions := {
      b := (k, a) -> H(add(H(a[k]>a[l]), l = 1..k-1) + add(H(a[k]>=a[l]), l = k+1..nops(a)) - nops(a) + 3/2):
      add((g/nargs + (1-g) * b(k, [args[1..nargs-1]])) * args[k], k = 1..nargs-1)
      end),
-  Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1, o, b_1)),
-  Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1, o, b_1)),
+  Latch_b = ((o, b_1, b_c) -> o = If_b(b_c = 1, o, b_1)),
+  Latch_v = ((o, v_1, v_c) ->  o = If_v(b_c = 1, o, v_1)),
   Bistable = (proc(o, i)
        if nargs = 3 then
          o = If_b(And(o = 0, args[2] = 1), 1, And(o = 1, args[3] = 0), 0, o)
@@ -214,7 +217,7 @@ prgm_compile([
   prgm_options = { omega = 10 },
   a = H(H(b)),
   Delay(b, i_t, 10)
- ]);
+ ]):
  
  
   

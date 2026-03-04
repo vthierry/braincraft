@@ -19,7 +19,6 @@
 >        if type(v, constant) then 1/(1+exp(-4*x))
 >        else  h(v)
 >        fi),
->    Id = (v-> omega * h(v/omega)),
 >    H = (v ->
 >        if type(v, `<=`) then H(H(op(1,v) - op(2,v)))
 >       #elif type(v, `>=`) then H(op(2,v) <= op(1,v))
@@ -31,6 +30,7 @@
 >       elif type(v, constant) then Heaviside(v)
 >       else H(v)
 >       fi),
+>    Id = (v-> omega * h(v/omega)),
 >   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
 >   Or   = (() -> H(sum(args[k], k = 1..nargs) + 1/2)),
 >   Not = ((v) -> H(1 - v)),
@@ -42,7 +42,10 @@
 >     if nargs = 3 then Bprod(c, v1,(1 - c), v0)
 >     else If_v(c, v1, If_v(args[3..nargs]))
 >     fi),
->  Bprod = (() ->
+>  Exp_v = ((v) -> .1821429756+2.339035264*h(v-1)+1.551573291*h(v/2)),
+>  Log_v = ((v) -> -5.103555789+2.597614937*h(v/2)+4.702926636*h(v/10)),
+>  Prod_v = ((v1, v2) -> evalf(subs({b=4/(exp(1)-1)^2, c = coth(1/2), l = (v -> Log_v(((exp(1)-1) * v + (exp(1)+1))/2))}, b * Exp_v(l(v1)+l(v2)) - c * (v1 + v2 + c)))),
+>  Prod_b = (() ->
 >      if type(nargs, odd) then Bprod(args, 0)
 >      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
 >      fi),
@@ -52,8 +55,8 @@
 >      b := (k, a) -> H(add(H(a[k]>a[l]), l = 1..k-1) + add(H(a[k]>=a[l]), l = k+1..nops(a)) - nops(a) + 3/2):
 >      add((g/nargs + (1-g) * b(k, [args[1..nargs-1]])) * args[k], k = 1..nargs-1)
 >      end),
->   Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1, o, b_1)),
->   Latch_b = ((o, b_1, b_c) -> If_v(b_c = 1, o, b_1)),
+>   Latch_b = ((o, b_1, b_c) -> o = If_b(b_c = 1, o, b_1)),
+>   Latch_v = ((o, v_1, v_c) ->  o = If_v(b_c = 1, o, v_1)),
 >   Bistable = (proc(o, i)
 >        if nargs = 3 then
 >          o = If_b(And(o = 0, args[2] = 1), 1, And(o = 1, args[3] = 0), 0, o)
@@ -83,8 +86,8 @@
 >      end)
 > }:
 Warning, (in anonymous procedure) `k` is implicitly declared local
-|../tex/programmatoid.mpl:48|
-Warning, (in b) `l` is implicitly declared local |../tex/programmatoid.mpl:47|
+|../tex/programmatoid.mpl:51|
+Warning, (in b) `l` is implicitly declared local |../tex/programmatoid.mpl:50|
 
 ## Compiles a set of equation as a piece of code
 
@@ -222,26 +225,7 @@ Warning, (in b) `l` is implicitly declared local |../tex/programmatoid.mpl:47|
 >   prgm_options = { omega = 10 },
 >   a = H(H(b)),
 >   Delay(b, i_t, 10)
->  ]);
-table([prgm_expanded = [a = H(H(b)), b = 2 H(1 - H(H(v_1 - 1/2))),
-
-           9/10       /     9/10\
-          2     v_1   |    2    |
-    v_1 = --------- + |1 - -----| i_t],
-              2       \      2  /
-
-    prgm_inputs = [a = H(H(b)), Delay(b, i_t, 10)],
-
-    prgm_options = [all_neuronoid = false, omega = 10], inputs = {i_t},
-
-    prgm_flattened = [a = H(x_2), b = 2. x_5,
-
-    v_1 = 0.9330329915 v_1 + 0.0669670085 i_t, x_2 = H(b), x_4 = H(x_5),
-
-    x_3 = H(1 - x_5), x_5 = H(v_1 - 1/2)]
-
-    ])
-
+>  ]):
 >  
 >  
 >   

@@ -1,20 +1,24 @@
 prgm_default_options := table([(all_neuronoid)=false,(omega)=1000]);
 prgm_functions := {And = (() -> H(sum(_passed[k],k = 1 .. _npassed)-_npassed+1/
-2)), Bprod = (() -> if type(_npassed,odd) then Bprod(_passed,0) else sum(omega*
-h(_passed[2*i]/omega+omega(_passed[2*i]-1)),k = 1 .. 1/2*_npassed) end if), 
-Delay = proc (o, i, T) local v, g; v := prgm_new_symbol("v"); g := if 0 < T 
-then 1-2^(-1/T) else 1 end if; o = If_b(1/2 < v,1,0), v = (1-g)*v+g*i end proc,
-H = (v -> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`<`) then Not(
-H(op(2,v) <= op(1,v))) elif type(v,`=`) then And(H(op(1,v) <= op(2,v)),H(op(2,v
-) <= op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif 
+2)), Delay = proc (o, i, T) local v, g; v := prgm_new_symbol("v"); g := if 0 <
+T then 1-2^(-1/T) else 1 end if; o = If_b(1/2 < v,1,0), v = (1-g)*v+g*i end 
+proc, Exp_v = (v -> .1821429756+2.339035264*h(v-1)+1.551573291*h(1/2*v)), H = (
+v -> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`<`) then Not(H(op(
+2,v) <= op(1,v))) elif type(v,`=`) then And(H(op(1,v) <= op(2,v)),H(op(2,v) <=
+op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif 
 prgm_current_options[all_neuronoid] then h(omega*v-1/2) elif type(v,constant) 
 then Heaviside(v) else H(v) end if), Id = (v -> omega*h(v/omega)), If_b = ((c,
 b1, b0) -> if _npassed = 3 then H(b0-c-1/2)+H(b1+c-3/2) else If_b(c,b1,If_b(
 _passed[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed = 3 then 
 Bprod(c,v1,1-c,v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])) end if), 
-Latch_b = ((o, b_1, b_c) -> If_b(b_c = 1,o,b_1)), Latch_b = ((o, b_1, b_c) -> 
-If_v(b_c = 1,o,b_1)), Not = (v -> H(1-v)), Or = (() -> H(sum(_passed[k],k = 1
-.. _npassed)+1/2)), Softmax = proc () local g, b, k; g := _passed[_npassed]; b
+Latch_b = ((o, b_1, b_c) -> o = If_b(b_c = 1,o,b_1)), Latch_v = ((o, v_1, v_c)
+-> o = If_v(b_c = 1,o,v_1)), Log_v = (v -> -5.103555789+2.597614937*h(1/2*v)+4.\
+702926636*h(1/10*v)), Not = (v -> H(1-v)), Or = (() -> H(sum(_passed[k],k = 1
+.. _npassed)+1/2)), Prod_b = (() -> if type(_npassed,odd) then Bprod(_passed,0)
+else sum(omega*h(_passed[2*i]/omega+omega(_passed[2*i]-1)),k = 1 .. 1/2*
+_npassed) end if), Prod_v = ((v1, v2) -> evalf(subs({b = 4/(exp(1)-1)^2, c = 
+coth(1/2), l = (v -> Log_v(1/2*(exp(1)-1)*v+1/2*exp(1)+1/2))},b*Exp_v(l(v1)+l(
+v2))-c*(v1+v2+c)))), Softmax = proc () local g, b, k; g := _passed[_npassed]; b
 := (k, a) -> local l; H(add(H(a[l] < a[k]),l = 1 .. k-1)+add(H(a[l] <= a[k]),l
 = k+1 .. nops(a))-nops(a)+3/2); add((g/_npassed+(1-g)*b(k,[_passed[1 .. 
 _npassed-1]]))*_passed[k],k = 1 .. _npassed-1) end proc, Spikeup = proc (o, i)

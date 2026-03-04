@@ -12,15 +12,15 @@ api/challenge_callback.html: ../braincraft/challenge_callback.py
 	rm -rf api/* ; ~/.local/bin/pdoc --logo ../../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../../data/braincraft-favicon.png   --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o api
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 
-# The programmatic-solution latex document
+# The programmatoid latex document
 
-tex/index.html: $(patsubst %.odg,%.png,$(wildcard tex/*.odg)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl)) $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) tex/programmatic-solution.png
+tex/index.html: $(patsubst %.odg,%.png,$(wildcard tex/*.odg)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl)) $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) tex/programmatoid.png
 	cd tex ; (echo '<ul>' ; for f in `ls *.pdf *.mpl.out.txt` ; do echo "<li><a href='$$f'>$$f</a></li>" ; done ; echo '</ul>') > ../$@
 
-tex/programmatic-solution.png: tex/programmatic-solution.pdf
-	pdftk $^ cat 1 output programmatic-solution-0.pdf
-	convert programmatic-solution-0.pdf $@
-	rm programmatic-solution-0.pdf
+tex/programmatoid.png: tex/programmatoid.pdf
+	pdftk $^ cat 1 output programmatoid-0.pdf
+	convert programmatoid-0.pdf $@
+	rm programmatoid-0.pdf
 
 tex/%.pdf: tex/%.tex $(wildcard tex/*.odg) $(wildcard tex/*.mpl) $(wildcard *.bib) 
 	cd tex; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; ok=
