@@ -25,9 +25,9 @@ def d_sigmoid(x):
     return 4 * e_x / (e_xp1* e_xp1)
 
 def step(x):
-    """Defines the step (ot Heavyside) function.
+    """Defines the step (or Heavyside) function.
     """
-    return 0 if x < 0 else 1
+    return 0 if x < 0 else 1 if x > 0 else 1/2
 
 # Defines the next function for a the global neurnoid model and state
 def next_output_from_network(context):

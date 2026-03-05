@@ -21,16 +21,19 @@ prgm_functions := {
       #elif type(v, `>`) then Not(H(op(1,v) <= op(2,v)))
       elif type(v, `=`) then And(H(op(1,v) <= op(2,v)), H(op(2,v) <= op(1,v)))
       elif type(v, `<>`) then Not(H(op(1, v) = op(2, v)))
-      elif prgm_current_options[all_neuronoid] then h(omega * v - 1/2)
+      elif prgm_current_options[all_neuronoid] then h(omega * v - 0.5)
       elif type(v, constant) then Heaviside(v)
       else H(v)
       fi),
-   Id = (v-> omega * h(v/omega)),
-  And = (() -> H(sum(args[k], k = 1..nargs) - nargs +1/2)),
-  Or   = (() -> H(sum(args[k], k = 1..nargs) + 1/2)),
+   Id = (v ->
+      if prgm_current_options[all_neuronoid] then omega * h(v/omega)
+     else h(v)
+     fi),
+  And = (() -> H(sum(args[k], k = 1..nargs) - nargs +0.5)),
+  Or   = (() -> H(sum(args[k], k = 1..nargs) + 0.5)),
   Not = ((v) -> H(1 - v)),
   If_b = ((c, b1, b0) ->
-    if nargs = 3 then H(b0 - c - 1/2) + H(b1 + c - 3/2)
+    if nargs = 3 then H(b0 - c - 0.5) + H(b1 + c - 3/2)
     else If_b(c, b1, If_b(args[3..nargs]))
     fi),
   If_v = ((c, v1, v0) ->
@@ -39,7 +42,7 @@ prgm_functions := {
     fi),
  Exp_v = ((v) -> .1821429756+2.339035264*h(v-1)+1.551573291*h(v/2)),
  Log_v = ((v) -> -5.103555789+2.597614937*h(v/2)+4.702926636*h(v/10)),
- Prod_v = ((v1, v2) -> evalf(subs({b=4/(exp(1)-1)^2, c = coth(1/2), l = (v -> Log_v(((exp(1)-1) * v + (exp(1)+1))/2))}, b * Exp_v(l(v1)+l(v2)) - c * (v1 + v2 + c)))),
+ Prod_v = ((v1, v2) -> evalf(subs({b=4/(exp(1)-1)^2, c = coth(0.5), l = (v -> Log_v(((exp(1)-1) * v + (exp(1)+1))/2))}, b * Exp_v(l(v1)+l(v2)) - c * (v1 + v2 + c)))),
  Prod_b = (() ->
      if type(nargs, odd) then Bprod(args, 0)
      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
@@ -58,26 +61,26 @@ prgm_functions := {
        else
          (proc(o, i)
             local i0 := prgm_new_symbol("i0"), i1 := prgm_new_symbol("i1"):
-	    o = If_b(And(o = 0, i1 = 1), 1, And(o = 1, i0 = 0), 0, 0),
             i1 = If_b(And(i1 = 0, i = 1), 1, o = 0, 0, i1),
-            i0 = If_b(And(i0 = 0, i = 0), 1, o = 1, 0, i0)
+            i0 = If_b(And(i0 = 0, i = 0), 1, o = 1, 0, i0),
+	    o = If_b(And(o = 0, i1 = 1), 1, And(o = 1, i0 = 0), 0, 0)
 	 end)(o, i)
        fi
        end),
   Spikeup = (proc(o, i)
       local r:= prgm_new_symbol("r"):
-      o = If_b(And(r = 0, i = 1),  1, 0),
-      r = If_b(o = 1, 1, i = 0, 0, r)
+      r = If_b(o = 1, 1, i = 0, 0, r),
+      o = If_b(And(r = 0, i = 1),  1, 0)
      end),
   Delay = (proc(o, i, T)
       local v := prgm_new_symbol("v"), g := if T > 0 then 1 - 2^(-1/T) else 1 fi:
-      o = If_b(v > 1/2, 1, 0),
-      v = (1 - g) * v + g * i
+      v = (1 - g) * v + g * i,
+      o = If_b(v > 0.5, 1, 0)
      end),
  Oscillator = (proc(o, c, T)
      local v := prgm_new_symbol("v"), gamma := if T > 0 then 2 - 2^(1-1/T) else 2 fi:
-     o = If_b(v < 1/3, 0, 0, v > 2/3, 1, o),
-     v = (1 - g) * v + g * (1 - o) * c
+     v = (1 - g) * v + g * (1 - o) * c,
+     o = If_b(v < 1/3, 0, 0, v > 2/3, 1, o)
      end)
 }:
 
@@ -114,7 +117,7 @@ prgm_compile := proc(prgm_input:: list)
 
     result[prgm_inputs] := eqs:
     (proc ()
-      global prgm_current_options: result[prgm_options] := op(op(prgm_current_options)):
+      global prgm_current_options: result[prgm_options] := op(prgm_current_options):
     end)():
 
      ### Checks the syntax of the equation list
@@ -156,34 +159,36 @@ prgm_compile := proc(prgm_input:: list)
    end, eqs)
  end)(eqs);
 
+   ## Reduces constants
+   eqs := evalf(eqs):
+  
   result[prgm_expanded] := eqs:
  
-   ## Reduces constants
-  eqs := evalf(eqs):
-  
    ## Expands inner functions
    eqs := (proc(eqs0)
      local
-       eqs1, eqs2 := table(), n,
+       eqs1, eqs2 := [],
        expand_args := a ->
          if type(a, {function, `+`, `*`}) then 
           op(0, a)(op(map(expand_arg, a)))
 	else a fi,  
-       expand_arg := a -> 
+       expand_arg := proc(a)
+          local n:
           if type(a, function) then 
 	    n  := prgm_new_symbol("x"):
-            eqs2[n = expand_args(a)] := true:
+            eqs2 := [n = expand_args(a), op(eqs2)]:
 	    n
 	  elif type(a, {`+`, `*`}) then
 	    expand_args(a)
-	 else a fi:
+	 else a fi
+       end:
      eqs1 := map(eq ->
         if type(eq, `=`) then
 	 op(1, eq) = expand_args(op(2, eq))
        else
          eq
       fi, eqs0):
-      [op(eqs1),op(map(e -> op(1,e), op(op(eqs2))))]
+      [op(eqs2), op(eqs1)]
    end)(eqs):
 
   ## To be done
@@ -193,8 +198,50 @@ prgm_compile := proc(prgm_input:: list)
   result[prgm_flattened] := eqs:
 
   ## Detects the input and output
- result[inputs] := indets(eqs, name) minus convert(map(eq -> if type(eq, `=`) then op(1, eq) else eq fi, eqs), set):
- result[outputs] := convert(map(eq -> if type(eq, `=`) then op(1, eq) fi, result[prgm_inputs] ), set) minus indets(map(eq -> if type(eq, `=`) then op(2, eq) else eq fi, eqs)):
+ result[inputs] := if assigned(result[prgm_options][inputs]) then prgm_current_options[inputs] else
+    convert(indets(eqs, name) minus convert(map(eq -> if type(eq, `=`) then op(1, eq) else eq fi, eqs), set), list) fi:
+ result[outputs] := if assigned(result[prgm_options] [outputs]) then prgm_current_options[outputs] else
+    convert(convert(map(eq -> if type(eq, `=`) then op(1, eq) fi, result[prgm_inputs] ), set) minus indets(map(eq -> if type(eq, `=`) then op(2, eq) else eq fi, eqs)), list) fi:
+
+  ## Converts to Json
+  eqs := (proc(result)
+    local e2j := proc(e)
+     if type(e, {list, set, table, rtable, table, record, DataSeries, DataFrame}) then
+       map(e2j, e)
+     else
+       convert(e, string)
+     fi
+   end:
+   JSON[ToString](e2j(result), block)
+   end)(result):
+
+  result[prgm_json] := eqs:
+
+  ## Code generation
+  eqs := (proc(result)
+    local c,
+    w := interface(warnlevel=0),
+    l2s := proc(l :: list)
+       local s := convert(l, string):
+       StringTools[SubString](s, 2..StringTools[Length](s)-1)
+    end:    
+    c := StringTools[RegSubs]("^" = "\t", StringTools[RegSubs]("\n(.)" = "\n\t\\1", CodeGeneration[Python](result[prgm_flattened], defaulttype=float,output=string))):
+    interface(warnlevel=w):
+    if assigned(result[prgm_options][Python]) then
+      FileTools[Text][WriteFile](cat(result[prgm_options][Python], ".py"),
+        cat(
+	"# This file is automatically generated by the programmatoid compiler, better not edit\n",
+	"\ndef ", result[prgm_options][Python], "(", l2s(result[inputs]), ")\n",
+	"\n\tdef Id(x):\n\t\treturn x\n",
+	"\n\tdef h(x):\n\t\treturn 1 / (1 + np.exp(-4 * x))\n",
+	"\n\tdef H(x):\n\t\treturn 0 if x < 0 else 1 if x > 0 else 1/2\t\n",
+	"\n", c,
+        "\treturn (", l2s(result[outputs]), ")\n")):
+    fi:
+   c
+  end)(result):
+
+  result[prgm_code] := eqs:
 
  op(result)
 end:
@@ -214,11 +261,9 @@ save prgm_default_options,  prgm_functions, prgm_compile, prgm_current_options, 
 
 ## Functional tests 
 
-r := prgm_compile([
-  prgm_options = { omega = 10 },
-  a = H(H(b)),
-  Delay(b, i_t, 10)
- ]);
+print(prgm_compile([
+  prgm_options = { omega = 10, Python = "test",  outputs = [a, b] },
+  Delay(b, i_t, 10),
+  a = H(H(b))
+ ])):
  
- 
-  

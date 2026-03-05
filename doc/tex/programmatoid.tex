@@ -10,7 +10,8 @@
 \title{Programmatoid and neuronoid computations}
 
 \begin{document} \tableofcontents {\tt ~ Ongoing:
-  \\+ …/..
+  \\+ Ordre correct de definition des variables
+  \\+ Remanence des variables => dictionnaire en in/out-put ?
 } \newpage
 
 \section{The braincraft challenge}
@@ -57,7 +58,7 @@ We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoyi
 \end{description}
 
 \subsubsection{Energy measurement}\begin{description}
- \item[Motivation] The energy increase accumulation is to be pre-processed, since used in some task.
+ \item[Motivation] The energy increase accumulation is to be preprocessed, since used in some task.
  \item[Processed Variables] 
 \eqline{\begin{array}{lll}
   g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
@@ -65,13 +66,13 @@ We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoyi
 \end{array}}
 Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the energy always changes so that $g_{e} \ne g_{e1}$.
 \item[Implementation] \eqline{\begin{array}{l}
-    \mbox{Cumulating energy increase starts, saving last increase in $g_{c2}$.} \\
+    \mbox{Cumulative energy increase starts, saving last increase in $g_{c2}$.} \\
     \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}}_{\mbox{\em increase after a decrease}} \mbox{ then } g_{c2} \leftarrow g_{c1}, \; g_{c1} \leftarrow (g_{e} - g_{e1}) \\
-    \mbox{Cumulating energy increase continues.} \\
+    \mbox{Cumulative energy increase continues.} \\
     \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\em increase after an increase}}  \mbox{ then } g_{c1} \leftarrow g_{c1} + (g_{e} - g_{e1}) \\
-    \mbox{Otherwise $g_{e} < g_{e1}$, thus cumulating energy increase stops, and $g_{c1}$ is memorized.} \\
-    g_s \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2} \mbox{ indicates that cumulating energy increase has just stopped.} \\
-    g_n \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} < g_{e2} \mbox{ indicates that cumulating energy increase did stop before.} \\
+    \mbox{Otherwise $g_{e} < g_{e1}$, thus cumulative energy increase stops, and $g_{c1}$ is memorized.} \\
+    g_s \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2} \mbox{ indicates that cumulative energy increase has just stopped.} \\
+    g_n \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} < g_{e2} \mbox{ indicates that cumulative energy increase did stop before.} \\
   \end{array}}
 \item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
    g_{c1} &\leftarrow& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
@@ -87,7 +88,7 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of energy profile when cumulating energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
+        \caption{Representation of energy profile when cumulative energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
         \label{energy-step}
     \end{minipage}
 \end{figure}
@@ -111,13 +112,13 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
 \end{array}}  where: \eqline{\begin{array}{rcll}
     w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
     \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
-    \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter submut the former.}}} \\
+    \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter summits the former.}}} \\
     \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
     \omega &=& 10 & \mbox{\parbox{8cm}{Constant to transform a boolean product to a step-function threshold.}} \\
 \end{array}} while: \eqline{\begin{array}{rclcl}
- t_l =1&\mbox{iff}& q_p = 0 &\mbox{and while}& \beta < p_l \\
- t_r =1&\mbox{iff}& q_p = 1 &\mbox{and while}& \beta < p_r \\
-\end{array}}  in words: we execute the quater-turn until another wall is detected\footnote{The indenties:
+ t_l =1&\mbox{if and only if}& q_p = 0 &\mbox{and while}& \beta < p_l \\
+ t_r =1&\mbox{if and only if}& q_p = 1 &\mbox{and while}& \beta < p_r \\
+\end{array}}  in words: we execute the quarter-turn until another wall is detected\footnote{The identities:
 \eqline{\begin{array}{rcl}
 (1- q_p) \, H(\beta - p_l) &=& H(H(\beta - p_l) - q_p - 1/2)\\
 q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
@@ -126,7 +127,7 @@ q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
-Given this controler the design reduces to navigation direction choice, i.e.,
+Given this controller the design reduces to navigation direction choice, i.e.,
 control the $q_p$ variable.
 
 \subsubsection{Task 1: Simple decision} \begin{description}
@@ -184,7 +185,7 @@ control the $q_p$ variable.
    \end{array}} \end{description}
 
 \subsubsection{Task 3: Valued environment decision} \begin{description}
-   \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increse than the former.
+   \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increase than the former.
    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
        q_p &\leftarrow& \mbox{if } \underbrace{g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\parbox{4cm}{energy increase\\ just stopped.}}}
        \mbox{ and }  \underbrace{g_{c2} > g_{c1}}_{\mbox{\parbox{4cm}{previous energy \\ increase is higher.}}}
@@ -264,7 +265,7 @@ This generalizes to conditional expressions on variables on any numerical type $
 By induction, considering the second line, one one hand, due to the products, if $b_n = 0, n \in \{1, N\}$ we obtain $v_0$.
 On the other hand, if $b_k = 0, k < K$ and $b_K = 1$, due the products, we obtain $v_K$, which is precisely the semantic
 of the conditional expression of the first line. \\
-The 3rd line is dediced from the second line, transforming the binary products on the corresponding programmatoid while:
+The 3rd line is deduced from the second line, transforming the binary products on the corresponding programmatoid while:
 \eqline{\begin{array}{rcl}
     h_0 &\defq& H(\sum_{n' \in \{1,  N\}} (1 - b_{n'}) - N + 1/2) \\ &=& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})\\
     h_n &\defq& H(b_n + \sum_{n' \in \{1,  N\}, n' \ne n} (1 - b_{n'})  - N + 1/2) \\ &=& H(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \\
@@ -292,7 +293,7 @@ As a consequence,
 
 \subsection{Neuronoid unit}
 
-By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modelisation} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
+By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modeling} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
 We define the equation\footnote{
 We also have: \eqline{h(x) \defq \frac{1}{1+e^{-4\,x}} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
@@ -330,7 +331,7 @@ More precisely, the ${\cal L}_1$ error magnitude, on $]-\infty, +\infty[$, write
 while:
 \eqline{|\epsilon_{H,\omega}(x)| = e^{-4\,\omega}+O\left(e^{-8\,\omega}\right)}
 
-It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is neglictible as soon as, say, $\omega \ge 10$:
+It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is negligible as soon as, say, $\omega \ge 10$:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
   \omega & 1 & 2 & 5 & 10 & 20 & 50 \\ \hline
   \epsilon_\omega(\pm1/2) & 0.119 &  0.0180 &  0.455 \, 10^{-4} &  0.206 \, 10^{-10} &  0.426 \, 10^{-19} &  0.372 \, 10^{-45} \\ \hline
@@ -442,11 +443,11 @@ The memorization is thus impaired by a linear bias only, thanks to the fact that
 
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/memorygate.mpl.out.txt}{{\tt Maple} code}.
 
-\subsection{Multistable mechanisms}
+\subsection{Multi-stable mechanisms}
 
 The previous developments leads to solutions for several temporal systems, as briefly given now.
 
-\subsubsection{Bistable mechanisms}
+\subsubsection{Bi-stable mechanisms}
 
 \begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./bistable2.png}
@@ -454,7 +455,7 @@ The previous developments leads to solutions for several temporal systems, as br
       \caption{With: \eqline{\begin{array}{rcl}
              o &\leftarrow& \mbox{ if } o = 0 \mbox{ and } i_1 = 1 \mbox{ then } 1 \\&& \mbox{ elif } o = 1 \mbox{ and } i_0 = 1 \mbox{ then } 0 \\&& \mbox{ else } o \\
          \end{array}}
-        a bistable system with two $1$ and $0$ inputs, is implemented.
+        a bi-stable system with two $1$ and $0$ inputs, is implemented.
         }
         \label{bistable2}
     \end{minipage}
@@ -468,7 +469,7 @@ The previous developments leads to solutions for several temporal systems, as br
              i_1 &\leftarrow& \mbox{ if } i_1 = 0 \mbox{ and } i = 1 \mbox{ then } 1 \\&& \mbox{ elif } o = 0 \mbox{ then } 0  \\&& \mbox{ else } i_1 \\
              i_0 &\leftarrow& \mbox{ if } i_0 = 0 \mbox{ and } i = 0 \mbox{ then } 1 \\&& \mbox{ elif } o = 1 \mbox{ then } 0  \\&& \mbox{ else } i_0 \\
          \end{array}}
-         a bistable system with one two-way switch is implemented, using internal variables $i_0$ and $i_1$. This corresponds to a frequency divider by 2.
+         a bi-stable system with one two-way switch is implemented, using internal variables $i_0$ and $i_1$. This corresponds to a frequency divider by 2.
         }
         \label{bistable1}
     \end{minipage}
@@ -499,7 +500,7 @@ The previous developments leads to solutions for several temporal systems, as br
          \end{array}}
         a delayed output is implemented. Assuming that $v = 0$, when $i=1$ and remains at this value, we obtain for the delay $T$:
         \eqline{T = -\frac{\log(2)}{\log(1 - \gamma)} > 0 \Leftrightarrow \gamma =  1 - 2^{-\frac{1}{T}}.}
-        Here we assume that $i = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bistable mechanism as input.}
+        Here we assume that $i = 1, t \in [0, T]$ but it is very easy to avoid this constraint with a bi-stable mechanism as input.}
         \label{delay1}
     \end{minipage}
 \end{figure}
@@ -536,12 +537,12 @@ The maximal and the average operators can be easily combined. For instance, give
 \end{array}}
 with  $\mu > 0$ parameterizing the balance between:
 \\\tab - the average, for small $\mu$, line 2 above,
-\\\tab - the maximun, for large $\mu$, line 3 above, up to an offset $-\log(K)/\mu$,
+\\\tab - the maximum, for large $\mu$, line 3 above, up to an offset $-\log(K)/\mu$,
 \\ as shown in Figure~\ref{explog}.
 \begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./explog.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $\mu \in \{0.01, 0.1, 1, 10, 100\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
+        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $\mu \in \{0.01, 0.1, 1, 10, 100\}$, from top to bottom, in black, orange, red, green and blue, respectively. With small $\mu$ it is closed to linear average, whereas for $\mu =100$ it is close to $\max(x, 1/2)$.}
         \label{explog}
     \end{minipage}
 \end{figure}
@@ -554,7 +555,7 @@ From Figure~\ref{explog}, we observe that for $i_k \in [-1, 1]$, $\mu \in [0.01,
     o  &\rightarrow& \frac{o}{\mu} \\ 
    o &=& \log\left(\frac{1}{K} \, \sum_{k \in \{1\cdots K\}}  \, \exp(i_k)\right) \\
 \end{array}}
-so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is now $[1, e]$, allowing an implementation with not so big function's range. This is fine, providing that we can implement the $\exp(\cdot)$ and the $\log(\cdot)$ functions with a sufficient numerical precision, because, we noa are working with small values of $i_k$.
+so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is now $[1, e]$, allowing an implementation with not so big function's range. This is fine, providing that we can implement the $\exp(\cdot)$ and the $\log(\cdot)$ functions with a sufficient numerical precision, because, we now are working with small values of $i_k$.
 
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
@@ -596,17 +597,17 @@ in such a way that the the $\log()$ and $\exp()$ functions are used within the r
     &=& v_1 \, v_2
 \end{array}}
 
-Therefore,  valued products can be approximated by neuronoids. This for instance quite useful for mechanism of gain control or using adaptative mechanisms, as for instance a softmax mechanism discussed now.
+Therefore,  valued products can be approximated by neuronoids. This for instance quite useful for mechanism of gain control or using adaptive mechanisms, as for instance a softmax mechanism discussed now.
     
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{Neuronoid approximation a softmax operator}
 
-Another track is to consider the programatoid implementation of the maximum operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, as a weighted sum:
+Another track is to consider the programmatoid implementation of the maximum operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, as a weighted sum:
 \eqline{o \defq \max_k(i_k) = \sum_k b_k \, i_k}
 with:
 \eqline{b_k \defq And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l),}
-So that $b_k = 1$ if $i_k$ is the first instanciation of the max value \footnote{
+So that $b_k = 1$ if $i_k$ is the first instantiating of the max value \footnote{
 First, assume that all $i_k$ are different; then $b_k = 1$ if and only if $\forall l \ne k, i_k > i_l$, yielding the expected result.\\
 Then, if more than one value corresponds to $\max_k(i_k)$, let us consider $k_0 = \mbox{ argmin} \{k, k = \max_k(i_k)\}$. \\
 For $k_0$, $And_{l \in \{k_0+1, K\}} H(i_{k_0} \ge i_l) = 1$ because it is a maximum and $And_{l \in \{1, k_0-1\}} H(i_{k_0} >  i_l) =1$ because no previous maximum is encountered, by definition. Then for subsequent values $k_1 = \max_k(i_k)$, because there is $k_0 < k_1$ with $i_{k_0} = i_{k_1}$, then $And_{l \in \{1, k_1-1\}} H(i_{k_1} >  i_l) = 0$, so that we only have one occurrence of $i_k$ which is selected.}, thus with a form similar to the average operator $\mbox{mean}_k(i_k) = 1/K \, \sum_k b_k \, i_k$.
@@ -623,7 +624,7 @@ Then, introducing a linearly combination of both operators:
     o &\defq& g \, \left(\frac{1}{K} \sum_k i_k \right) + (1-g) \, \left(\sum_k b_k \, i_k \right) \\
    &=& \sum_k \frac{q}{K} \, i_k + \sum_k b_k \, ((1-g)  \, i_k), \\
 \end{array}}
-we have constructed  a softmax mechanism, directly based on the previous developmemts, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}. The formula can also be mollified if required.
+we have constructed  a softmax mechanism, directly based on the previous developments, without introducing numerical approximations of other non-linear functions, as shown in Figure.~\ref{softmax}. The formula can also be mollified if required.
 It is a correct programmatoid mechanism, because $g$ is a constant, so we only have either product with a constant or with a binary value.
 
 We also could have considered $g$ as an input value, yielding product of two valued inputs, thus involving mechanisms discussed previously.
@@ -631,14 +632,14 @@ We also could have considered $g$ as an input value, yielding product of two val
 \begin{figure}[H]
    \includegraphics[width=0.5\textwidth,valign=c]{./softmax.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, ornage, red, green and blue, respectively. With small $g = 1$ it is exactly a linear average, whereas for $g = 0$ it is close to $\max(x, 1/2)$}.
+        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, orange, red, green and blue, respectively. With small $g = 1$ it is exactly a linear average, whereas for $g = 0$ it is close to $\max(x, 1/2)$}.
         \label{softmax}
     \end{minipage}
 \end{figure}
 
 Derivations of this subsection are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/softmax.mpl.out.txt}{{\tt Maple} code}.
 
-\section{Comparing {\tt tanh} with other non linearities}
+\section{Comparing {\tt tanh} with other non linearity}
 
 We have $h(x) = \frac{1 + \tanh(2 \, x)}{2}$ thus based on the {\tt tanh} non linearity. This corresponds most common activation function
 when deriving a rate-based reduced neural network from bio-physical elements  \cite{cessac_neuron_2007}. This is far from being the only choice,
@@ -659,13 +660,13 @@ $\bar{h}$ functions of the form:
 while all profiles are normalized and symmetric, i.e.:
 \eqline{\bar{h}(-\infty) = 0, \bar{h}(0) = 1/2, \bar{h}'(0) = 1, \bar{h}(+\infty) = 1, \bar{h}(x) = 1 - \bar{h}(-x)}
 and are drawn in the Figure~\ref{sigmoidatan}.
-\\ - The {Arctan} and {Softsign} profiles are smoother than the Tanh profile, whereas we are looking here for sharper profiles in order to better approxximate the step-function. They also have higher maximal curvatures $\kappa_{max}$ which means that the curvature is more inhomogeneous than for the Tanh profile, and they do not correspond to biologically plausible activation functions \cite{cessac_neuron_2007}, despite the fact they could be of great interest in machine learning \cite{szandala_review_2020}.
-\\ - The \href{https://en.wikipedia.org/wiki/Error_function}{error function}, Erf, based profile is very closed numerically from the Tanh profile, with a finite ${\cal L}_1\simeq -0.028$ small distance magnitude, and a ${\cal L}_0 < 2\%$ small distance magnitude, with similar maximal curvatures $\kappa_{max}$ up to $1\%$, and is also quoted as a biologically plausible activation functions \cite{cessac_neuron_2007}. Though its sharpness is a bit better than fro teh Tanh profile, with a better repartition of the curvature, all algebraic derivations made in this paper would not have as easy as its is now.
+\\ - The {Arctan} and {Softsign} profiles are smoother than the Tanh profile, whereas we are looking here for sharper profiles in order to better approximate the step-function. They also have higher maximal curvatures $\kappa_{max}$ which means that the curvature is more inhomogeneous than for the Tanh profile, and they do not correspond to biologically plausible activation functions \cite{cessac_neuron_2007}, despite the fact they could be of great interest in machine learning \cite{szandala_review_2020}.
+\\ - The \href{https://en.wikipedia.org/wiki/Error_function}{error function}, Erf, based profile is very closed numerically from the Tanh profile, with a finite ${\cal L}_1\simeq -0.028$ small distance magnitude, and a ${\cal L}_0 < 2\%$ small distance magnitude, with similar maximal curvatures $\kappa_{max}$ up to $1\%$, and is also quoted as a biologically plausible activation functions \cite{cessac_neuron_2007}. Though its sharpness is a bit better than for the Tanh profile, with a better distribution of the curvature, all algebraic derivations made in this paper would not have as easy as its is now.
 
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./sigmoidatan.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Comparision between  the normalized Tanh profile in red, the Erf profile in green, the Arctan profile in blue and the Softsign in orange, i.e., from the sharpest to the smoothest.}
+      \caption{Comparison between  the normalized Tanh profile in red, the Erf profile in green, the Arctan profile in blue and the Softsign in orange, i.e., from the sharpest to the smoothest.}
         \label{sigmoidatan}
     \end{minipage}
 \end{figure}
@@ -678,7 +679,7 @@ This documentation allows to use the braincraft challenge for a programmatic imp
 
 Here is braincraft challenge original documentation \href{https://github.com/rougier/braincraft/blob/master/README.md}{original documentation}.
 
-You must be familiar with basic {\tt git} usage and basic {\tt python} programmation.
+You must be familiar with basic {\tt git} usage and basic {\tt python} programming.
 
 \subsection{Installation of the setup}
 \begin{enumerate}
@@ -710,17 +711,21 @@ subs({
 },
 [
   prgm_options = { omega = 10 },
-  a = H(H(b)),
-  Delay(b, , T)
+  Delay(b, i_t, T),
+  a = H(H(b))
 ])\end{verbatim}
+
+{\bf Note:} The equation list being evaluated in sequence, equations with input must precede equations with output.
 
 \subsubsection{Programmatoid options}
 
 Available options: \\\begin{tabular}{|l|l|l|l|} \hline
-{\bf Name}                & {\bf Type}                & {\bf Default value} & \\ \hline
-{\tt omega}                & large positive float & 1000 & The $\omega$ used for both Id() function and H() mollification \\
-{\tt all\_neuronoid}   & Boolean                   &  false & Whether H() functions are mollified to remain with neuronoid only \\
-{\tt Python}                & filename (string)    &            & If defined, generates the a Python piece of code with the flattened code \\
+{\bf Name}                & {\bf Type}                & {\bf Default value} & \\ \hline &&&\\
+{\tt omega}                & large positive float & 1000 & \parbox{8cm}{The $\omega$ used for both {\tt Id()} and {\tt H()} functions mollification.} \\ &&&\\
+{\tt all\_neuronoid}   & Boolean                   &  false & \parbox{8cm}{Whether {\tt Id()}  and {\tt H()} functions are mollified, remaining with {\tt h()} function only.} \\ &&&\\
+{\tt inputs}                 & List of names          &  deduced & \parbox{8cm}{The list of input variables, if it does not correspond to the right-hand side expression variables, not present in any left-hand side equation.} \\ &&&\\
+{\tt outputs}               & List of names          &  deduced & \parbox{8cm}{The list of output variables, if it does not correspond the left-hand side variables, not present in right-hand side expressions.} \\ &&&\\
+{\tt Python}                & Python's name    &            & \parbox{8cm}{If defined, generates a Python piece of code with the flattened code, defined as a function of the given {\tt name} and stored in a file of name {\tt name.py}.} \\ &&&\\
 \hline \end{tabular}
 
 \subsubsection{Programmatoid functions}
@@ -729,7 +734,7 @@ For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variab
 functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\
   {\tt v\_o = h(v)} & The normalized sigmoid. \\
   {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{v<0}, 1/2_{v=0}, 1_{v>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
-  {\tt v\_o = Id(v)} & Identity function\\& Converted to a neuronoid approximative identity  when the option {\tt prgm["neuronoid"] =  true}.\\
+  {\tt v\_o = Id(v)} & Identity function\\& Converted to a neuronoid when the option {\tt prgm["neuronoid"] =  true}.\\
   {\tt b\_o = And(b\_1, …)} & Conjunction with a variable number of binary  arguments.\\& Implements {\tt b\_1 and b\_2 …} \\
   {\tt b\_o = Or(b\_1, …)} & Disjunction with a variable number of binary arguments.\\& Implements {\tt b\_1 or b\_2 …} \\
   {\tt b\_o = Not(b)} & Negation of a binary value. \\& Implements {\tt not b} \\
@@ -742,8 +747,8 @@ functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{l
   {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{maximum}, 1_{average}]$ controls the mean-max balance.\\
   {\tt Latch\_b(b\_o, b\_i, b\_c)} & Binary memory latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
   {\tt Latch\_v(b\_o, v\_i, b\_c)} & Valued memory latch. \\& {\tt b\_o} is the  output, \\& {\tt v\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
-  {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bistable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
-  {\tt Bistable(b\_o, b\_i)} & One input bistable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the two-way input.\\
+  {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
+  {\tt Bistable(b\_o, b\_i)} & One input bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the two-way input.\\
   {\tt Spikeup(b\_o, b\_i)} & Spike generation on input rising front. \\& {\tt b\_i} is the input, which rising front is detected.\\
   {\tt Delay(b\_o, b\_i, T)} & Delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the delayed input.\\
   {\tt Oscillator(b\_o, b\_c, T)} & Oscillatory output. \\& $\mbox{{\tt T}} > 0$ is the period, in number of global clock event. \\& {\tt b\_o} is the  output, \\& $\mbox{{\tt b\_c}} \in \{0_{stop}, 1_{run}\}$ is the control.\\
