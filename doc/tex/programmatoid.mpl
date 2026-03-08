@@ -4,7 +4,8 @@
 
 prgm_default_options := table([
    omega = 1000,
-   all_neuronoid = false
+   all_neuronoid = false,
+   python = true
 ]):
 
 ## Defines expandable functions
@@ -21,12 +22,12 @@ prgm_functions := {
       #elif type(v, `>`) then Not(H(op(1,v) <= op(2,v)))
       elif type(v, `=`) then And(H(op(1,v) <= op(2,v)), H(op(2,v) <= op(1,v)))
       elif type(v, `<>`) then Not(H(op(1, v) = op(2, v)))
-      elif prgm_current_options[all_neuronoid] then h(omega * v - 0.5)
+      elif prgm_options[all_neuronoid] then h(omega * v - 0.5)
       elif type(v, constant) then Heaviside(v)
       else H(v)
       fi),
    Id = (v ->
-      if prgm_current_options[all_neuronoid] then omega * h(v/omega)
+      if prgm_options[all_neuronoid] then omega * h(v/omega)
      else h(v)
      fi),
   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +0.5)),
@@ -48,9 +49,9 @@ prgm_functions := {
      else sum(omega * h(args[2*i]/omega + omega (args[2*i] - 1)), k = 1 .. nargs/2)
      fi),
  Softmax = (proc()
-   local
+   local k,
      g := args[nargs],
-     b := (k, a) -> H(add(H(a[k]>a[l]), l = 1..k-1) + add(H(a[k]>=a[l]), l = k+1..nops(a)) - nops(a) + 3/2):
+     b := proc (k, a) local l: H(add(H(a[k]>a[l]), l = 1..k-1) + add(H(a[k]>=a[l]), l = k+1..nops(a)) - nops(a) + 3/2) end:
      add((g/nargs + (1-g) * b(k, [args[1..nargs-1]])) * args[k], k = 1..nargs-1)
      end),
   Latch_b = ((o, b_1, b_c) -> o = If_b(b_c = 1, o, b_1)),
@@ -86,41 +87,49 @@ prgm_functions := {
 
 ## Compiles a set of equation as a piece of code
 
-prgm_compile := proc(prgm_input:: list)
-  local eqs, result := table():
+prgm_compile := proc(prgm_file :: string)
+  local prgm := table(), new_symbol, new_symbol_count := 0:
+
+  try 
+
+    ### Sets basic otions
+
+    prgm["options"] := (proc() global prgm_default_options: op(prgm_default_options) end)():
+    prgm["options"][file] :=  prgm_file:
+    prgm["options"][name] :=  FileTools[Basename](prgm_file):
+    prgm["options"][version] :=  convert(Date(), string):
+
+    ### Reads and parses the source text
+
+    if not FileTools[Exists](prgm["options"][file]) then
+      error cat("Syntax error: The file '", prgm["options"][file], "' does not exist, it must.")
+    fi:
+    prgm["source"] := FileTools[Text][ReadFile](prgm["options"][file]):
+    prgm["input"] := parse(StringTools[RegSubs]("#[^\n]*\n" = "", prgm["source"])):
  
-  try
-    ### Extracts options from the prgm_input
-    eqs := (proc(prgm_input)
-       local eqs := prgm_input:
-       if type(prgm_input, list) and nops(prgm_input) > 0 then
-         if type(op(1, prgm_input), `=`) and op(1, op(1, prgm_input)) = prgm_options then
-           if type(op(2, op(1, prgm_input)), {list,  set}) then
-	     map(proc(o)
-	        global prgm_current_options:
-                if type(o, `=`) then prgm_current_options[op(1, o)] := op(2, o) else prgm_current_options[o] := true fi
-	     end, op(2, op(1, prgm_input)))
-           else
-             error "Syntax error: The prgm_options is not a set or a list, it must." : 
-           fi:
-           eqs := [op(2..nops(prgm_input), prgm_input)]:
-         fi:
-         map(eq ->
-	    if type(eq, `=`) and op(1, eq) = prgm_options then
-	      error "Syntax error: A prgm_options is not given at the 1st line, it must."
-	   fi, eqs):
-       else
-         error "Syntax error: The prgm_input is not a non empty list, it must."
-       fi:
-       eqs
-     end)(prgm_input):
+    ### Extracts options from the input first line
 
-    result[prgm_inputs] := eqs:
-    (proc ()
-      global prgm_current_options: result[prgm_options] := op(prgm_current_options):
-    end)():
-
+    if type(prgm["input"], list) and nops(prgm["input"]) > 0 then
+      if type(op(1, prgm["input"]), `=`) and op(1, op(1, prgm["input"])) = prgm_options then
+        if type(op(2, op(1, prgm["input"])), {list,  set}) then
+          map(o ->
+	    if type(o, `=`) then prgm["options"] [op(1, o)] := op(2, o) else prgm["options"] [o] := true fi,
+	    op(2, op(1, prgm["input"])))
+        else
+           error "Syntax error: The prgm_options is not a set or a list, it must." : 
+        fi:
+       prgm["input"] := [op(2..nops(prgm["input"]), prgm["input"])]:
+     fi:
+     map(eq ->
+        if type(eq, `=`) and op(1, eq) = prgm_options then
+          error "Syntax error: A prgm_options is not given at the 1st line, it must."
+        fi, prgm["input"]):
+    else
+      error "Syntax error: The sourc file content is not a non empty list, it must."
+    fi:
+    
      ### Checks the syntax of the equation list
+
      (proc(eqs)
        global prgm_functions:
        local function_names := map(eq -> op(1, eq), prgm_functions),
@@ -135,48 +144,45 @@ prgm_compile := proc(prgm_input:: list)
            alert(not (type(eq, function) and op(0, eq) in function_names), "The '", eq, "', line number '", l, "' is not a known function"):
 	fi
      end, [$1..nops(eqs)], eqs)
-   end)(eqs):
-  catch:
-    lprint(lasterror):
-    return []
-  end try:
+   end)(prgm["input"]):
 
-  ## Expands the known functions
-  eqs := (proc(eqs)
-     ### Iterate towards a fixed point
-     local fixed_point := proc(f, v_0, max_iterations::posint:=10)
+  
+   #### Creates a new symbol
+
+   new_symbol := proc(prefix:: string) new_symbol_count := new_symbol_count + 1:  convert(cat(prefix, "_", new_symbol_count), name) end:
+
+   ### Expands the known functions
+  
+  prgm["expanded"]  := (proc(prgm)
+     #### Iterate towards a fixed point
+     local fixed_point := proc(f, v_0, context, max_iterations::posint:=10)
        local v0 := null, v1 := v_0, t:
        for t to max_iterations do
-         v0 := f(v1):
+         v0 := f(v1, context):
          if  v0 = v1 then return v0 fi:
 	 v1 := v0
       od:	
      error "Iteratively expanding toward a fixed point failed."
    end:
-   fixed_point(proc(eqs)
+   evalf(fixed_point(proc(eqs, prgm)
      global prgm_function:
-     eval(subs(prgm_functions, eqs))
-   end, eqs)
- end)(eqs);
+     eval(subs(subs(prgm_options = prgm["options"], prgm_new_symbol = new_symbol, prgm_functions), eqs))
+   end, prgm["input"], prgm))
+  end)(prgm):
 
-   ## Reduces constants
-   eqs := evalf(eqs):
-  
-  result[prgm_expanded] := eqs:
- 
-   ## Expands inner functions
-   eqs := (proc(eqs0)
-     local
-       eqs1, eqs2 := [],
+   ## Flattens inner functions
+   prgm["flattened"]  := (proc(eqs0)
+     local  eqs1, eqs2 := [],
        expand_args := a ->
          if type(a, {function, `+`, `*`}) then 
           op(0, a)(op(map(expand_arg, a)))
 	else a fi,  
        expand_arg := proc(a)
-          local n:
-          if type(a, function) then 
-	    n  := prgm_new_symbol("x"):
-            eqs2 := [n = expand_args(a), op(eqs2)]:
+          local n, a_n:
+          if type(a, function) then
+	    a_n := expand_args(a):
+	    n  := new_symbol("x"):
+            eqs2 := [n = a_n, op(eqs2)]:
 	    n
 	  elif type(a, {`+`, `*`}) then
 	    expand_args(a)
@@ -186,84 +192,53 @@ prgm_compile := proc(prgm_input:: list)
         if type(eq, `=`) then
 	 op(1, eq) = expand_args(op(2, eq))
        else
-         eq
+         error cat("After expanding one line: '", eq, "' is not an equation")
       fi, eqs0):
       [op(eqs2), op(eqs1)]
-   end)(eqs):
+   end)(prgm["expanded"]):
 
   ## To be done
   ### - reintroduces the Id function on sum and product
+  ### - checks the error of eqs2 order
   ### - factorizes identical expressions, looking the eqs2 table
 
-  result[prgm_flattened] := eqs:
-
-  ## Detects the input and output
- result[inputs] := if assigned(result[prgm_options][inputs]) then prgm_current_options[inputs] else
-    convert(indets(eqs, name) minus convert(map(eq -> if type(eq, `=`) then op(1, eq) else eq fi, eqs), set), list) fi:
- result[outputs] := if assigned(result[prgm_options] [outputs]) then prgm_current_options[outputs] else
-    convert(convert(map(eq -> if type(eq, `=`) then op(1, eq) fi, result[prgm_inputs] ), set) minus indets(map(eq -> if type(eq, `=`) then op(2, eq) else eq fi, eqs)), list) fi:
-
-  ## Converts to Json
-  eqs := (proc(result)
-    local e2j := proc(e)
-     if type(e, {list, set, table, rtable, table, record, DataSeries, DataFrame}) then
-       map(e2j, e)
-     else
-       convert(e, string)
-     fi
-   end:
-   JSON[ToString](e2j(result), block)
-   end)(result):
-
-  result[prgm_json] := eqs:
-
-  ## Code generation
-  eqs := (proc(result)
-    local c,
-    w := interface(warnlevel=0),
-    l2s := proc(l :: list)
-       local s := convert(l, string):
-       StringTools[SubString](s, 2..StringTools[Length](s)-1)
-    end:    
-    c := StringTools[RegSubs]("^" = "\t", StringTools[RegSubs]("\n(.)" = "\n\t\\1", CodeGeneration[Python](result[prgm_flattened], defaulttype=float,output=string))):
-    interface(warnlevel=w):
-    if assigned(result[prgm_options][Python]) then
-      FileTools[Text][WriteFile](cat(result[prgm_options][Python], ".py"),
-        cat(
-	"# This file is automatically generated by the programmatoid compiler, better not edit\n",
-	"\ndef ", result[prgm_options][Python], "(", l2s(result[inputs]), ")\n",
-	"\n\tdef Id(x):\n\t\treturn x\n",
+  ## Generates python code
+  if prgm["options"][python] then 
+    prgm["python"] := (proc(prgm)
+      local c,
+      w := interface(warnlevel=0):
+      c := StringTools[RegSubs]("^" = "\t", StringTools[RegSubs]("\n(.)" = "\n\t\\1", CodeGeneration[Python](prgm["flattened"], defaulttype=float, output=string))):
+      interface(warnlevel=w):
+      c := cat(
+        "# This file is automatically generated by the programmatoid compiler, better not edit\n",
+	"\ndef ", prgm["options"][name], "(state)\n",
+	(if not prgm["options"][all_neuronoid] then cat(
+	  "\n\tdef H(x):\n\t\treturn 0 if x < 0 else 1 if x > 0 else 1/2\t\n",
+	  "\n\tdef Id(x):\n\t\treturn x\n")
+	else "" fi),
 	"\n\tdef h(x):\n\t\treturn 1 / (1 + np.exp(-4 * x))\n",
-	"\n\tdef H(x):\n\t\treturn 0 if x < 0 else 1 if x > 0 else 1/2\t\n",
-	"\n", c,
-        "\treturn (", l2s(result[outputs]), ")\n")):
-    fi:
-   c
-  end)(result):
+	"\n", c, "\n"):
+      FileTools[Text][WriteFile](StringTools[RegSubs]("\.mpl$" = "\.py", prgm["options"][file]), c):
+      c
+    end)(prgm):
+  fi:
 
-  result[prgm_code] := eqs:
+  ### Stops the compilation if errors
+  
+  catch:
+    prgm["error"] := lastexception:
+    return prgm
+  end try:
 
- op(result)
+  prgm
 end:
-prgm_current_options := op(prgm_default_options):
-
-## Creates a new variable
-
-prgm_new_symbol := proc(prefix:: string)
-   global prgm_new_symbol_count: prgm_new_symbol_count := prgm_new_symbol_count + 1:
-   convert(cat(prefix, '_', prgm_new_symbol_count), name):
- end:
-prgm_new_symbol_count := 0:
 
 ## Saves the package
 
-save prgm_default_options,  prgm_functions, prgm_compile, prgm_current_options, prgm_new_symbol, prgm_new_symbol_count, "../../braincraft/programmatoid.mw":
+save prgm_default_options,  prgm_functions, prgm_compile, "../../braincraft/programmatoid.mw":
 
 ## Functional tests 
 
-print(prgm_compile([
-  prgm_options = { omega = 10, Python = "test",  outputs = [a, b] },
-  Delay(b, i_t, 10),
-  a = H(H(b))
- ])):
+FileTools[Text][WriteFile]("/tmp/prgm_test.mpl", "[ prgm_options = { omega = 10 },  Delay(b, i_t, 10),  a = H(H(b))]"):
+print(prgm_compile("/tmp/prgm_test.mpl"));
  
