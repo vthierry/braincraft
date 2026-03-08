@@ -230,7 +230,7 @@ prgm_compile := proc(prgm_file :: string)
     return prgm
   end try:
 
-  prgm
+    prgm
 end:
 
 ## Saves the package

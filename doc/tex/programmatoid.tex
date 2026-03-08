@@ -7,11 +7,8 @@
 \newcommand{\defq}{\stackrel {\rm def}{=}}
 \newcommand{\tab}{\hphantom{4mm}}
 
-\title{Programmatoid and neuronoid computations}
-
-\begin{document} \tableofcontents {\tt ~ Ongoing:
-  \\+ Ordre correct de definition des variables
-} \newpage
+\title{Programmatoid and neuronoid computations} 
+\begin{document} \maketitle \tableofcontents \newpage
 
 \section{The braincraft challenge}
 
@@ -703,13 +700,14 @@ The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challeng
   
 \subsection{Running at the programmatoid level}
 
-At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}
-subs({
-    T = 10, # The delay
-    constantName = constantValue
+At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}# A tiny example of programmatoid
+subs({ ## Fixed parameters constant values
+    T = 10,                                             ### The delay
+    constantName = constantValue  ### Any other …
 },
-[
+[  ## The package options 
   prgm_options = { omega = 10 },
+  ## The package equations
   Delay(b, i_t, T),
   a = H(H(b))
 ])\end{verbatim}
