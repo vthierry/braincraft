@@ -255,6 +255,39 @@ prgm_compile := proc(prgm_file :: string)
 
   ### Generates the equations in matrix form
 
+  #### Detects the state, input and output variables
+  ##### Sets varibal lists
+  if not assigned(prgm["options"][outputs]) then 
+    prgm["options"][outputs] := convert(indets(map(eq->op(1,eq), prgm["flattened"]), name) minus indets(map(eq->op(2,eq), prgm["flattened"]), name), list) fi:
+  if not assigned(prgm["options"][inputs]) then
+    prgm["options"][inputs] := convert(indets(map(eq->op(2,eq), prgm["flattened"]), name) minus indets(map(eq->op(1,eq), prgm["flattened"]), name), list) fi:
+  prgm["model"][state] := convert(indets(prgm["flattened"], name), list):
+  prgm["model"][lhs] := map(eq->op(1,eq),prgm["flattened"]):
+  ##### Checks variable list coherence
+  if convert(prgm["options"][inputs], set) intersect convert(prgm["options"][outputs], set) <> {} then
+    error cat("Incoherence in variables, the input variables '", prgm["options"][inputs], "' and output variables '", prgm["options"][outputs], "' intersect, it must not.") fi:
+  if not convert(prgm["options"][inputs], set) subset indets(prgm["flattened"], name) then
+    error cat("Incoherence in variables, the input variables '", prgm["options"][inputs], "' is not a subset of the whole variable set '",  prgm["model"][state], "', it must.") fi:
+  if not convert(prgm["options"][outputs], set) subset convert(prgm["model"][lhs], set) then
+    error cat("Incoherence in variables, the output variables '", prgm["options"][outputs], "' is not a subset of the left-hand side variable set '", prgm["model"][lhs], "', it must.") fi:
+  if convert(prgm["model"][lhs], set) union convert(prgm["options"][inputs], set) <> indets(prgm["flattened"], name) then
+    error cat("Incoherence in variables, the left-hand side variables '", prgm["model"][lhs], "' with the input variables '", prgm["options"][inputs], "' does not equals the whole variable set '", prgm["model"][state], "', it must.") fi:
+  ##### Sets network parameters model
+  prgm["model"][rhs_f] := map(eq->op(0,op(2,eq)), prgm["flattened"]):
+  if nops(convert(prgm["model"][rhs_f], set)) = 1 then prgm["model"][the_f] := op(1, prgm["model"][rhs_f]) fi:
+  prgm["model"][W_in] := Matrix(nops(prgm["model"][state]), nops(prgm["options"][inputs]), (s, i) -> if prgm["model"][state][s] = prgm["options"][inputs][i] then 1 else 0 fi):
+  prgm["model"][W_out] := Matrix(nops(prgm["options"][outputs]), nops(prgm["model"][state]), (o, s) -> if prgm["options"][outputs][o] = prgm["model"][state][s] then 1 else 0 fi):
+  prgm["model"][W] := Matrix(nops(prgm["model"][state]), nops(prgm["model"][state]), proc(r, s)
+    local i, a, b:
+    member(prgm["model"][state][r], prgm["model"][lhs], i):
+    if i = 0 then
+      0
+    else
+      a := op(2, op(i, prgm["flattened"])):
+      b := prgm["model"][state][s]:
+      0
+   fi end):
+
   ### Stops the compilation if errors
   
   catch:
