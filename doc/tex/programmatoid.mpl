@@ -1,5 +1,8 @@
 # Implementation of the programmatoid mechanisms
 
+## TBD
+### - factorizes identical expressions, looking the eqs2 table
+
 ## Defines the option list with their default values
 
 prgm_default_options := table([
@@ -22,13 +25,13 @@ prgm_functions := {
       #elif type(v, `>`) then Not(H(op(1,v) <= op(2,v)))
       elif type(v, `=`) then And(H(op(1,v) <= op(2,v)), H(op(2,v) <= op(1,v)))
       elif type(v, `<>`) then Not(H(op(1, v) = op(2, v)))
-      elif prgm_options[all_neuronoid] then h(omega * v - 0.5)
+      elif all_neuronoid then h(omega * v - 0.5)
       elif type(v, constant) then Heaviside(v)
       else H(v)
       fi),
    Id = (v ->
-      if prgm_options[all_neuronoid] then omega * h(v/omega)
-     else h(v)
+      if all_neuronoid then h(omega * h(v/omega))
+     else Id(v)
      fi),
   And = (() -> H(sum(args[k], k = 1..nargs) - nargs +0.5)),
   Or   = (() -> H(sum(args[k], k = 1..nargs) + 0.5)),
@@ -61,7 +64,7 @@ prgm_functions := {
          o = If_b(And(o = 0, args[2] = 1), 1, And(o = 1, args[3] = 0), 0, o)
        else
          (proc(o, i)
-            local i0 := prgm_new_symbol("i0"), i1 := prgm_new_symbol("i1"):
+            local i0 := new_symbol("i0"), i1 := new_symbol("i1"):
             i1 = If_b(And(i1 = 0, i = 1), 1, o = 0, 0, i1),
             i0 = If_b(And(i0 = 0, i = 0), 1, o = 1, 0, i0),
 	    o = If_b(And(o = 0, i1 = 1), 1, And(o = 1, i0 = 0), 0, 0)
@@ -69,17 +72,17 @@ prgm_functions := {
        fi
        end),
   Spikeup = (proc(o, i)
-      local r:= prgm_new_symbol("r"):
+      local r:= new_symbol("r"):
       r = If_b(o = 1, 1, i = 0, 0, r),
       o = If_b(And(r = 0, i = 1),  1, 0)
      end),
   Delay = (proc(o, i, T)
-      local v := prgm_new_symbol("v"), g := if T > 0 then 1 - 2^(-1/T) else 1 fi:
+      local v := new_symbol("v"), g := if T > 0 then 1 - 2^(-1/T) else 1 fi:
       v = (1 - g) * v + g * i,
       o = If_b(v > 0.5, 1, 0)
      end),
  Oscillator = (proc(o, c, T)
-     local v := prgm_new_symbol("v"), gamma := if T > 0 then 2 - 2^(1-1/T) else 2 fi:
+     local v := new_symbol("v"), gamma := if T > 0 then 2 - 2^(1-1/T) else 2 fi:
      v = (1 - g) * v + g * (1 - o) * c,
      o = If_b(v < 1/3, 0, 0, v > 2/3, 1, o)
      end)
@@ -88,11 +91,11 @@ prgm_functions := {
 ## Compiles a set of equation as a piece of code
 
 prgm_compile := proc(prgm_file :: string)
-  local prgm := table(), new_symbol, new_symbol_count := 0:
+  local prgm := table(), next_symbol, next_symbol_count := 0:
 
   try 
 
-    ### Sets basic otions
+    ### Sets basic options
 
     prgm["options"] := (proc() global prgm_default_options: op(prgm_default_options) end)():
     prgm["options"][file] :=  prgm_file:
@@ -107,7 +110,7 @@ prgm_compile := proc(prgm_file :: string)
     prgm["source"] := FileTools[Text][ReadFile](prgm["options"][file]):
     prgm["input"] := parse(StringTools[RegSubs]("#[^\n]*\n" = "", prgm["source"])):
  
-    ### Extracts options from the input first line
+    ### Extracts options from the first  input line
 
     if type(prgm["input"], list) and nops(prgm["input"]) > 0 then
       if type(op(1, prgm["input"]), `=`) and op(1, op(1, prgm["input"])) = prgm_options then
@@ -125,7 +128,7 @@ prgm_compile := proc(prgm_file :: string)
           error "Syntax error: A prgm_options is not given at the 1st line, it must."
         fi, prgm["input"]):
     else
-      error "Syntax error: The sourc file content is not a non empty list, it must."
+      error "Syntax error: The source file content is not a non-empty list, it must."
     fi:
     
      ### Checks the syntax of the equation list
@@ -149,7 +152,7 @@ prgm_compile := proc(prgm_file :: string)
   
    #### Creates a new symbol
 
-   new_symbol := proc(prefix:: string) new_symbol_count := new_symbol_count + 1:  convert(cat(prefix, "_", new_symbol_count), name) end:
+   next_symbol := proc(prefix:: string) next_symbol_count := next_symbol_count + 1:  convert(cat(prefix, "_", next_symbol_count), name) end:
 
    ### Expands the known functions
   
@@ -162,53 +165,79 @@ prgm_compile := proc(prgm_file :: string)
          if  v0 = v1 then return v0 fi:
 	 v1 := v0
       od:	
-     error "Iteratively expanding toward a fixed point failed."
+     error "Iteratively expanding '", v_0, ", => '", v0, "' toward a fixed point failed."
    end:
-   evalf(fixed_point(proc(eqs, prgm)
+   fixed_point(proc(eqs, prgm)
      global prgm_function:
-     eval(subs(subs(prgm_options = prgm["options"], prgm_new_symbol = new_symbol, prgm_functions), eqs))
-   end, prgm["input"], prgm))
+     local
+       #### Tests if it is a linear combination of constant with symbol or function
+       type_linear_combination := proc(a) type_linear_combination_term(a) or (type(a, `+`) and convert(map(type_linear_combination_term, convert(a, list)), `and`)) end,
+       type_linear_combination_term := proc(a) type(a, {constant, function}) or (type(a, `*`) and nops(a) <= 2 and type(op(1, a), constant)) end:
+    #### Manages the Id function on linear combination
+   map(proc(eq1)
+      local eq2 := evalf(eq1):
+      if type(eq2, `=`) and type(op(2, eq2), {`+`, `*`}) then
+        if type_linear_combination(op(2, eq2)) then
+	   op(1, eq2) = Id(op(2, eq2))
+	else
+          error cat("When flattening, one algebraic expression: '", eq2, "' is not a linear combination of constants with symbols")
+        fi
+      else
+        eq2
+      fi
+   end,
+     #### Substitutes known prgm functions
+     eval(subs(prgm_functions, prgm["options"], new_symbol = next_symbol, eqs)))
+   end, prgm["input"], prgm)
   end)(prgm):
 
-   ## Flattens inner functions
-   prgm["flattened"]  := (proc(eqs0)
-     local  eqs1, eqs2 := [],
-       expand_args := a ->
+   ### Flattens inner functions
+   prgm["flattened"]  := (proc(eqs1)
+     local  eqs2 := [],
+       #### Expands flattening on a right-hand side expression
+       expand_args := proc(a)
          if type(a, {function, `+`, `*`}) then 
           op(0, a)(op(map(expand_arg, a)))
-	else a fi,  
+	else a fi
+       end,  
+       #### Expands flattening on an expression's argument
        expand_arg := proc(a)
-          local n, a_n:
           if type(a, function) then
-	    a_n := expand_args(a):
-	    n  := new_symbol("x"):
-            eqs2 := [n = a_n, op(eqs2)]:
-	    n
+	    add_eq(next_symbol("x"), expand_args(a))
 	  elif type(a, {`+`, `*`}) then
 	    expand_args(a)
 	 else a fi
+       end,
+       #### Adds a flattened equation
+       add_eq := proc(n, a_n)
+         ##### Tests if right-hand side is already in the equation set, to avoid double calculation
+         local l := convert(map((l, eqs2) -> if op(2, eqs2[l]) = a_n then l else 0 fi, [$1..nops(eqs2)], eqs2), set) minus {0}:
+	 if nops(l) > 0 then
+	   op(1, op(l, eqs2))
+	 else
+	   eqs2 := [op(eqs2), n = a_n]:
+	   n
+	 fi
        end:
-     eqs1 := map(eq ->
-        if type(eq, `=`) then
-	 op(1, eq) = expand_args(op(2, eq))
+     #### Applies on the equation list  
+     map(proc(eq)
+       if type(eq, `=`) then
+         add_eq(op(1, eq), expand_args(op(2, eq)))
        else
-         error cat("After expanding one line: '", eq, "' is not an equation")
-      fi, eqs0):
-      [op(eqs2), op(eqs1)]
+         error cat("After expanding, one line: '", eq, "' is not an equation")
+      fi end, eqs1):
+      eqs2
    end)(prgm["expanded"]):
 
-  ## To be done
-  ### - reintroduces the Id function on sum and product
-  ### - checks the error of eqs2 order
-  ### - factorizes identical expressions, looking the eqs2 table
-
-  ## Generates python code
+  ### Generates python code
   if prgm["options"][python] then 
     prgm["python"] := (proc(prgm)
       local c,
+      #### Calls the python code generation modules avoiding warning on uknown functions
       w := interface(warnlevel=0):
       c := StringTools[RegSubs]("^" = "\t", StringTools[RegSubs]("\n(.)" = "\n\t\\1", CodeGeneration[Python](prgm["flattened"], defaulttype=float, output=string))):
       interface(warnlevel=w):
+      #### Builds the complete source file
       c := cat(
         "# This file is automatically generated by the programmatoid compiler, better not edit\n",
 	"\ndef ", prgm["options"][name], "(state)\n",
@@ -218,10 +247,13 @@ prgm_compile := proc(prgm_file :: string)
 	else "" fi),
 	"\n\tdef h(x):\n\t\treturn 1 / (1 + np.exp(-4 * x))\n",
 	"\n", c, "\n"):
+      #### Saves and returns
       FileTools[Text][WriteFile](StringTools[RegSubs]("\.mpl$" = "\.py", prgm["options"][file]), c):
       c
     end)(prgm):
   fi:
+
+  ### Generates the equations in matrix form
 
   ### Stops the compilation if errors
   
@@ -239,6 +271,6 @@ save prgm_default_options,  prgm_functions, prgm_compile, "../../braincraft/prog
 
 ## Functional tests 
 
-FileTools[Text][WriteFile]("/tmp/prgm_test.mpl", "[ prgm_options = { omega = 10 },  Delay(b, i_t, 10),  a = H(H(b))]"):
+FileTools[Text][WriteFile]("/tmp/prgm_test.mpl", "[ prgm_options = { omega = 10, all_neuronoid = false },  Delay(b, i_t, 10),  a = H(H(b))]"):
 print(prgm_compile("/tmp/prgm_test.mpl"));
  
