@@ -315,6 +315,8 @@ with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
 Here,  $h(\cdot)$ is the normalized sigmoid with \eqline{h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1, h(x) = 1 - h(-x)}
 All this is just very standard derivations, available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/neuronoid.mpl.out.txt}{{\tt Maple} code}, of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
 
+The leak term, in the discrete case, is computationally equivalent to a recurrent linear connection, it will thus be implemented as such in the sequel.
+
 We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
 
 \subsection{Step-function mollification}

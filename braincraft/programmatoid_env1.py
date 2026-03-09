@@ -9,6 +9,6 @@ from bot import Bot
 from environment_1 import Environment
 
 if __name__ == "__main__":
-    from challenge_callback import evaluate
-    evaluate(Bot, Environment, model=10,debug=True)
+    from programmatoid_challenge import evaluate
+    evaluate(Bot, Environment, model =10, debug=True)
   

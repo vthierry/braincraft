@@ -1,14 +1,14 @@
 
 # The doc files to build
 
-build : api/challenge_callback.html  tex/index.html logs
+build : api/programmatoid_challenge.html  tex/index.html logs
 
 clean :
-	rm -f api/challenge_callback.html  tex/index.html
+	rm -f api/programmatoid_challenge.html  tex/index.html
 
 # The challenge callback api documentation
 
-api/challenge_callback.html: ../braincraft/challenge_callback.py
+api/programmatoid_challenge.html: ../braincraft/programmatoid_challenge.py
 	rm -rf api/* ; ~/.local/bin/pdoc --logo ../../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../../data/braincraft-favicon.png   --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o api
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 
