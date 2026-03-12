@@ -1,5 +1,5 @@
 \documentclass[a4]{article}
-\usepackage[left=2cm,right=3cm,top=1cm,bottom=1cm]{geometry}
+\usepackage[left=2cm,right=3cm,top=1cm,bottom=2cm]{geometry}
 \usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
@@ -18,7 +18,7 @@ Let us consider the following digital experimental setup, as described in \href{
 
 \centerline{\includegraphics[width=0.9\textwidth]{../../data/debug.png}}
 
-\href{https://github.com/rougier/braincraft}{The braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
+As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}, \href{https://github.com/rougier/braincraft}{the braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
 \eqline{\begin{array}{|ll|l|}
   \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
   p_l \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[ && \mbox{\parbox{5cm}{~\\Leftward proximity, {\small max value of the [0, +30°] range 32 left sensors.\\}}} \\\hline 
@@ -175,9 +175,9 @@ control the $q_p$ variable.
     \item[Programmatoid solution] \eqline{\begin{array}{rcl}
         \multicolumn{3}{l}{\mbox{Detect the cue, if not yet done, and reset below an energy threshold}} \\
         c_{cb} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lb} = 1 \mbox{ or } c_{rb} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else } c_{cb} \\
-        c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{lr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
+        c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{rr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
         \multicolumn{3}{l}{\mbox{Set the direction according to the cue}} \\
-        q_p &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_c \\
+        q_p &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_p \\
    \end{array}} \end{description}
 
 \subsubsection{Task 3: Valued environment decision} \begin{description}
@@ -694,11 +694,17 @@ while using a virtual environment, is advised, but not mandatory.
 
 \subsection{Running at the programmatic level}
 
-When running at the programmatic level,
-\\- the \href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/challenge_callback.html#next_output_from_network}{{\tt  next\_output\_from\_network(context)}} callback is to be implemented, and
-\\- to be called by the ``callback'' version of the \href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/challenge_callback.html#evaluate}{{\tt evaluate($\cdots$)}} method.
+The bot behavior is defined by:
+\\- A state which is a very standard {\tt name $\rightarrow$ value} map, i.e., a dictionary in the {\tt Python} language. It stores all state input, output, and internal state variables, and some parameters.
+\\- Two procedures:
+\\\tab- {\tt init\_state(state)} called once at the beginning of each run, and
+\\\tab-{\tt update\_state(state)} called at each run step.
 
-The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/challenge_callback.py}{{\tt challenge\_callback\_1.py}} source file includes all documented methods.
+At the programmatic level, the bot behavior is directly programmed using the target programming language, following this simple example:
+\begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatic_challenge_example.py}{\tt programmatic\_challenge\_example}\end{center}
+
+The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.py}{{\tt programmatoid\_challenge.py}} source file includes all documented methods and the related API is available here:
+\begin{center}\href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/programmatoid_challenge.html}{\tt programmatoid challenge API}\end{center}
   
 \subsection{Running at the programmatoid level}
 
@@ -716,12 +722,48 @@ subs({ ## Fixed parameters constant values
 
 {\bf Note:} The equation list being evaluated in sequence, equations with input must precede equations with output.
 
-\subsubsection{Programmatoid package meta-data and options}
+This piece of {\tt Maple} code, stored in a file of the form {\tt prgm\_name.mpl} is compiled in the form of straight-line program, with a programmatoid syntax, as defined in this documents.
+
+It is output as a piece of {\tt Python} code and then executed in the desired environment using the:
+\begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.sh}{\tt programmatoid challenge script}\end{center}
+\begin{verbatim}
+Usage ./programmatoid_challenge.sh $prgm
+  - The programmatoid source is in a $prgm.mpl file.
+     - The $prgm name must have a 1, 2, or 3 digit to define the braincraft task number, thus which environment.
+  - The compiled source is in a $prgm.py file.
+     - The compiled log is in a $prgm.log file.
+  - The test is run executing from an automatically generated $prgm_test_$d*.py 
+     - The execution log is in a $prgm._test_$d.log file.
+     - The $d value corresponds to the execution date time.
+The compilation is parameterized by a set of options given in appendix~\ref{programmatoid-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document. 
+\end{verbatim}
+
+\subsection{Running at the artificial neural network level}
+
+If the {\tt network\_weights} compilation option is raised, is is compiled in the form of a network weights as illustrated\footnote{Shared here by courtesy of R. de Coudenhove, Y. Bendi-Ouis, A. Strock and X. Hinaut.} here:
+
+\centerline{\includegraphics[width=0.9\textwidth]{./res_archi.png}}
+
+and run using the specific  recurrent equations, on input ${\bf I}$ and output {\bf O}, with internal values ${\bf X}$:
+\eqline{{\bf X} = h\left({\bf W} \, {\bf X} + {\bf w} + {\bf W}_{in} \, {\bf I}\right), \;\;\; {\bf O} = {\bf W}_{out} \, {\bf X}, \;\;\;\left.{\bf X}\right|_{t = 0} = {\bf 0}}
+where:
+\\- $W_{out}^{i,j} = \delta_{i = j}$, in words, the output is just a sub-vector of the internal values.
+\\- There is no leak, but recurrent connections acting as discrete implementation of a leak.
+\\- There is an offset ${\bf w}$ that equivalently corresponds to a a input weight on a constant input.
+\\- The non-linearity is a normalized sigmoid.
+
+In fact this compilation option is simply used to verify numerically that such a network is totally equivalent to programmatoid implementation with only neuronoids.
+
+\bibliographystyle{apalike}\bibliography{AIDE}
+
+\appendix \section{Programmatoid package reference}
+
+\subsection{Programmatoid package meta-data and options}\label{programmatoid-options}
 
 Available options: \\\begin{tabular}{|l|l|l|l|} \hline
 {\bf Name}                & {\bf Format}                & {\bf Value} & \\ \hline
  &&&\\\multicolumn{4}{|l|}{{\bf Package meta-data.}} \\
-{\tt name} & string & \parbox{2cm}{set during \\ compilation} & \parbox{8cm}{The package name, deduced from the source file name, which is of the form {\tt name.mpl}.}\\
+{\tt name} & string & & \parbox{8cm}{The package name, deduced from the source file name, which is of the form {\tt name.mpl}.}\\
 {\tt file} & string & \parbox{2cm}{set during \\ compilation} & \parbox{8cm}{The package source path name, which is of the form {\tt path/name.mpl}.}\\
 {\tt description} & string & & \parbox{8cm}{A one or two lines description. }\\
 {\tt homepage} & URL & & \parbox{8cm}{A link to the package, e.g., a git page.}\\
@@ -729,15 +771,15 @@ Available options: \\\begin{tabular}{|l|l|l|l|} \hline
 {\tt license} & string & CECILL-C & \parbox{8cm}{The share licence. }\\
 {\tt author} & Name $<$email$>$ & & \parbox{8cm}{The name and email of the contact person.} \\
  &&&\\ \multicolumn{4}{|l|}{{\bf Compiler parameters.}} \\
-{\tt omega}                & large positive float & 1000 & \parbox{8cm}{The $\omega$ used for both {\tt Id()} and {\tt H()} functions mollification.} \\ &&&\\
-{\tt all\_neuronoid}   & Boolean                   &  false & \parbox{8cm}{Whether {\tt Id()}  and {\tt H()} functions are mollified, remaining with {\tt h()} function only.} \\ &&&\\
-{\tt python}                & Boolean    &  true    & \parbox{8cm}{If defined, generates a Python piece of code with the flattened code.} \\ &&&\\
+{\tt omega}                    & large positive float & 1000 & \parbox{8cm}{The $\omega$ used for both {\tt Id()} and {\tt H()} functions mollification.} \\ &&&\\
+{\tt all\_neuronoid}       & Boolean                   &  false & \parbox{8cm}{Whether {\tt Id()}  and {\tt H()} functions are mollified, remaining with {\tt h()} function only.} \\ &&&\\
+{\tt network\_weights}  & Boolean                   &  false & \parbox{8cm}{Whether not a code, but the weights of a recurrent network with {\tt h()} as non-linearity, is generated.} \\ &&&\\
+{\tt python}                & Boolean    &  true    & \parbox{8cm}{If defined, generates a Python piece of code of name {\tt update\_state} with the flattened code.} \\ &&&\\
 {\tt inputs}                 & List of names          &  deduced & \parbox{8cm}{The list of input variables, if it does not correspond to the right-hand side expression variables, not present in any left-hand side equation, in the initial equation order.} \\ &&&\\
 {\tt outputs}               & List of names          &  deduced & \parbox{8cm}{The list of output variables, if it does not correspond the left-hand side variables, not present in right-hand side expressions, in the initial equation order.} \\ &&&\\
 \hline \end{tabular}
 
-
-\subsubsection{Programmatoid compilation}
+\newpage \subsection{Programmatoid compilation output}\label{programmatoid-compilation}
 \begin{tabular}{|l|l|l|} \hline
 {\bf Name}                   & {\bf Type}               & \\ \hline &&\\
 {\tt options}                  & string                      & \parbox{8cm}{The compilation options, given in the code first line.} \\
@@ -755,12 +797,12 @@ Available options: \\\begin{tabular}{|l|l|l|l|} \hline
 {\tt model[the\_f]}      & list(name)              & \parbox{8cm}{The rigth-hand side non-linearity function, if unique.}\\
 {\tt model[W\_in]}      & matrix                    & \parbox{8cm}{The binary matrix that maps input vector on the state variables vector.}\\
 {\tt model[W\_out]}     & matrix                    & \parbox{8cm}{The binary matrix that mapsthe state variables vector onto the output vector.}\\
-{\tt model[W]}             & matrix                    & \parbox{8cm}{The recurrent weights matrix (IN PROGRESS)}\\
+{\tt model[W]}             & matrix                    & \parbox{8cm}{The recurrent weights matrix.}\\
+{\tt model[w]}             & matrix                    & \parbox{8cm}{The recurrent weights offset, or bias.}\\
 {\tt error}                     & string                     & \parbox{8cm}{The error message, if an error occurs during input source analysis.} \\
 \hline \end{tabular}
 
-
-\subsubsection{Programmatoid functions}
+\newpage \subsection{Programmatoid functions}\label{programmatoid-functions}
 
 For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
 functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\
@@ -786,11 +828,4 @@ functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{l
   {\tt Oscillator(b\_o, b\_c, T)} & Oscillatory output. \\& $\mbox{{\tt T}} > 0$ is the period, in number of global clock event. \\& {\tt b\_o} is the  output, \\& $\mbox{{\tt b\_c}} \in \{0_{stop}, 1_{run}\}$ is the control.\\
 \end{tabular}}
 
-% \subsection{Running at the artificial neural network level}
-
-%The  {\tt def weights()}  function returning the fixed pre-compiled parameters {\tt weights = win, w, wout} is to be defined.
-
-%The {\tt neuronoid.py} code provides all functions to evaluate the implementation, without training phase. 
-
-\bibliographystyle{apalike}\bibliography{AIDE}
 \end{document}

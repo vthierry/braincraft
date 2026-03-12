@@ -31,13 +31,3 @@ tex/%.mpl.out.txt: tex/%.mpl
 tex/%.png : tex/%.odg
 	@libreoffice --headless --convert-to png --outdir $(@D) $^
 
-# The python codes output log
-
-what = env1_player_programmatoid
-
-logs: $(patsubst %,log/%.py.out.txt,$(what))
-
-log/%.py.out.txt: ../braincraft/%.py 
-	cd ../braincraft ; python3 $*.py 2>&1 | tee ../doc/log/$*.py.out.txt
-
-

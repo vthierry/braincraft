@@ -7,91 +7,71 @@ from bot import Bot
 from camera import Camera
 
 # Defines some non-linear functions
-def identity(x):
-    """Defines the identity function value.
-    """
-    return x
 
 def sigmoid(x):
     """Defines the normalized sigmoid function.
     """
     return 1 / (1 + np.exp(-4 * x))
 
-def d_sigmoid(x):
-    """Defines the normalized sigmoid function derivative.
-    """
-    e_x = np.exp(-4 * x)
-    e_xp1 = 1 + e_x
-    return 4 * e_x / (e_xp1* e_xp1)
-
 def step(x):
     """Defines the step (or Heavyside) function.
     """
     return 0 if x < 0 else 1 if x > 0 else 1/2
 
-# Defines the next function for a the global neurnoid model and state
-def next_output_from_network(context):
-    """Returns the next bot output and update the state.
+def init_state_from_network(state):
+    """Inits the state from a neuronoid network
+    """
+   W_in, W, w, W_out = state["network"]
+    n = w.size
+    state["X"] = np.zeros((n,1))
 
-    Parameter
+def update_state_from_network(state):
+    """Updates the state from a neuronoid network
+
+    Parameters
     ----------
-    context: dictionary
-    - "model" : The model parameters list as defined below.
-        - It is a `W_in, W, W_out, warmup, leak, f, g` list for this next_output_from_network() callback, where:
-            - `p = bot.camera.resolution`.
-            - `n` # The network size
+    state: dictionary
+    - "network" : The network parameters list as defined below.
+        - It is a `W_in, W, w, W_out` list for this next_output_from_network() callback, where:
+            - `p = bot.camera.resolution`, available as `state["camera.resolution"]`.
+            - `n` # The network size.
             - `W_in(n,2*p+3)` is the input weights.
             - `W(n,n)` is the internal weights, thus `W(row-count,column-count)`.
+            - `w(n)` is the internal offsets..
             - `W_out(1,n)` is the output weights.
-            - `warmup` is the number of iteration, before the bot starts.
-            - `leak(n, 1)`  the leak vector, or scalar.
-            - `f = tanh`  is the internal non-linearity.
-            - `g = identity`  is the internal non-linearity.
-    - "state"   : The model current input and state.
-        - It is a `I, X` list where:
-            - `I[:p] = 1 - bot.camera.depths`.
-            - `I[p:2*p] = bot.camera.values`.
-            - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
-            - `X[0:network_size(),0]` is the local state.
+         - The following elements are constant in this implementation:
+            - `warmup = 0` is the number of iteration, before the bot starts, NOT used.
+            - `leak(n, 1) = 0`  the leak vector, or scalar, ALWAYS 0 (leak is integrated in the reccurent connections).
+            - `f = sigmoid`  is the internal non-linearity, ALWAYS a sigmoid.
+            - `g = identity`  is the output non-linearity, ALWAYS the  identity.
+    - "X"   : The network current state.
+        - `X[0:n]` is the local state, initialized to 0.
+    - "I"   : The network current input.
+          - `I[:p] = 1 - bot.camera.depths`.
+          - `I[p:2*p] = bot.camera.values`.
+          - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
+    - "d_o" : The network returned output
     """
-    W_in, W, W_out, warmup, leak, f, g = context["model"]
-    I, X = context["state"]
-    X = leak*X + (1-leak)*f(np.dot(W_in, I) + np.dot(W, X))
-    O = np.dot(W_out, g(X))
-    context["state"] = I, X
-    return O
-            
-def default_model(n):
-    bot = Bot()
-    p = bot.camera.resolution
-    np.random.seed(1234567)
-    Win  = np.random.uniform(-1,1, (n,2*p+3))
-    W = np.random.uniform(-1,1, (n,n))*(np.random.uniform(0,1, (n,n)) < 0.1)
-    Wout = 0.1*np.random.uniform(-1, 1, (1,n))
-    warmup = 0
-    f = sigmoid
-    g = identity
-    leak = 0
-    model = Win, W, Wout, warmup, leak, f, g
-    return model
+    W_in, W, w, W_out = state["network"]
+    I, X = state["I"], state["X"]
+    X = sigmoid(np.dot(W_in, I) + np.dot(W, X) + w)
+    state["d_o"] = np.dot(W_out, X)
+    state["X"] = X
 
-def evaluate(Bot, Environment, model, next_output=next_output_from_network, runs=1, debug=False):
-    """Evaluates a model.
+def evaluate(Bot, Environment, runs = 1, debug = False):
+    """Evaluates a programatoid
+
+    - It calls init_state(state) which initializes the state parameters and variables, at the beggining of each run.
+
+    - It calls update_state(state)  which computes the next `d_o` value from the input `I` or preprocessed input, at each step.
 
     Parameters
     ----------
     Bot: class.
-      Bot class to use for evaluation.
+     - The Bot class to use for evaluation.
 
     Environment: class.
-      Environment class to use for evaluation.
-
-    model : list or int
-     - A `W_in, W, W_out, warmup, leak, f, g` list, or …
-     - A `n` defining the default model size,
-
-    next_output: function
-    - The `O = next_output(context)` iteration function.
+    - The Environment class to use for evaluation.
 
     runs : int
     - Number of runs.
@@ -103,11 +83,6 @@ def evaluate(Bot, Environment, model, next_output=next_output_from_network, runs
     =======
     Mean score (float) and standard deviation over the given number of runs.
     """
-
-    if isinstance(model, int):
-        model = default_model(model)
-    W_in, W, W_out, warmup, leak, f, g = model
-    n = np.shape(W)[0]
 
     if debug:
         start_time = time.time()
@@ -156,9 +131,10 @@ def evaluate(Bot, Environment, model, next_output=next_output_from_network, runs
         bot = Bot()
         
         p = bot.camera.resolution
-        I, X = np.zeros((2*p+3,1)), np.zeros((n,1))
-        context = dict({"model": model, "state": (I, X)})
 
+        state = dict({"g_e1" : 1, "g_e2" : 1, "g_c1" : 0, "g_c2" : 0, "camera.resolution" : bot.camera.resolution})
+        init_state(state)
+        
         distance = 0
         hits = 0
         iteration = 0
@@ -180,15 +156,28 @@ def evaluate(Bot, Environment, model, next_output=next_output_from_network, runs
             I[:p,0] = 1 - bot.camera.depths
             I[p:2*p,0] = bot.camera.values
             I[2*p:,0] = bot.hit, bot.energy, 1.0
+            state["I"] = I
+
+            ##  Input preprocessing
+            state["p_l"] = np.mean(I[0:p/2,0]):
+            state["p_r"] = np.mean(I[p/2:p,0]):
+            state["c_lb"] = 1 if 4 in I[p:p+p/2,0] 0 else
+            state["c_lr"] = 1 if 5 in I[p:p+p/2,0] 0 else
+            state["c_rb"] = 1 if 4 in I[p+p/2:2*p,0] 0 else
+            state["c_rr"] = 1 if 5 in I[p+p/2:2*p,0] 0 else
+            state["g_e2"] = state["g_e1"]
+            state["g_e1"] = state["g_e"]
+            state["g_e"] = bot.energy
+            if  state["g_e"] > state["g_e1"] and state["g_e1"] < state["g_e2"]:
+                state["g_c2"] = state["g_c1"]
+                state["g_c1"] = state["g_e"] - state["g_e1"]
+            if  state["g_e"] > state["g_e1"] and state["g_e1"] > state["g_e2"]:
+                state["g_c1"] += state["g_e"] - state["g_e1"]
+
+            update_state(state)
             
-            O = next_output(context)
+            O = state["d_o"]
             
-            # During warmup, bot does not move
-            if iteration > warmup:
-                p = bot.position
-                bot.forward(O, environment, debug)
-                distance += np.linalg.norm(p - bot.position)
-                hits += bot.hit
             iteration += 1
 
             if debug:

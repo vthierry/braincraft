@@ -12,10 +12,12 @@ subs(
 ,[
   prgm_options = { omega = 100, all_neuronoid = false, Python = "task1" },
  ## Direction choice
-  q_p = If_b(Or(q_p = 1, eta > g_e), 1, 0),
+ c_cb = If_b(And(c_cb = 0, c_cr = 0, Or(c_lb = 1, c_rb = 1)), 1, g_e < eta/2, 0, c_cb),
+ c_cr = If_b(And(c_cb = 0, c_cr = 0, Or(c_lr = 1, c_rr = 1)), 1, g_e < eta/2, 0, c_cr),
+ q_p = If_b(Or(c_lb = c_cb, c_lr = c_rr), 0, Or(c_lb = c_cb, c_lr = c_rr), 1, q_p),
   ## Navigation equations
-  t_l = If_b(q_p = 1, H(beta - p_l), 0),
-  t_r = If_b(q_p = 0, H(beta - p_r), 0),
+  t_l = If_b(q_p = 1, beta > p_l, 0),
+  t_r = If_b(q_p = 0, beta > p_r, 0),
   d_o = gamma * (p_l - p_r) + alpha * (t_l - t_r)
  ]):
 
