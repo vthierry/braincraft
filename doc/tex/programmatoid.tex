@@ -710,10 +710,10 @@ The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programm
 \subsection{Running at the programmatoid level}
 
 At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}# A tiny example of programmatoid
-subs({ ## Fixed parameters constant values
-    T = 10,                                             ### The delay
-    constantName = constantValue  ### Any other …
-},
+subs( ## Fixed parameters sequence of constant values
+    T = 10, ### The delay
+    constantName = constantValue  ### Any other constants
+,
 [  ## The package options 
   prgm_options = { omega = 10 },
   ## The package equations
@@ -731,13 +731,14 @@ It is output as a piece of {\tt Python} code and then executed in the desired en
 Usage ./programmatoid_challenge.sh $prgm
   - The programmatoid source is in a $prgm.mpl file.
      - The $prgm name must have a 1, 2, or 3 digit to define the braincraft task number, thus which environment.
-  - The compiled source is in a $prgm.py file.
-     - The compiled log is in a $prgm.log file.
-  - The test is run executing from an automatically generated $prgm_test_$d*.py 
-     - The execution log is in a $prgm._test_$d.log file.
-     - The $d value corresponds to the execution date time.
-The compilation is parameterized by a set of options given in appendix~\ref{programmatoid-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document. 
+  - The compilation output is saved:
+    -  In a $prgm.py file for the init_state() and update_state() procedures.
+     - In a $prgm.mw file for the maple compilation output.
+  - The test is run executing an automatically generated $prgm_test.py file
+  - The execution log is in a $prgm._test_$current-date-and-time.log file.
 \end{verbatim}
+
+The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document. 
 
 \subsection{Running at the artificial neural network level}
 
@@ -759,49 +760,40 @@ In fact this compilation option is simply used to verify numerically that such a
 
 \appendix \section{Programmatoid package reference}
 
-\subsection{Programmatoid package meta-data and options}\label{programmatoid-options}
+\subsection{Package and compiler options and outputs}\label{package-options}
 
-Available options: \\\begin{tabular}{|l|l|l|l|} \hline
+\begin{tabular}{|l|l|l|l|} \hline
 {\bf Name}                & {\bf Format}                & {\bf Value} & \\ \hline
  &&&\\\multicolumn{4}{|l|}{{\bf Package meta-data.}} \\
-{\tt name} & string & & \parbox{8cm}{The package name, deduced from the source file name, which is of the form {\tt name.mpl}.}\\
-{\tt file} & string & \parbox{2cm}{set during \\ compilation} & \parbox{8cm}{The package source path name, which is of the form {\tt path/name.mpl}.}\\
-{\tt description} & string & & \parbox{8cm}{A one or two lines description. }\\
-{\tt homepage} & URL & & \parbox{8cm}{A link to the package, e.g., a git page.}\\
-{\tt version} & date & \parbox{2cm}{set during \\ compilation}  & \parbox{8cm}{The package version, given as the date of compilation.}\\
-{\tt license} & string & CECILL-C & \parbox{8cm}{The share licence. }\\
-{\tt author} & Name $<$email$>$ & & \parbox{8cm}{The name and email of the contact person.} \\
+{\tt file} 		& string & {\tt path/name.mpl} & \parbox{6cm}{The package source path name.}\\
+{\tt name} 	& string & from file name& \parbox{6cm}{The package name.}\\
+{\tt excerpt} 	& string & … & \parbox{6cm}{A one or two lines description.}\\
+{\tt homepage} & URL & … & \parbox{6cm}{A link to the package, e.g., a git page.}\\
+{\tt version} & date & & \parbox{6cm}{The compilation date and time.}\\
+{\tt license} & string & {\tt \small CeCILL-C} or … & \parbox{6cm}{The share license. }\\
+{\tt author} & Name $<$email$>$ & … & \parbox{6cm}{The person to contact.} \\
  &&&\\ \multicolumn{4}{|l|}{{\bf Compiler parameters.}} \\
-{\tt omega}                    & large positive float & 1000 & \parbox{8cm}{The $\omega$ used for both {\tt Id()} and {\tt H()} functions mollification.} \\ &&&\\
-{\tt all\_neuronoid}       & Boolean                   &  false & \parbox{8cm}{Whether {\tt Id()}  and {\tt H()} functions are mollified, remaining with {\tt h()} function only.} \\ &&&\\
-{\tt network\_weights}  & Boolean                   &  false & \parbox{8cm}{Whether not a code, but the weights of a recurrent network with {\tt h()} as non-linearity, is generated.} \\ &&&\\
-{\tt python}                & Boolean    &  true    & \parbox{8cm}{If defined, generates a Python piece of code of name {\tt update\_state} with the flattened code.} \\ &&&\\
-{\tt inputs}                 & List of names          &  deduced & \parbox{8cm}{The list of input variables, if it does not correspond to the right-hand side expression variables, not present in any left-hand side equation, in the initial equation order.} \\ &&&\\
-{\tt outputs}               & List of names          &  deduced & \parbox{8cm}{The list of output variables, if it does not correspond the left-hand side variables, not present in right-hand side expressions, in the initial equation order.} \\ &&&\\
+{\tt omega}                    & \parbox{3cm}{large float} & 1000 & \parbox{6cm}{The $\omega$ used for {\tt Id()} and {\tt H()} mollification.} \\ &&&\\
+{\tt mollification}       & Boolean                   &  false & \parbox{6cm}{Whether {\tt Id()}  and {\tt H()} functions are converted to {\tt h()}.} \\ &&&\\
+{\tt networking}  & Boolean                   &  false & \parbox{6cm}{Whether no code, but network's weights is generated.} \\ &&&\\
+{\tt python}                & Boolean    &  true    & \parbox{6cm}{If defined, generates a Python piece of code of name {\tt update\_state} with the flattened code.} \\ &&&\\
+{\tt inputs}                 & list(name)          &  \parbox{3cm}{r.h.s. variables \\ not in l.h.s.} & \parbox{6cm}{Input variables, user defined or deduced.} \\ &&&\\
+{\tt outputs}               & list(name)          &  \parbox{3cm}{l.h.s. variables \\ not in r.h.s.} & \parbox{6cm}{Input variables, user defined or deduced.} \\ &&&\\
+ &&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\
+{\tt error}                      & string                     & … or not :) & \parbox{6cm}{The error message, if any} \\&&&\\
+{\tt source}                     & string                     & & \parbox{6cm}{The parsed input source, without the user options.} \\&&&\\
+{\tt expanded}             & string                     & & \parbox{6cm}{The parsed source, with known functions expanded.} \\&&&\\
+{\tt flattened}              & string                      & & \parbox{6cm}{The expanded source, with all inner functions generated by new equations.} \\&&&\\
+{\tt network[dimension]} & int                         & & \parbox{6cm}{The network internal unit count.}\\
+{\tt network[connectivity]} & int                         & & \parbox{6cm}{The network non-sero weight count.}\\
+{\tt network[f]}               & list(name)              & & \parbox{6cm}{The unit's non-linearities.}\\
+{\tt network[W\_in]}       & matrix                    & & \parbox{6cm}{The input weight's matrix.}\\
+{\tt network[W]}             & matrix                    & & \parbox{6cm}{The recurrent weight's matrix.}\\
+{\tt network[w]}              & matrix                    & & \parbox{6cm}{The recurrent weights offset, or bias.}\\
+{\tt network[W\_out]}     & matrix                    & & \parbox{6cm}{The output weight's matrix.}\\
 \hline \end{tabular}
 
-\newpage \subsection{Programmatoid compilation output}\label{programmatoid-compilation}
-\begin{tabular}{|l|l|l|} \hline
-{\bf Name}                   & {\bf Type}               & \\ \hline &&\\
-{\tt options}                  & string                      & \parbox{8cm}{The compilation options, given in the code first line.} \\
-{\tt options[name]}      & string                      & \parbox{8cm}{The programmatoid name.} \\
-{\tt options[file]}          & string                      & \parbox{8cm}{The programmatoid source path name.} \\
-{\tt options[version]}   & date                         & \parbox{8cm}{The compilation version.} \\
-{\tt source}                   & string                       & \parbox{8cm}{The input source file content, including the comments.} \\
-{\tt input}                     & list({`=`,function})   & \parbox{8cm}{The parsed input source, without the options.} \\
-{\tt expanded}             & list({`=`,function})   & \parbox{8cm}{The input, with known functions expanded.} \\
-{\tt flattened}             & list({`=`,function})    & \parbox{8cm}{The expanded input, with all inner functions generated by new equations.} \\
-{\tt python}                 & string                      & \parbox{8cm}{The flattened input, as a {\tt def name(state)} function, saved in a {\tt name.py} file.}\\
-{\tt model[state]}        & list(name)              & \parbox{8cm}{The list of all state variables of the programmatoid.}\\
-{\tt model[lhs]}          & list(name)              & \parbox{8cm}{The list of all left-hand side variables of the programmatoid.}\\
-{\tt model[rhs\_f]}      & list(name)              & \parbox{8cm}{The list of all rigth-hand side non-linearity functions of the programmatoid.}\\
-{\tt model[the\_f]}      & list(name)              & \parbox{8cm}{The rigth-hand side non-linearity function, if unique.}\\
-{\tt model[W\_in]}      & matrix                    & \parbox{8cm}{The binary matrix that maps input vector on the state variables vector.}\\
-{\tt model[W\_out]}     & matrix                    & \parbox{8cm}{The binary matrix that mapsthe state variables vector onto the output vector.}\\
-{\tt model[W]}             & matrix                    & \parbox{8cm}{The recurrent weights matrix.}\\
-{\tt model[w]}             & matrix                    & \parbox{8cm}{The recurrent weights offset, or bias.}\\
-{\tt error}                     & string                     & \parbox{8cm}{The error message, if an error occurs during input source analysis.} \\
-\hline \end{tabular}
+{\bf Note:} All package meta-data and compiler parameters can be overwritten in the source {\tt prgm\_options} first-line.
 
 \newpage \subsection{Programmatoid functions}\label{programmatoid-functions}
 

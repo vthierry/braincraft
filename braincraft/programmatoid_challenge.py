@@ -58,7 +58,7 @@ def update_state_from_network(state):
     state["d_o"] = np.dot(W_out, X)
     state["X"] = X
 
-def evaluate(Bot, Environment, runs = 1, debug = False):
+def evaluate(Bot, Environment, challenge, timeout = 1000, runs = 1, debug = False):
     """Evaluates a programatoid
 
     - It calls init_state(state) which initializes the state parameters and variables, at the beggining of each run.
@@ -73,16 +73,18 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
     Environment: class.
     - The Environment class to use for evaluation.
 
+    challenge : int
+    - Challenge number 1, 2, 3
+
+    timeout : int
+    - Maximum number of iterations
+
     runs : int
     - Number of runs.
 
     debug : boolean
     - Whether to display animation or not.
-    
-    Returns
-    =======
-    Mean score (float) and standard deviation over the given number of runs.
-    """
+     """
 
     if debug:
         start_time = time.time()
@@ -120,7 +122,9 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
                                color=("black", "white", "C1"), linewidth=(20,18,12),
                                capstyle="round", zorder=150)) }
         
-    scores = []
+    iterations = []
+    distances = []
+    hits = []
 
     for i in range(runs):
         environment = Environment()
@@ -136,7 +140,7 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
         init_state(state)
         
         distance = 0
-        hits = 0
+        hit = 0
         iteration = 0
 
         # Initial update
@@ -148,7 +152,7 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
                               environment.world, environment.colormap)
 
         # Run until no energy
-        while bot.energy > 0:
+        while bot.energy > 0 and timeout > iteration:
 
             energy = bot.energy
 
@@ -178,8 +182,12 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
             update_state(state)
             
             O = state["d_o"]
-            
+
             iteration += 1
+            p = bot.position
+            bot.forward(O, environment, debug)
+            distance += np.linalg.norm(p - bot.position)
+            hit += bot.hit
 
             if debug:
                 graphics["rays"].set_segments(bot.camera.rays)
@@ -203,12 +211,11 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
                                       environment.world, environment.colormap)
                     plt.pause(1/60)
 
-        scores.append(distance)
+        distances.append(distance)
+        hits.append(hit)
+        iterations.append(iteration)
     if debug:
         elapsed = time.time() - start_time
-        print(f"Evaluation completed after {elapsed:.2f} seconds")
-        print(f"Final score: {np.mean(scores):.2f} ± {np.std(scores):.2f}")
-
-    return np.mean(scores), np.std(scores)
+        print(f"  execution: \u007b\n\t\"challenge\": \"{challenge}\", \n\t\"runs\": \"{runs}\", \n\t\"debug\": \"{debug}\",  \n\t\"evaluation-time\": \"{elapsed:.2f} sec\",  \n\t\"iterations\": \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\",  \n\t\"distances\": \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\",  \n\t\"hits\": \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\"\t\n\u007d\n")
 
 

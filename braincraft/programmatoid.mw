@@ -1,149 +1,158 @@
-prgm_default_options := table([(network_weights)=false,(all_neuronoid)=false,(
-python)=true,(omega)=1000]);
+prgm_default_options := table([(omega)=1000,(python)=true,(networking)=false,(
+mollification)=false,(licence)="CeCILL-C"]);
 prgm_functions := {And = (() -> H(sum(H_(_passed[k]),k = 1 .. _npassed)-
 _npassed+.5)), Delay = proc (o, i, T) local v, g; v := new_symbol("v"); g := if
 0 < T then 1-2^(-1/T) else 1 end if; v = (1-g)*v+g*i, o = If_b(.5 < v,1,0) end
-proc, Exp_v = (v -> .1821429756+2.339035264*h(v-1)+1.551573291*h(1/2*v)), H = (
-v -> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`<`) then Not(H(op(
-2,v) <= op(1,v))) elif type(v,`=`) then And(H(op(1,v) <= op(2,v)),H(op(2,v) <=
-op(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif all_neuronoid 
+proc, Exp_v = (v -> .1821429756+2.339035264*h(v-1)+1.551573291*h(.5*v)), H = (v
+-> if type(v,`<=`) then H(H(op(1,v)-op(2,v))) elif type(v,`<`) then Not(H(op(2,
+v) <= op(1,v))) elif type(v,`=`) then And(H(op(1,v) <= op(2,v)),H(op(2,v) <= op
+(1,v))) elif type(v,`<>`) then Not(H(op(1,v) = op(2,v))) elif mollification 
 then h(omega*v-.5) elif type(v,constant) then Heaviside(v) else H(v) end if), 
 H_ = (v -> if type(v,{`<`, `<=`, `<>`, `=`}) then H(v) else v end if), Id = (v
--> if all_neuronoid then h(omega*h(v/omega)) else Id(v) end if), If_b = ((c, b1
-, b0) -> if _npassed = 3 then H(H_(b0)-H_(c)-.5)+H(H_(b1)+H_(c)-3/2) else If_b(
+-> if mollification then h(omega*h(v/omega)) else Id(v) end if), If_b = ((c, b1
+, b0) -> if _npassed = 3 then H(H_(b0)-H_(c)-.5)+H(H_(b1)+H_(c)-1.5) else If_b(
 c,b1,If_b(_passed[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed
 = 3 then Bprod(H_(c),v1,1-H_(c),v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])
 ) end if), Latch_b = ((o, b_1, b_c) -> o = If_b(H_(b_c) = 1,o,b_1)), Latch_v =
 ((o, v_1, v_c) -> o = If_v(H_(b_c) = 1,o,v_1)), Log_v = (v -> -5.103555789+2.59\
-7614937*h(1/2*v)+4.702926636*h(1/10*v)), Not = (v -> H(1-H_(v))), Or = (() -> H
-(sum(H_(_passed[k]),k = 1 .. _npassed)+.5)), Prod_b = (() -> if type(_npassed,
+7614937*h(.5*v)+4.702926636*h(.1*v)), Not = (v -> H(1-H_(v))), Or = (() -> H(
+sum(H_(_passed[k]),k = 1 .. _npassed)+.5)), Prod_b = (() -> if type(_npassed,
 odd) then Bprod(_passed,0) else sum(omega*h(_passed[2*i]/omega+omega(H_(_passed
 [2*i])-1)),k = 1 .. 1/2*_npassed) end if), Prod_v = ((v1, v2) -> evalf(subs({b
 = 4/(exp(1)-1)^2, c = coth(.5), l = (v -> Log_v(1/2*(exp(1)-1)*v+1/2*exp(1)+1/2
 ))},b*Exp_v(l(v1)+l(v2))-c*(v1+v2+c)))), Softmax = proc () local k, g, b; g :=
 _passed[_npassed]; b := proc (k, a) local l; H(add(H(a[l] < a[k]),l = 1 .. k-1)
-+add(H(a[l] <= a[k]),l = k+1 .. nops(a))-nops(a)+3/2) end proc; add((g/_npassed
++add(H(a[l] <= a[k]),l = k+1 .. nops(a))-nops(a)+1.5) end proc; add((g/_npassed
 +(1-g)*b(k,[_passed[1 .. _npassed-1]]))*_passed[k],k = 1 .. _npassed-1) end 
 proc, Spikeup = proc (o, i) local r; r := new_symbol("r"); r = If_b(o = 1,1,i =
 0,0,r), o = If_b(And(r = 0,i = 1),1,0) end proc, h = (v -> if type(v,constant)
-then 1/(1+exp(-4*x)) else h(v) end if), Bistable = proc (o, i) if _npassed = 3
-then o = If_b(And(o = 0,_passed[2] = 1),1,And(o = 1,_passed[3] = 0),0,o) else 
-proc (o, i) local i0, i1; i0 := new_symbol("i0"); i1 := new_symbol("i1"); i1 =
-If_b(And(i1 = 0,i = 1),1,o = 0,0,i1), i0 = If_b(And(i0 = 0,i = 0),1,o = 1,0,i0)
-, o = If_b(And(o = 0,i1 = 1),1,And(o = 1,i0 = 0),0,0) end proc(o,i) end if end
-proc, Oscillator = proc (o, c, T) local v, gamma; v := new_symbol("v"); gamma 
-:= if 0 < T then 2-2^(1-1/T) else 2 end if; v = (1-g)*v+g*(1-o)*c, o = If_b(v <
-1/3,0,0,2/3 < v,1,o) end proc};
+then evalf(1.0/(1.0+exp(-4.0*x))) else h(v) end if), Bistable = proc (o, i) if
+_npassed = 3 then o = If_b(And(o = 0,_passed[2] = 1),1,And(o = 1,_passed[3] = 0
+),0,o) else proc (o, i) local i0, i1; i0 := new_symbol("i0"); i1 := new_symbol(
+"i1"); i1 = If_b(And(i1 = 0,i = 1),1,o = 0,0,i1), i0 = If_b(And(i0 = 0,i = 0),1
+,o = 1,0,i0), o = If_b(And(o = 0,i1 = 1),1,And(o = 1,i0 = 0),0,0) end proc(o,i)
+end if end proc, Oscillator = proc (o, c, T) local v, gamma; v := new_symbol(
+"v"); gamma := if 0 < T then 2-2^(1-1/T) else 2 end if; v = (1-g)*v+g*(1-o)*c,
+o = If_b(v < 1/3,0,0,2/3 < v,1,o) end proc};
 prgm_compile := proc (prgm_file::string) local prgm, next_symbol, 
-next_symbol_count; prgm := table(); next_symbol_count := 0; try prgm["options"]
-:= proc () global prgm_default_options; op(prgm_default_options) end proc(); 
-prgm["options"][file] := prgm_file; prgm["options"][name] := FileTools[Basename
-](prgm_file); prgm["options"][version] := convert(Date(),string); if not 
-FileTools[Exists](prgm["options"][file]) then error cat(
-"Syntax error: The file '",prgm["options"][file],"' does not exist, it must.")
-end if; prgm["source"] := FileTools[Text][ReadFile](prgm["options"][file]); 
-prgm["input"] := parse(StringTools[RegSubs]("#[^\n]*\n" = "",prgm["source"]));
-if type(prgm["input"],list) and 0 < nops(prgm["input"]) then if type(op(1,prgm[
-"input"]),`=`) and op(1,op(1,prgm["input"])) = prgm_options then if type(op(2,
-op(1,prgm["input"])),{list, set}) then map(o -> if type(o,`=`) then prgm[
-"options"][op(1,o)] := op(2,o) else prgm["options"][o] := true end if,op(2,op(1
-,prgm["input"]))) else error 
+next_symbol_count; next_symbol_count := 0; try prgm := proc () global 
+prgm_default_options; op(prgm_default_options) end proc(); prgm[file] := 
+prgm_file; prgm[name] := FileTools[Basename](prgm_file); prgm[version] := 
+StringTools[RegSubs]("T" = "_",StringTools[RegSubs](" .*" = "",convert(Date(),
+string))); if not FileTools[Exists](prgm[file]) then error cat(
+"Syntax error: The file '",prgm[file],"' does not exist, it must.") end if; 
+prgm[text] := FileTools[Text][ReadFile](prgm[file]); prgm[source] := parse(
+StringTools[RegSubs]("#[^\n]*\n" = "",prgm[text])); if type(prgm[source],list)
+and 0 < nops(prgm[source]) then if type(op(1,prgm[source]),`=`) and op(1,op(1,
+prgm[source])) = prgm_options then if type(op(2,op(1,prgm[source])),{list, set}
+) then map(o -> if type(o,`=`) then prgm[op(1,o)] := op(2,o) else prgm[o] := 
+true end if,op(2,op(1,prgm[source]))) else error 
 "Syntax error: The prgm_options is not a set or a list, it must." end if; prgm[
-"input"] := [op(2 .. nops(prgm["input"]),prgm["input"])] end if; map(eq -> if 
-type(eq,`=`) and op(1,eq) = prgm_options then error 
+source] := [op(2 .. nops(prgm[source]),prgm[source])] end if; map(eq -> if type
+(eq,`=`) and op(1,eq) = prgm_options then error 
 "Syntax error: A prgm_options is not given at the 1st line, it must." end if,
-prgm["input"]) else error 
+prgm[source]) else error 
 "Syntax error: The source file content is not a non-empty list, it must." end 
-if; if prgm["options"][network_weights] then prgm["options"][all_neuronoid] :=
-true end if; proc (eqs) local function_names, alert; global prgm_functions; 
-function_names := map(eq -> op(1,eq),prgm_functions); alert := e -> if e then 
-error cat("Syntax error: ",op(map(a -> convert(a,string),[_passed[2 .. nops([
-_passed])]]))) end if; alert(not type(eqs,list),
-"The  input is not a list (of equations)"); map(proc (l, eqs) local eq; eq := 
-eqs[l]; if type(eq,`=`) then alert(not type(op(1,eq),name),
+if; if prgm[networking] then prgm[mollification] := true end if; proc (eqs) 
+local function_names, alert; global prgm_functions; function_names := map(eq ->
+op(1,eq),prgm_functions); alert := e -> if e then error cat("Syntax error: ",op
+(map(a -> convert(a,string),[_passed[2 .. nops([_passed])]]))) end if; alert(
+not type(eqs,list),"The  input is not a list (of equations)"); map(proc (l, eqs
+) local eq; eq := eqs[l]; if type(eq,`=`) then alert(not type(op(1,eq),name),
 "The left hand side of '",eq,"', line number '",l,"' is not a name"); alert(
 type(op(2,eq),function) and not op(0,op(2,eq)) in function_names,
 "The right hand side of '",eq,"', line number '",l,"' is not a known function")
 else alert(not (type(eq,function) and op(0,eq) in function_names),"The '",eq,
 "', line number '",l,"' is not a known function") end if end proc,[$ 1 .. nops(
-eqs)],eqs) end proc(prgm["input"]); next_symbol := proc (prefix::string) 
+eqs)],eqs) end proc(prgm[source]); next_symbol := proc (prefix::string) 
 next_symbol_count := next_symbol_count+1; convert(cat(prefix,"_",
-next_symbol_count),name) end proc; prgm["expanded"] := proc (prgm) local 
+next_symbol_count),name) end proc; prgm[expanded] := proc (prgm) local 
 fixed_point; fixed_point := proc (f, v_0, context, max_iterations::posint := 10
 ) local v0, v1, t; v0 := null; v1 := v_0; for t to max_iterations do v0 := f(v1
 ,context); if v0 = v1 then return v0 end if; v1 := v0 end do; error 
 "Iteratively expanding '", v_0, ", => '", v0, "' toward a fixed point failed."
 end proc; fixed_point(proc (eqs, prgm) global prgm_function; map(proc (eq1) 
 local eq2; eq2 := evalf(eq1); if type(eq2,`=`(name,{`*`, `+`})) then op(1,eq2)
-= Id(op(2,eq2)) else eq2 end if end proc,eval(subs(prgm_functions,prgm[
-"options"],new_symbol = next_symbol,eqs))) end proc,prgm["input"],prgm) end 
-proc(prgm); prgm["flattened"] := proc (eqs1) local eqs2, expand_args, 
-expand_arg, add_eq; eqs2 := []; expand_args := proc (a) if type(a,{`*`, `+`, 
-function}) then op(0,a)(op(map(expand_arg,a))) else a end if end proc; 
-expand_arg := proc (a) if type(a,function) then add_eq(next_symbol("x"),
-expand_args(a)) elif type(a,{`*`, `+`}) then expand_args(a) else a end if end 
-proc; add_eq := proc (n, a_n) local l; l := convert(map((l, eqs2) -> if op(2,
-eqs2[l]) = a_n then l else 0 end if,[$ 1 .. nops(eqs2)],eqs2),set) minus {0}; 
-if 0 < nops(l) then op(1,op(l,eqs2)) else eqs2 := [op(eqs2), n = a_n]; n end if
-end proc; map(proc (eq) if type(eq,`=`) then add_eq(op(1,eq),expand_args(op(2,
-eq))) else error cat("After expanding, one line: '",eq,"' is not an equation")
-end if end proc,eqs1); eqs2 end proc(prgm["expanded"]); if not assigned(prgm[
-"options"][outputs]) then prgm["options"][outputs] := convert(indets(map(eq ->
-op(1,eq),prgm["flattened"]),name) minus indets(map(eq -> op(2,eq),prgm[
-"flattened"]),name),list) end if; if not assigned(prgm["options"][inputs]) then
-prgm["options"][inputs] := convert(indets(map(eq -> op(2,eq),prgm["flattened"])
-,name) minus indets(map(eq -> op(1,eq),prgm["flattened"]),name),list) end if; 
-prgm["network"][state] := convert(indets(prgm["flattened"],name),list); prgm[
-"network"][lhs] := map(eq -> op(1,eq),prgm["flattened"]); if convert(prgm[
-"options"][inputs],set) intersect convert(prgm["options"][outputs],set) <> {} 
-then error cat("Incoherence in variables, the input variables '",prgm["options"
-][inputs],"' and output variables '",prgm["options"][outputs],
-"' intersect, it must not.") end if; if not convert(prgm["options"][inputs],set
-) subset indets(prgm["flattened"],name) then error cat(
-"Incoherence in variables, the input variables '",prgm["options"][inputs],
-"' is not a subset of the whole variable set '",prgm["network"][state],
-"', it must.") end if; if not convert(prgm["options"][outputs],set) subset 
-convert(prgm["network"][lhs],set) then error cat(
-"Incoherence in variables, the output variables '",prgm["options"][outputs],
-"' is not a subset of the left-hand side variable set '",prgm["network"][lhs],
-"', it must.") end if; if convert(prgm["network"][lhs],set) union convert(prgm[
-"options"][inputs],set) <> indets(prgm["flattened"],name) then error cat(
-"Incoherence in variables, the left-hand side variables '",prgm["network"][lhs]
-,"' with the input variables '",prgm["options"][inputs],
-"' does not equals the whole variable set '",prgm["network"][state],
-"', it must.") end if; map(eq -> if not (type(eq,`=`(name,function(And(polynom(
-constant,prgm["network"][state]),linear)))) and nops(op(2,eq)) = 1) then error
-cat("Incoherence in the flattened equation '",eq,"', it must be of the form [na\
-me = function(linear-combination-with-constant-coefficient),…]") end if,prgm[
-"flattened"]); prgm["network"][rhs_f] := map(eq -> op(0,op(2,eq)),prgm[
-"flattened"]); prgm["network"][W_out] := Matrix(nops(prgm["options"][outputs]),
-nops(prgm["network"][lhs]),(o, s) -> if prgm["options"][outputs][o] = prgm[
-"network"][state][s] then 1 else 0 end if); prgm["network"][W_in] := Matrix(
-nops(prgm["network"][lhs]),nops(prgm["options"][inputs]),(s, i) -> coeff(op(1,
-op(2,prgm["flattened"][s])),prgm["options"][inputs][i])); prgm["network"][W] :=
-Matrix(nops(prgm["network"][lhs]),nops(prgm["network"][lhs]),(s, r) -> coeff(op
-(1,op(2,prgm["flattened"][s])),prgm["network"][lhs][r])); prgm["network"][w] :=
-Matrix(nops(prgm["network"][lhs]),1,(s, r) -> subs(map(v -> v = 0,prgm[
-"network"][state]),op(1,op(2,prgm["flattened"][s])))); if prgm["options"][
-python] then prgm["python"] := proc (prgm) local c, d, wl; c := subs(map(n -> n
-= state[convert(n,string)],indets(prgm["flattened"],name)),prgm["flattened"]);
-wl := interface(warnlevel = 0); c := StringTools[RegSubs]("^" = "\t",
-StringTools[RegSubs]("\n(.)" = "\n\t\\1",CodeGeneration[Python](c,defaulttype =
-float,output = string))); d := StringTools[RegSubs]("cg" = "state[\"model\"]",
-StringTools[RegSubs]("[]][\t\n ]*$" = "",StringTools[RegSubs]("= [[]" = "= ",
-CodeGeneration[Python]([prgm["network"][W_out], prgm["network"][W_in], prgm[
-"network"][W], prgm["network"][w]],defaulttype = float,output = string)))); 
-interface(warnlevel = wl); c := cat("# This file is automatically generated by \
-the programmatoid compiler, better not edit\n",if prgm["options"][
-network_weights] then cat("\ndef init_state(state)\n","\t",d,
+= Id(op(2,eq2)) else eq2 end if end proc,eval(subs(prgm_functions,prgm,
+new_symbol = next_symbol,eqs))) end proc,prgm[source],prgm) end proc(prgm); 
+prgm[flattened] := proc (eqs1) local eqs2, expand_args, expand_arg, add_eq; 
+eqs2 := []; expand_args := proc (a) if type(a,{`*`, `+`, function}) then op(0,a
+)(op(map(expand_arg,a))) else a end if end proc; expand_arg := proc (a) if type
+(a,function) then add_eq(next_symbol("x"),expand_args(a)) elif type(a,{`*`, `+`
+}) then expand_args(a) else a end if end proc; add_eq := proc (n, a_n) local l;
+l := convert(map((l, eqs2) -> if op(2,eqs2[l]) = a_n then l else 0 end if,[$ 1
+.. nops(eqs2)],eqs2),set) minus {0}; if 0 < nops(l) then op(1,op(op(1,l),eqs2))
+else eqs2 := [op(eqs2), n = a_n]; n end if end proc; map(proc (eq) if type(eq,
+`=`) then add_eq(op(1,eq),expand_args(op(2,eq))) else error cat(
+"After expanding, one line: '",eq,"' is not an equation") end if end proc,eqs1)
+; eqs2 end proc(prgm[expanded]); if not assigned(prgm[outputs]) then prgm[
+outputs] := convert(indets(map(eq -> op(1,eq),prgm[flattened]),name) minus 
+indets(map(eq -> op(2,eq),prgm[flattened]),name),list) end if; if not assigned(
+prgm[inputs]) then prgm[inputs] := convert(indets(map(eq -> op(2,eq),prgm[
+flattened]),name) minus indets(map(eq -> op(1,eq),prgm[flattened]),name),list)
+end if; prgm[network][state] := convert(indets(prgm[flattened],name),list); 
+prgm[network][lhs] := map(eq -> op(1,eq),prgm[flattened]); if convert(prgm[
+inputs],set) intersect convert(prgm[outputs],set) <> {} then error cat(
+"Incoherence in variables, the input variables '",prgm[inputs],
+"' and output variables '",prgm[outputs],"' intersect, it must not.") end if; 
+if not convert(prgm[inputs],set) subset indets(prgm[flattened],name) then error
+cat("Incoherence in variables, the input variables '",prgm[inputs],
+"' is not a subset of the whole variable set '",prgm[network][state],
+"', it must.") end if; if not convert(prgm[outputs],set) subset convert(prgm[
+network][lhs],set) then error cat(
+"Incoherence in variables, the output variables '",prgm[outputs],
+"' is not a subset of the left-hand side variable set '",prgm[network][lhs],
+"', it must.") end if; if convert(prgm[network][lhs],set) union convert(prgm[
+inputs],set) <> indets(prgm[flattened],name) then error cat(
+"Incoherence in variables, the left-hand side variables '",prgm[network][lhs],
+"' with the input variables '",prgm[inputs],
+"' does not equals the whole variable set '",prgm[network][state],"', it must."
+) end if; map(eq -> if not (type(eq,`=`(name,function(And(polynom(constant,prgm
+[network][state]),linear)))) and nops(op(2,eq)) = 1) then error cat(
+"Incoherence in the flattened equation '",eq,"', it must be of the form [name =\
+ function(linear-combination-with-constant-coefficient),…]") end if,prgm[
+flattened]); prgm[network][dimension] := nops(prgm[flattened]); prgm[network][
+rhs_f] := map(eq -> op(0,op(2,eq)),prgm[flattened]); prgm[network][W_out] := 
+Matrix(nops(prgm[outputs]),nops(prgm[network][lhs]),(o, s) -> if prgm[outputs][
+o] = prgm[network][state][s] then 1 else 0 end if); prgm[network][W_in] := 
+Matrix(nops(prgm[network][lhs]),nops(prgm[inputs]),(s, i) -> coeff(op(1,op(2,
+prgm[flattened][s])),prgm[inputs][i])); prgm[network][W] := Matrix(nops(prgm[
+network][lhs]),nops(prgm[network][lhs]),(s, r) -> coeff(op(1,op(2,prgm[
+flattened][s])),prgm[network][lhs][r])); prgm[network][w] := Matrix(nops(prgm[
+network][lhs]),1,(s, r) -> subs(map(v -> v = 0,prgm[network][state]),op(1,op(2,
+prgm[flattened][s])))); prgm[network][connectivity] := convert(map(M -> 
+rtable_scanblock(M,[],'NonZeros'),[prgm[network][W_out], prgm[network][W], prgm
+[network][w], prgm[network][W_in]]),`+`); if prgm[python] then proc (prgm) 
+local c, d, wl; c := subs(map(n -> n = state[convert(n,string)],indets(prgm[
+flattened],name)),prgm[flattened]); wl := interface(warnlevel = 0); c := 
+StringTools[RegSubs]("^" = "\t",StringTools[RegSubs]("\n(.)" = "\n\t\\1",
+CodeGeneration[Python](c,defaulttype = float,output = string))); d := 
+StringTools[RegSubs]("cg" = "state[\"model]",StringTools[RegSubs]("[]][\t\n ]*$\
+" = "",StringTools[RegSubs]("= [[]" = "= ",CodeGeneration[Python]([prgm[network
+][W_in], prgm[network][W], prgm[network][w], prgm[network][W_out]],defaulttype
+= float,output = string)))); interface(warnlevel = wl); c := cat("# This file i\
+s automatically generated by the programmatoid compiler, better not edit\n",if
+prgm[networking] then cat("\ndef init_state(state)\n","\t",d,
 "\n\tinit_state_from_network(state)\n",
 "\ndef update_state(state)\n\tupdate_state_from_network(state)\n\n") else cat(
 "\ndef init_state(state)\n","\tstate.update(dict({",op(map(n -> cat("\"",n,
-"\": 0, "),indets(prgm["flattened"],name)))," \"init\": True}))\n",
-"\ndef update_state(state)\n",if not prgm["options"][all_neuronoid] then cat(
-"\n\tdef H(x):\n\t\treturn 0 if x < 0 else 1 if x > 0 else 1/2\t\n",
+"\": 0, "),indets(prgm[flattened],name)))," \"init\": True}))\n",
+"\ndef update_state(state)\n",if not prgm[mollification] then cat(
+"\n\tdef H(x):\n\t\treturn 0 if x < 0 else 1 if x > 0 else 0.5\t\n",
 "\n\tdef Id(x):\n\t\treturn x\n") else "" end if,
 "\n\tdef h(x):\n\t\treturn 1 / (1 + np.exp(-4 * x))\n","\n",c) end if,"\n"); 
-FileTools[Text][WriteFile](StringTools[RegSubs](".mpl$" = ".py",prgm["options"]
-[file]),c); c end proc(prgm) end if catch: prgm["error"] := lastexception end 
-try; prgm end proc;
+FileTools[Text][WriteFile](StringTools[RegSubs](".mpl$" = ".py",prgm[file]),c);
+c end proc(prgm) end if catch: prgm["error"] := lastexception end try; save 
+prgm, StringTools[RegSubs](".mpl$" = ".mw",prgm[file]); StringTools[RegSubs](
+"\"(\\[[^\"\n]*\\])\"" = "\\1",StringTools[RegSubs]("\"([a-z_-]*)\"" = "\\1",
+StringTools[RegSubs]("\\\\n" = " \\\n\t\t",cat("  compilation: ",JSON[ToString]
+([op(map((n, prgm) -> if assigned(prgm[n]) then n = prgm[n] end if,[file, name,
+excerpt, homepage, version, license, author, omega, mollification, networking,
+python, inputs, outputs, count, "error"],prgm)), op(map((n, prgm) -> n = cat(
+"\n",op(map(l -> cat(convert(l,string),"\n"),prgm[n]))),[source, expanded, 
+flattened],prgm)), network = [dimension = prgm[network][dimension], 
+connectivity = prgm[network][connectivity], f = convert(prgm[network][rhs_f],
+string), op(map((n, prgm) -> n = StringTools[RegSubs](
+"cg.*= numpy.mat\\(([^)]*)\\)\n" = "\\1",CodeGeneration[Python](prgm[network][n
+],defaulttype = float,output = string)),[W_in, W, w, W_out],prgm))]],style = 
+block))))) end proc;
