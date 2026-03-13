@@ -1,4 +1,6 @@
 
+all : wjson-install
+
 usage:
 	echo 'make (sync|git|home) # see makefile'
 
@@ -17,7 +19,7 @@ git:
 home:
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
 
-# This is only to be used by vthierry
+# These are only to be used by vthierry
 
 vthierry-install:
 #	sudo apt install python3-tqdm
@@ -26,4 +28,15 @@ vthierry-install:
 	git commit -a -m 'sync from makefile to fetch'
 	git merge master/master
 	cd ../braincraft ; sedgrep -name '*.py' -in atan2 -out arctan2
+
+wjson-install:
+	mkdir -p etc
+	/bin/rm -rf etc/wjson-master etc/*.zip
+	cd etc ; wget -q https://gitlab.inria.fr/line/aide-group/wjson/-/archive/master/wjson-master.zip ; unzip -q wjson-master.zip
+	/bin/bash -c '/bin/rm -rf etc/{*.zip,wjson-master/{.git*,public,src/{makefile,.make*,*.md,*.*pp,*.C,*.tex,*.odg,*.bib,run_protege*,test.*,ttl2n3.js}}}'
+	git add etc/wjson-master
+
+
+
+
 

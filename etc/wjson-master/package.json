@@ -1,0 +1,30 @@
+{
+  "name": "wjson",
+  "description": "Implements a JavaScript JSON weak-syntax reader and writer",
+  "homepage": "https://line.gitlabpages.inria.fr/aide-group/wjson",
+  "version": "1.0.3",
+  "license": "CECILL-C",
+  "author": "Thierry Vieville <thierry.vieville@inria.fr>",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.inria.fr/line/aide-group/wjson",
+    "project_ID": 26382
+  },
+  "scripts": {
+    "install": "make -s --no-print-directory -C src install",
+    "build": "make -s --no-print-directory -C src build",
+    "test": "make -s --no-print-directory -C src test",
+    "clean": "make -s --no-print-directory -C src clean"
+  },
+  "dependencies": {
+    "ace-builds": "latest",
+    "aidesys": "git+https://gitlab.inria.fr/line/aide-group/aidesys.git",
+    "rdf": "latest"
+  },
+  "devDependencies": {
+    "aidebuild": "git+https://gitlab.inria.fr/line/aide-group/aidebuild.git"
+  },
+  "softwareheritage": true,
+  "npmjs": true,
+  "swig": true
+}

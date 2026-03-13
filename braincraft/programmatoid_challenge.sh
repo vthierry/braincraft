@@ -1,5 +1,6 @@
 #!/bin/bash
 
+## Usage of the script
 if [ -z "$1" ] ; then cat <<EOF 
 Usage $0 \$prgm
   - The programmatoid source is in a \$prgm.mpl file.
@@ -8,26 +9,26 @@ Usage $0 \$prgm
     -  In a \$prgm.py file for the init_state() and update_state() procedures.
      - In a \$prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated \$prgm_test.py file
-  - The execution log is in a \$prgm._test_\$current-date-and-time.log file.
+  - The compilation and execution output is available in \$prgm_test.out.wjson (in weak JSON syntax) and \$prgm_test.out.html files 
 EOF
 exit -1
 fi
 
-## The input file name without extension
-f="${1%.*}"
-## The log file name
-l="$f_test_`date '+%Y-%m-%d_%H-%M-%S'`.log"
-echo "{" > $l
-
-## The environmnet number 1, 2, or 3
+## The environment number 1, 2, or 3
 n="echo `$1 | sed 's/[^123]*\([123]\).*/\1' | grep '^[123]$'`"
 if [ -z "$n" ] ; then echo "No 1, 2, or 3 digit in the '$1' name" ; exit -1 ; fi
 
-# Compiles the programmatoid specifications
+## The input file name without extension
+f="${1%.*}"
+## The log file name
+l="$f_test.out.wjson"
+echo "{\n  date: `date '+%Y-%m-%d_%H-%M-%S'`\n" > $l
+
+## Compiles the programmatoid specifications
 echo "Compiling …"
 (echo 'read "./programmatoid.mw": prgm_compile("$f");' | maple -q) | tee -a $l
 
-# Builds and runs the test executable
+## Builds and executes the given challenge
 if [ -f "$f.py" ]
 then
    cat <<EOF  > $f_test.py
@@ -44,8 +45,12 @@ EOF
    echo "Executing …"
    (python3 $f_test.py) | tee -a $l
 else
-    echo "The '$f' programmatoid compilation fails."
+    echo "The '$f' programmatoid compilation fails, look at '$l'."
 fi
+
+## Finalizes the output file in both json and html
 echo "}" >> $l
+if [ -f "../etc/wjson-master/src/wjson2html.js" ] ; then ../etc/wjson-master/src/wjson2html.js < $l > $f_test.out.html ; fi
+
 
 

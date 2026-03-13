@@ -735,10 +735,12 @@ Usage ./programmatoid_challenge.sh $prgm
     -  In a $prgm.py file for the init_state() and update_state() procedures.
      - In a $prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated $prgm_test.py file
-  - The execution log is in a $prgm._test_$current-date-and-time.log file.
+  - The compilation and execution output is available in $prgm_test.out.wjson (in weak JSON syntax) and $prgm_test.out.html files.
 \end{verbatim}
 
-The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document. 
+The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document.
+
+The {\tt \$prgm\_test.out.wjson} output file format uses a dialect of the \href{https://www.json.org/json-en.html}{JSON} syntax, called {\tt wJSON}, for weak-json as \href{https://line.gitlabpages.inria.fr/aide-group/wjson/}{presented here}.
 
 \subsection{Running at the artificial neural network level}
 
