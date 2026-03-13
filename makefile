@@ -1,10 +1,11 @@
 
-dft : demo
+usage:
+	echo 'make (sync|git|home) # see makefile'
 
 # Git synchronisation command
 
 sync:
-	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc
+	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
 	rm -f `find -name 'nohup.out' -o -name '*~'`
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
@@ -15,10 +16,6 @@ git:
 
 home:
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
-
-# This is still in development, do not use
-
-demo: show
 
 # This is only to be used by vthierry
 
