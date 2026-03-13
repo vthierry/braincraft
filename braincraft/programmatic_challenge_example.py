@@ -8,7 +8,8 @@ from programmatoid_challenge import evaluate
 from environment_1 import Environment
 
 ## Initializes some state variables if needed
-def init_state(state): 
+def init_state(state):
+	nothing_to_do = True
         
 ## Updates the required state variable and sets the output value
 ## - Here the bot simply moves forward and turn left when possible

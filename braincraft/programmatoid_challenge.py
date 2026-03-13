@@ -20,8 +20,8 @@ def step(x):
 
 def init_state_from_network(state):
     """Inits the state from a neuronoid network
-    """
-   W_in, W, w, W_out = state["network"]
+	"""
+    W_in, W, w, W_out = state["network"]
     n = w.size
     state["X"] = np.zeros((n,1))
 
@@ -51,7 +51,7 @@ def update_state_from_network(state):
           - `I[p:2*p] = bot.camera.values`.
           - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
     - "d_o" : The network returned output
-    """
+	"""
     W_in, W, w, W_out = state["network"]
     I, X = state["I"], state["X"]
     X = sigmoid(np.dot(W_in, I) + np.dot(W, X) + w)
@@ -86,7 +86,7 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
 
     if debug:
         start_time = time.time()
-    
+        
     if debug:
         import matplotlib.pyplot as plt
         from matplotlib.patches import Circle
@@ -127,12 +127,12 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
 
         if debug:
             graphics["topview"].set_data(environment.world_rgb)
-        
+            
         bot = Bot()
         
         p = bot.camera.resolution
 
-        state = dict({"g_e1" : 1, "g_e2" : 1, "g_c1" : 0, "g_c2" : 0, "camera.resolution" : bot.camera.resolution})
+        state = dict({"d_o" : 0, "g_e" : 1, "g_e1" : 1, "g_e2" : 1, "g_c1" : 0, "g_c2" : 0, "camera.resolution" : bot.camera.resolution})
         init_state(state)
         
         distance = 0
@@ -153,18 +153,19 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
             energy = bot.energy
 
             p = bot.camera.resolution
+            I = np.zeros((2*p+3,1))
             I[:p,0] = 1 - bot.camera.depths
             I[p:2*p,0] = bot.camera.values
             I[2*p:,0] = bot.hit, bot.energy, 1.0
             state["I"] = I
 
             ##  Input preprocessing
-            state["p_l"] = np.mean(I[0:p/2,0]):
-            state["p_r"] = np.mean(I[p/2:p,0]):
-            state["c_lb"] = 1 if 4 in I[p:p+p/2,0] 0 else
-            state["c_lr"] = 1 if 5 in I[p:p+p/2,0] 0 else
-            state["c_rb"] = 1 if 4 in I[p+p/2:2*p,0] 0 else
-            state["c_rr"] = 1 if 5 in I[p+p/2:2*p,0] 0 else
+            state["p_l"] = np.mean(I[0:int(p/2),0])
+            state["p_r"] = np.mean(I[int(p/2):p,0])
+            state["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
+            state["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
+            state["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0
+            state["c_rr"] = 1 if 5 in I[p+int(p/2):2*p,0] else 0
             state["g_e2"] = state["g_e1"]
             state["g_e1"] = state["g_e"]
             state["g_e"] = bot.energy
@@ -197,10 +198,10 @@ def evaluate(Bot, Environment, runs = 1, debug = False):
                 else:
                     graphics["energy"].set_segments([[(0.1, 0.1),(0.9, 0.1)],
                                                      [(0.1, 0.1),(0.9, 0.1)]])            
-                graphics["camera"].set_data(bot.camera.framebuffer)
-                bot.camera.render(bot.position, bot.direction,
-                              environment.world, environment.colormap)
-                plt.pause(1/60)
+                    graphics["camera"].set_data(bot.camera.framebuffer)
+                    bot.camera.render(bot.position, bot.direction,
+                                      environment.world, environment.colormap)
+                    plt.pause(1/60)
 
         scores.append(distance)
     if debug:
