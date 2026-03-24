@@ -8,7 +8,10 @@
 > h := x -> 1/(1+exp(-4*x)):
 
 ## Linear relation with tanh
-> ok := evalb(0 = convert(h(x) - (1+tanh(2 * x))/2, exp));
+> ok := evalb(simplify(convert(h(x) = (1+tanh(2 * x))/2, exp)));
+                                   ok := true
+
+> ok := evalb(simplify( convert(0 = tanh(x) - (2 * h(x/2) - 1), exp)));
                                    ok := true
 
 
@@ -55,8 +58,8 @@
                                 \t0 = 1                            /
 
 > rsolve({v(t+1) = (1-g) * v(t) + g * z0, v(0) = v0}, {v(t)});
-                                      t                  t
-                    {v(t) = v0 (1 - g)  + z0 - z0 (1 - g) }
+                                      t             t
+                    {v(t) = v0 (1 - g)  - z0 (1 - g)  + z0}
 
 
 ### Continous/discrete correspondence
@@ -72,4 +75,4 @@
 
 
 > quit
-memory used=88.9MB, alloc=84.3MB, time=0.45
+memory used=89.2MB, alloc=84.3MB, time=0.46

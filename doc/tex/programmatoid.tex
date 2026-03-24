@@ -27,16 +27,19 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
   c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
   c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
   g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
-  \hline \multicolumn{3}{|c|}{\mbox{{\bf Output variable}}}\\\hline
-  d_o \in [-5, 5] && \mbox{\parbox{5cm}{~\\Orientation difference, saturated at  $\pm$ 5°.\\}}\\\hline 
+  \hline \multicolumn{3}{|c|}{\mbox{{\bf Output variables}}}\\\hline
+  d_l \in [0, 1_{+ 5^o}] && \mbox{\parbox{5cm}{~\\Left orientation difference.\\}}\\\hline 
+  d_r \in [0, 1_{- 5^o}] && \mbox{\parbox{5cm}{~\\Right orientation difference.\\}}\\\hline 
  \end{array}}
 
 With respect to the original braincraft challenge:
 \\ \tab - we consider two leftward and rightward ``average'' sensors only,
 \\ \tab - color is input as binary variables, and always available,
-\\ \tab - the wall hit indicator is not used.
+\\ \tab - the output stands on positive normalized signal,
+\\ \tab - the wall hit indicator is not used,
 
-\subsection{Input preprocessing}
+
+\subsection{Preprocessing}
 
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
@@ -54,44 +57,14 @@ We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoyi
  where $K$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
 \end{description}
 
-\subsubsection{Energy measurement}\begin{description}
- \item[Motivation] The energy increase accumulation is to be preprocessed, since used in some task.
- \item[Processed Variables] 
-\eqline{\begin{array}{lll}
-  g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
-  g_{e\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{e\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last energy value.} \\
-\end{array}}
-Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the energy always changes so that $g_{e} \ne g_{e1}$.
-\item[Implementation] \eqline{\begin{array}{l}
-    \mbox{Cumulative energy increase starts, saving last increase in $g_{c2}$.} \\
-    \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}}_{\mbox{\em increase after a decrease}} \mbox{ then } g_{c2} \leftarrow g_{c1}, \; g_{c1} \leftarrow (g_{e} - g_{e1}) \\
-    \mbox{Cumulative energy increase continues.} \\
-    \mbox{ if } \underbrace{g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\em increase after an increase}}  \mbox{ then } g_{c1} \leftarrow g_{c1} + (g_{e} - g_{e1}) \\
-    \mbox{Otherwise $g_{e} < g_{e1}$, thus cumulative energy increase stops, and $g_{c1}$ is memorized.} \\
-    g_s \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2} \mbox{ indicates that cumulative energy increase has just stopped.} \\
-    g_n \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} < g_{e2} \mbox{ indicates that cumulative energy increase did stop before.} \\
-  \end{array}}
-\item[Pseudo programmatoid solution] \eqline{\begin{array}{rcl}
-   g_{c1} &\leftarrow& g_{c1} - H(g_{e2} - g_{e1}) \, g_{c1} + H(g_{e} - g_{e1}) \, (g_{e} - g_{e1}) \\
-   g_{c2} &\leftarrow& g_{c2}  + H(H(g_{e} - g_{e1}) + H(g_{e2} - g_{e1}) - 3/2) \, (g_{c1} - g_{c2}) \\
-  \multicolumn{3}{l}{\mbox{Then}} \\
-   g_{e2} &\leftarrow& g_{e1} \\
-   g_{e1} &\leftarrow& g_{e} \\
-\end{array}}
-  which is not a pure programmatoid solution because, because of term of the form $H(u) \, v$, thus with a product,
-  but is implementable in the neuronoid framework discussed in the sequel. In brief:
-  \eqline{H(x) \, y \simeq \omega' \, h(y/\omega' + \omega \, h(\omega \, x) - \omega)}
-  where $h(\cdot)$ is the sigmoid function, and $\omega$ and $\omega'$ are sufficiently large numbers.
-\begin{figure}[H]
-  \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of energy profile when cumulative energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
-        \label{energy-step}
-    \end{minipage}
-\end{figure}
+\subsubsection{Output normalization}\begin{description}
+  \item[Motivation] As far as biologically plausible signals related to neuronal firing rate is concerned, we better consider only positive value, normalized by the maximal firing rate.
+  \item[Implementation] This can be considered as a minimal output linear unit: \eqline{
+    O \leftarrow 5 \, (d_l - d_r)
+    }
 \end{description}
 
-\subsection{A putative controller}
+\subsection{A generic controller}
 
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
@@ -101,11 +74,12 @@ Here instantaneous energy increase is $(g_{e} - g_{e1})$, and we assume that the
 \item[Internal variable] \eqline{\begin{array}{lll}
   q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
 \end{array}}
-\item[Programmatoid solution]:\eqline{\begin{array}{rclcl}
-    d_o &\leftarrow& \multicolumn{3}{l}{\underbrace{\gamma \, (p_l - p_r)}_{\mbox{\begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}}} +
-                                                                   \underbrace{\alpha \, (t_l - t_r)}_{\mbox{\begin{tabular}{c}quarter- turn \\ left or right\end{tabular}}}} \\
-    t_l &\leftarrow& (1- q_p) \, H(\beta - p_l) &=& H(H(\beta - p_l) - q_p - 1/2)\\
-    t_r &\leftarrow& q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
+\item[Programmatoid solution]:\eqline{\begin{array}{rcccc}
+    d_l &\leftarrow& \gamma \, p_r   & +&  \alpha \, t_l \\
+    d_r &\leftarrow& \gamma \, p_l   & +&  \alpha \, t_r \\
+           &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter- turn \\ left or right\end{tabular}} \\ \\
+    t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_l < \beta \mbox{ then } 1 \mbox{ else } 0} \\
+    t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
     w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
     \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
@@ -130,12 +104,11 @@ control the $q_p$ variable.
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
   \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
-      At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.\eqline{\begin{array}{l}
-          q_p \leftarrow \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{then} 1 \mbox{ else } 0 \\
+    At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.
+\item[Programmatoid solution] \eqline{\begin{array}{l}
+          q_p \leftarrow \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{ then } 1 \mbox{ else } 0 \\
       \end{array}}
-     \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-       q_p  &\leftarrow& H(\omega \, q_p + (\eta - g_e))\\
-   \end{array}} where: \eqline{\begin{array}{rcll}
+   where: \eqline{\begin{array}{rcll}
       c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
       s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
       b &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
@@ -183,20 +156,49 @@ control the $q_p$ variable.
 
 \subsubsection{Task 3: Valued environment decision} \begin{description}
    \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increase than the former.
-   \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-       q_p &\leftarrow& \mbox{if } \underbrace{g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2}}_{\mbox{\parbox{4cm}{energy increase\\ just stopped.}}}
-       \mbox{ and }  \underbrace{g_{c2} > g_{c1}}_{\mbox{\parbox{4cm}{previous energy \\ increase is higher.}}}
-       \mbox{ then } 1 - q_p \mbox{ else } q_p \\
-    \end{array}} \end{description}
+   \item[Internal Variables] \eqline{\begin{array}{lll}
+     g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
+     g_{e\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{e\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last energy value.} \\
+    \multicolumn{2}{l}{b_{di} \defq g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}} & \mbox{Increase starts,  after a decrease.} \\
+    \multicolumn{2}{l}{b_{ii} \defq g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}} & \mbox{Increase continues.} \\
+    \multicolumn{2}{l}{b_{id} \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2}} & \mbox{Increase has just stopped, now decreases.} \\
+    \multicolumn{2}{l}{b_{i} \defq g_{c2} > g_{c1}} & \mbox{Previous energy increase is higher.} \\
+   \end{array}}
+  \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+      q_p &\leftarrow& \mbox{if } b_{id} \mbox{ and }  b_{i} \mbox{ then } 1 - q_p \mbox{ else } q_p \\
+   \multicolumn{3}{l}{\mbox{Then, in sequence:}} \\
+     g_{c2} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{c1} \mbox{ else } g_{c2} \\
+     g_{c1} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{e} - g_{e1} \mbox{ elif } b_{ii} \mbox{ then } g_{c1} + (g_{e} - g_{e1}) \mbox{ else } g_{c1} \\
+     g_{e2} &\leftarrow& g_{e1} \\
+     g_{e1} &\leftarrow& g_{e} \\
+  \end{array}}
+    It is important to note that evaluation is to be done in sequence, for the mechanism to be valid.
+\begin{figure}[H]
+  \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Representation of energy profile when cumulative energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
+        \label{energy-step}
+    \end{minipage}
+\end{figure}
+\end{description}
 
 \section{Programmatoid computation} \label{programmatoid}
 
-We name ``programmatoid'' computation the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on numerical value expressions using an LN-system with the step-function as non-linearity, this writing:
-\eqline{o_n[t] = H(\sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}), n \in \{1, N\}}
-where $i_m[t]$ is the $m$-th input at a discrete $t$ and $o_n[t]$ is the $n$-th output, including recurrent system with some output corresponding to inputs, while $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
+\subsection{Definition of a programmatoid computation}
 
-For the sake of simplicity if the left hand size correspond to a value at time $t$ and right-hand size to values at $t-1$, which will be always here, and if not informative, temporal indexes are omitted, i.e. the previous equation will be written: 
-\eqline{o_n  \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
+We name ``programmatoid computation'' the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either binary values $\in \{0, 1\}$ or continuous normalized\footnote{An alternative would have be to consider continuous normalized values $\in [-1, 1]$, with the sign function $Sg(x) \defq \mbox{if } x > 0 \mbox{ then } 1 \mbox{ elif } x < 0 \mbox{ then } -1 \mbox{ else } 0$, and its mollification using $\mbox{tanh}(\cdot)$, which would have yields to same general results, with somehow heavier derivations, as the reader can verify. Implementing signed variable is obvious in a programmatoid environment:
+\eqline{s \defq s_+ - s_-, s_+ \defq \mbox{if } s  > 0 \mbox{ then } s\mbox{ else } 0, s_-\defq \mbox{if } s  < 0 \mbox{ then } -s \mbox{ else } 0,}
+thus manipulating signed variables in a environment with only positive variables.} values $\in [0, 1]$, which evolution is defined using an LN-system with linear units or the step-function $H(\cdot)$ as non-linearity, this writing:
+\eqline{o_n[t] = \left\{ \begin{array}{r} H(z_n[t]) \\ Id(z_n[t)] \\ \end{array} \right., z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
+where $Id(\cdot)$ stands for the identity function. Here
+\\\tab - $i_m[t]$ is the $m$-th input at a discrete $t$, and
+\\\tab - $o_n[t]$ is the $n$-th output a time $t$
+\\ including recurrent system with some output corresponding to inputs, while
+\\\tab - $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
+
+A generalized programmatoid may includes other non linearities; this will not used here.
+
+By design, evaluation is done in sequence at a given $t$, i.e., from $o_1[t]$ to $o_N[t] $.
 
 The step-function, also called Heaviside function, implements the computation of the sign of a value:
 \eqline{\begin{array}{rcl}
@@ -207,6 +209,9 @@ The design choice of $H(0) = 1/2$, instead for instance $H(0)=0$, this latter si
 
 By extension, we use,  for any property ${\cal P}$, the notation:
 \eqline{H({\cal P}) \defq \mbox{if } {\cal P} \mbox{ then } 1 \mbox{ else } 0}
+
+For the sake of simplicity if the left hand size correspond to a value at time $t$ and right-hand size to values at $t-1$, which will be always here, and if not informative, temporal indexes are omitted, i.e. the previous equation will be written: 
+\eqline{o_n  \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
 
 \subsection{Comparison implementation}
 
@@ -294,13 +299,15 @@ By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neur
 
 We define the equation\footnote{
 We also have: \eqline{h(x) \defq \frac{1}{1+e^{-4\,x}} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
-\eqline{\begin{array}{cl}
-  \tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), &
-  z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right), \\
-  h(x) \defq \frac{1}{1+e^{-4\,x}} & = h(x_0) + sech(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), \\
-                                                          & = 1 - e^{-4 \,x} + O(e^{-8 \, x)}) \\
+\eqline{\begin{array}{rcll}
+  \multicolumn{2}{l}{\tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t),} &
+  \multicolumn{2}{l}{z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right),} \\ \\
+  h(x) &\defq& \frac{1}{1+e^{-4\,x}} \\
+         &=& \frac{1+ \mbox{tanh}(2 \, x)}{2} & \mbox{(tanh linear relation)}\\
+         &=& h(x_0) + \mbox{sech}(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), & \mbox{(local 1st order behavior)}\\
+         &=& 1 - e^{-4 \,x} + O(e^{-8 \, x)}) & \mbox{(behavior toward infinity)}\\
 \end{array}}
-where $v_i$ is the membrane potential, so that:
+where $v_i$ stands for the membrane potential, so that:
 \eqline{\begin{array}{rcll} v(t)
   &=& 1/\tau \, \int_0^t e^{-(t-s)/\tau} \, z(s) \, ds + v(0) \, e^{-t/\tau} \\
   &=& \left. z(0) + e^{-t/\tau} \, (v(0) - z(0)) \right|_{z(t)= z(0)} & \mbox{ (constant input)}\\
@@ -318,7 +325,11 @@ All this is just very standard derivations, available as \href{https://raw.githu
 
 The leak term, in the discrete case, is computationally equivalent to a recurrent linear connection, it will thus be implemented as such in the sequel.
 
-We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination of neuronoids, as defined previously.
+\subsection{Definition of a neuronoid computation}
+
+We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination of only neuronoids:
+\eqline{o_n[t] = h(z_n[t), z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
+with the same notations as for programmatoid computations.
 
 \subsection{Step-function mollification}
 
@@ -363,6 +374,8 @@ Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0
 \end{array}}
 with a negligible error for, say, $\omega'  \ge 100$.
 
+It must be noted that although continous variables stands in $[0, 1]$ because of negative weights in the linear combination of input, intermediate values may be negative.
+
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{Approximation of switch mechanisms}
@@ -375,9 +388,9 @@ Given normalized floating point variables $v_n \in [-1, 1], n \in \{1, N\}$ and 
     &=& \sum_{n \in \{0, N\}} \omega' \, h(v_n/\omega' + \omega \, b_n - \omega) + O\left(\frac{1}{\omega'^2}\right)+ O\left(e^{-4\,w}\right) \\
 \end{array}}
 
-The implementation as neuronoid, thus allows to implement more formula than only using programmatoid.
+The implementation as neuronoid, thus allows one to implement more formula than only using programmatoid.
 
-\section{Examples of neuronoid computation}
+\section{Examples of programmatoid computation}
 
 A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc.
 
@@ -523,7 +536,7 @@ Derivations are available as \href{https://raw.githubusercontent.com/vthierry/br
 
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/delayastable.mpl.out.txt}{{\tt Maple} code}.
 
-\section{Softmax mechanisms} \label{softmax}
+\section{Examples of neuronoid computation} \label{softmax}
 
 \subsection{The explog function} \label{explog}
 
@@ -558,7 +571,7 @@ so that the $\exp(\cdot)$ range is now $[-1, 1]$ and the $\log(\cdot)$ range is 
 
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
-\subsection{Neuronoid approximation of {\tt exp} and {\tt log}}
+\subsection{Approximation of {\tt exp} and {\tt log}}
 
 Taking benefit of the fact that sigmoid is convex as the exponential function in some range, and concave as the logarithm function in some range, we can easily design the following approximations, obtained by some manual intuitive choice of the sigmoid combination and numerical adjustment of the parameters. Two examples are given in Figure~\ref{expneuronoid} and Figure~\ref{logneuronoid}. We share these examples to illustrate fact we really can approximate several bounded non-linear function with neuronoid, but we will use another track, to 
 
@@ -582,7 +595,7 @@ Given these two approximations, we can implement an approximation of the renorma
 
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
-\subsection{Neuronoid approximation of valued product.}
+\subsection{Approximation of valued product.}
 
 Let us now consider two values $v_i \in [-1, 1], i \in \{1, 2\}$, and apply the basic formula:
 \eqline{\exp(\log(v_1)+\log(v_2)) = v_1 \, v_2}
@@ -600,7 +613,7 @@ Therefore,  valued products can be approximated by neuronoids. This for instance
     
 Derivations of this section are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/explog.mpl.out.txt}{{\tt Maple} code}.
 
-\subsection{Neuronoid approximation a softmax operator}
+\subsection{Approximation a softmax operator}
 
 Another track is to consider the programmatoid implementation of the maximum operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, as a weighted sum:
 \eqline{o \defq \max_k(i_k) = \sum_k b_k \, i_k}

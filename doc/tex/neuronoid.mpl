@@ -3,7 +3,8 @@
 h := x -> 1/(1+exp(-4*x)):
 
 ## Linear relation with tanh
-ok := evalb(0 = convert(h(x) - (1+tanh(2 * x))/2, exp));
+ok := evalb(simplify(convert(h(x) = (1+tanh(2 * x))/2, exp)));
+ok := evalb(simplify( convert(0 = tanh(x) - (2 * h(x/2) - 1), exp)));
 
 ### Series around huge values
 simplify(series(h(x), x = x0, 2));
