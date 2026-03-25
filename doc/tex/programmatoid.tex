@@ -44,24 +44,21 @@ With respect to the original braincraft challenge:
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
 \item[Implementation] A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
-We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
+  \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in } p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
+  where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
+We also can use a softmax mechanism as derived in the sequel, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
 \end{description}
 
 \subsubsection{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
-\item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit: \eqline{\begin{array}{rcl}
-    c_{\dagger\bullet} &\leftarrow& H(\sum_{k \in K}  \, (1 - D(i_{\bullet} - c[k]))), c[k] \in {\cal N}\\
-    && \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} \\
-    D(x) &\defq& H(x-1/2) + H(-x-1/2)) = \mbox{ if } |x| < 1/2 \mbox{ then } 0 \mbox{ else } 1 \\
-\end{array}}
- where $K$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
+\item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit:
+  \eqline{c_{\dagger\bullet} \leftarrow \mbox{ if } Or_{k \in K_\dagger} (i_{\bullet} - c[k]) = 0 \mbox{ then } 1 \mbox{ else } 0, \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}}
+ where $K_\dagger$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
 \end{description}
 
 \subsubsection{Output normalization}\begin{description}
   \item[Motivation] As far as biologically plausible signals related to neuronal firing rate is concerned, we better consider only positive value, normalized by the maximal firing rate.
-  \item[Implementation] This can be considered as a minimal output linear unit: \eqline{
-    O \leftarrow 5 \, (d_l - d_r)
-    }
+  \item[Implementation] This can be considered as a minimal output linear unit: \eqline{O \leftarrow 5 \, (d_l - d_r)}
 \end{description}
 
 \subsection{A generic controller}
@@ -77,7 +74,7 @@ We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoyi
 \item[Programmatoid solution]:\eqline{\begin{array}{rcccc}
     d_l &\leftarrow& \gamma \, p_r   & +&  \alpha \, t_l \\
     d_r &\leftarrow& \gamma \, p_l   & +&  \alpha \, t_r \\
-           &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter- turn \\ left or right\end{tabular}} \\ \\
+           &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \\ \\
     t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_l < \beta \mbox{ then } 1 \mbox{ else } 0} \\
     t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
@@ -89,11 +86,7 @@ We also can use a softmax mechanism as derived in Appendix~\ref{softmax}, enjoyi
 \end{array}} while: \eqline{\begin{array}{rclcl}
  t_l =1&\mbox{if and only if}& q_p = 0 &\mbox{and while}& \beta < p_l \\
  t_r =1&\mbox{if and only if}& q_p = 1 &\mbox{and while}& \beta < p_r \\
-\end{array}}  in words: we execute the quarter-turn until another wall is detected\footnote{The identities:
-\eqline{\begin{array}{rcl}
-(1- q_p) \, H(\beta - p_l) &=& H(H(\beta - p_l) - q_p - 1/2)\\
-q_p \, H(\beta - p_r) &=& H(H(\beta - p_r)  +  q_p - 3/2) \\
-\end{array}} are easy to verify using a simple truth table.}.
+\end{array}}  in words: we execute the quarter-turn until another wall is detected.
 \end{description}
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
@@ -186,67 +179,71 @@ control the $q_p$ variable.
 
 \subsection{Definition of a programmatoid computation}
 
-We name ``programmatoid computation'' the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either binary values $\in \{0, 1\}$ or continuous normalized\footnote{An alternative would have be to consider continuous normalized values $\in [-1, 1]$, with the sign function $Sg(x) \defq \mbox{if } x > 0 \mbox{ then } 1 \mbox{ elif } x < 0 \mbox{ then } -1 \mbox{ else } 0$, and its mollification using $\mbox{tanh}(\cdot)$, which would have yields to same general results, with somehow heavier derivations, as the reader can verify. Implementing signed variable is obvious in a programmatoid environment:
-\eqline{s \defq s_+ - s_-, s_+ \defq \mbox{if } s  > 0 \mbox{ then } s\mbox{ else } 0, s_-\defq \mbox{if } s  < 0 \mbox{ then } -s \mbox{ else } 0,}
-thus manipulating signed variables in a environment with only positive variables.} values $\in [0, 1]$, which evolution is defined using an LN-system with linear units or the step-function $H(\cdot)$ as non-linearity, this writing:
-\eqline{o_n[t] = \left\{ \begin{array}{r} H(z_n[t]) \\ Id(z_n[t)] \\ \end{array} \right., z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
-where $Id(\cdot)$ stands for the identity function. Here
-\\\tab - $i_m[t]$ is the $m$-th input at a discrete $t$, and
+We name ``programmatoid computation'' the conception of an input-output \href{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either binary values $\in \{0, 1\}$ or continuous normalized\footnote{An alternative would have be to consider continuous normalized values $\in [-1, 1]$, with the sign function, and its mollification using $\mbox{tanh}(\cdot)$:
+\eqline{\mbox{Sg}(x) \defq \mbox{if } x > 0 \mbox{ then } 1 \mbox{ elif } x < 0 \mbox{ then } -1 \mbox{ else } 0 = -1 + 2 \, \mbox{H}(x) = \lim_{\omega \rightarrow +\infty} \mbox{tanh}(\omega \, x),}
+which would have yields to same general results, with somehow heavier derivations, as the reader can verify.
+
+Implementing signed variable is obvious in a programmatoid environment:
+\eqline{s = s_+ - s_-, \left\{\begin{array}{rcl} s_+ &\defq& \mbox{if } s  > 0 \mbox{ then } s \mbox{ else } 0 \\ s_- &\defq& \mbox{if } s  < 0 \mbox{ then } -s \mbox{ else } 0, \\ \end{array} \right.}
+thus manipulating signed variables in a environment with only positive variables.} values $\in [0, 1]$, which evolution is defined using an LN-system with linear units or the step-function $\mbox{H}(\cdot)$ as non-linearity, this writing:
+\eqline{o_n[t] = \left\{ \begin{array}{r} \mbox{H}(z_n[t]) \\ \mbox{Id}(z_n[t]) \\ \end{array} \right., z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
+where $\mbox{Id}(\cdot)$ stands for the identity function. Here
+\\\tab - $i_m[t]$ is the $m$-th input at a discrete $t$, $\left. i_m[t] \right|_{t=0} = 0$and
 \\\tab - $o_n[t]$ is the $n$-th output a time $t$
 \\ including recurrent system with some output corresponding to inputs, while
 \\\tab - $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
-
-A generalized programmatoid may includes other non linearities; this will not used here.
 
 By design, evaluation is done in sequence at a given $t$, i.e., from $o_1[t]$ to $o_N[t] $.
 
 The step-function, also called Heaviside function, implements the computation of the sign of a value:
 \eqline{\begin{array}{rcl}
-    H(x) &\defq& \left\{ \begin{array}{rcl} 1 &\mbox{if}& x > 0\\ 1/2 &\mbox{if}& x = 0\\ 0 &\mbox{if}& x < 0\\ \end{array}\right. \\
+    \mbox{H}(x) &\defq& \left\{ \begin{array}{rcl} 1 &\mbox{if}& x > 0\\ 1/2 &\mbox{if}& x = 0\\ 0 &\mbox{if}& x < 0\\ \end{array}\right. \\
     &=& \mbox{if } x > 0 \mbox{ then } 1 \mbox{ elif } x = 0 \mbox{ then } 1/2 \mbox{ else } 0. \\
 \end{array}}
-The design choice of $H(0) = 1/2$, instead for instance $H(0)=0$, this latter simplifying some formula, is due the neuronoid approximation developed in the sequel.
+The design choice of $\mbox{H}(0) = 1/2$, instead for instance $\mbox{H}(0)=0$, this latter simplifying some formula, is due the neuronoid approximation developed in the sequel.
 
 By extension, we use,  for any property ${\cal P}$, the notation:
-\eqline{H({\cal P}) \defq \mbox{if } {\cal P} \mbox{ then } 1 \mbox{ else } 0}
+\eqline{\mbox{H}({\cal P}) \defq \mbox{if } {\cal P} \mbox{ then } 1 \mbox{ else } 0}
+
+A ``generalized programmatoid computation'' may include other dedicated non-linearities, providing these are \href{https://en.wikipedia.org/wiki/Pure_function}{pure fonction}, i.e., no side effect, same inpouts yield same output, and providing execution time does not depends on the input, while reasonably small; this will not used here.
 
 For the sake of simplicity if the left hand size correspond to a value at time $t$ and right-hand size to values at $t-1$, which will be always here, and if not informative, temporal indexes are omitted, i.e. the previous equation will be written: 
-\eqline{o_n  \leftarrow H(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
+\eqline{o_n  \leftarrow \mbox{H}(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
 
 \subsection{Comparison implementation}
 
 Given two numerical variables $v_1$ and $v_2$, using the notation ,
 we have the equivalence\footnote{
-Considering the pseudo truth table, with $H(0) = 1/2$:
+Considering the pseudo truth table, with $\mbox{H}(0) = 1/2$:
 \eqline{\begin{array}{c|c|c|l|}
-                                                             &H(v_1 > v_2) &H(v_1 = v_2) & H(v_1 < v_2) \\\hline
-    H(v_1 - v_2)                                      & 1                  &   1/2           & 0 \\
-    H(H(v_1 - v_2))                                 & 1                 &   1              & 0 \\
-    H(H(v_2 - v_1))                                 & 0                 &   1              & 1 \\
-    H(H(v_1 - v_2)) +H(H(v_2 - v_1))-1   & 0                 &   1              & 0 \\ \hline
+                                                             &\mbox{H}(v_1 > v_2) &\mbox{H}(v_1 = v_2) & \mbox{H}(v_1 < v_2) \\\hline
+    \mbox{H}(v_1 - v_2)                                      & 1                  &   1/2           & 0 \\
+    \mbox{H}(\mbox{H}(v_1 - v_2))                                 & 1                 &   1              & 0 \\
+    \mbox{H}(\mbox{H}(v_2 - v_1))                                 & 0                 &   1              & 1 \\
+    \mbox{H}(\mbox{H}(v_1 - v_2)) +\mbox{H}(\mbox{H}(v_2 - v_1))-1   & 0                 &   1              & 0 \\ \hline
 \end{array}}  we obtain the expected results.}, considering $true$ as $1$ and $false$ as $0$:
 \eqline{\begin{array}{|c|c|c|c|l}
-    H(v_1 > v_2)                            & H(v_1 \le v_2)                        & H(v_1 = v_2)                                                    & H(v_1 \ne v_2)         \\  \hline
-    \mbox{ not } H(v_1 \le v_2)   & H(H(v_1 - v_2))                      & H(v_1 \le v_2)  \mbox{ and } H(v_2 \le v_1)   & \mbox{ not } H(v_1 = v_2)                  & \mbox{with } H(0) = 1/2\\ \hline
-    H(v_1 - v_2)                            & \mbox{ not } H(v_1 - v_2)     & \mbox{ not } H(v_1 \ne v_2)                          &H(v_1 > v_2) \mbox{ or } H(v_2> v_1)  & \mbox{with } H(0) = 0\\
+    \mbox{H}(v_1 > v_2)                            & \mbox{H}(v_1 \le v_2)                        & \mbox{H}(v_1 = v_2)                                                    & \mbox{H}(v_1 \ne v_2)         \\  \hline
+    \mbox{ not } \mbox{H}(v_1 \le v_2)   & \mbox{H}(\mbox{H}(v_1 - v_2))                      & \mbox{H}(v_1 \le v_2)  \mbox{ and } \mbox{H}(v_2 \le v_1)   & \mbox{ not } \mbox{H}(v_1 = v_2)                  & \mbox{with } \mbox{H}(0) = 1/2\\ \hline
+    \mbox{H}(v_1 - v_2)                            & \mbox{ not } \mbox{H}(v_1 - v_2)     & \mbox{ not } \mbox{H}(v_1 \ne v_2)                          &\mbox{H}(v_1 > v_2) \mbox{ or } \mbox{H}(v_2> v_1)  & \mbox{with } \mbox{H}(0) = 0\\
 \hline\end{array}}
-while $H(v_1 < v_2) = H(v_2 > v_1)$ and $H(v_1 \ge v_2) = H(v_2 \le v_1)$. We thus can implement any numerical comparison as a programmatoid, providing that we can implement boolean expressions, as given now.
+while $\mbox{H}(v_1 < v_2) = \mbox{H}(v_2 > v_1)$ and $\mbox{H}(v_1 \ge v_2) = \mbox{H}(v_2 \le v_1)$. We thus can implement any numerical comparison as a programmatoid, providing that we can implement boolean expressions, as given now.
 
 \subsection{Boolean expression implementation}
 
 Given binary variables $b_n \in \{0_{{false}}, 1_{{true}}\}, n \in \{1, N\}$ we have the obvious\footnote{Easy to verify with, e..g., a truth table, and by induction for the generalized formula.} correspondence:
 \eqline{\begin{array}{|c|c|c|c|} \hline
     b_1               & b_1 \mbox{ and } b_2                &  b_1 \mbox{ or } b_2   & \mbox{ not } b_1 \\ \hline
-    H(b_1 - 1/2) & b_1 \, b_2 = H(b_1 + b_ 2 - 3/2)  & H(b_1 + b_ 2 - 1/2)       & 1 - b_1  = H(1/2 - b_1) \\ \hline
+    \mbox{H}(b_1 - 1/2) & b_1 \, b_2 = \mbox{H}(b_1 + b_ 2 - 3/2)  & \mbox{H}(b_1 + b_ 2 - 1/2)       & 1 - b_1  = \mbox{H}(1/2 - b_1) \\ \hline
 \end{array}} and more generally:
 \eqline{\begin{array}{rcl}
-    \mbox{and}_{n \in \{1, N\}} &=& H\left(\sum_{n \in \{1, N\}} b_n - N + 1/2\right) = \prod_{n \in \{1,  N\}} H(b_n - 1/2) = \prod_{n \in \{1,  N\}} b_n \\
-    \mbox{or}_{n \in \{1, N\}} &=& H\left(\sum_{n \in \{1, N\}} b_n - 1/2\right) \\
+    \mbox{and}_{n \in \{1, N\}} &=& \mbox{H}\left(\sum_{n \in \{1, N\}} b_n - N + 1/2\right) = \prod_{n \in \{1,  N\}} \mbox{H}(b_n - 1/2) = \prod_{n \in \{1,  N\}} b_n \\
+    \mbox{or}_{n \in \{1, N\}} &=& \mbox{H}\left(\sum_{n \in \{1, N\}} b_n - 1/2\right) \\
 \end{array}}
 
 An interesting consequence is that binary variable products can be translated to a programmatoid.
 
-Let us also notice that all arguments $x$ of the step function $H(\cdot)$ still verify $|x| \ge 1/2$.
+Let us also notice that all arguments $x$ of the step function $\mbox{H}(\cdot)$ still verify $|x| \ge 1/2$.
 
 \subsection{Conditional expression implementation}
 
@@ -254,9 +251,9 @@ A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}
      v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
     &=& b_1 \, v_1 + (1 - b_1) \, v_0 \\
     \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
-    &=& H(v_1 + b_1 - 3/2) + H(v_0 + (1 - b_1) - 3/2) \\
-    &=& H(v_1 + b_1 - 3/2) + H(v_0 - b_1 - 1/2) \\
-    &=& H(H(v_1 + b_1 - 3/2) + H(v_0 - b_1 - 1/2)) \\
+    &=& \mbox{H}(v_1 + b_1 - 3/2) + \mbox{H}(v_0 + (1 - b_1) - 3/2) \\
+    &=& \mbox{H}(v_1 + b_1 - 3/2) + \mbox{H}(v_0 - b_1 - 1/2) \\
+    &=& \mbox{H}(\mbox{H}(v_1 + b_1 - 3/2) + \mbox{H}(v_0 - b_1 - 1/2)) \\
 \end{array}}
 as easy to verify, using for instance a truth table. Here:
 \\- products with $(1 - b_1)$ and $b_1$ behaves as switches between $v_o$ and $v_1$
@@ -269,26 +266,26 @@ On the other hand, if $b_k = 0, k < K$ and $b_K = 1$, due the products, we obtai
 of the conditional expression of the first line. \\
 The 3rd line is deduced from the second line, transforming the binary products on the corresponding programmatoid while:
 \eqline{\begin{array}{rcl}
-    h_0 &\defq& H(\sum_{n' \in \{1,  N\}} (1 - b_{n'}) - N + 1/2) \\ &=& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})\\
-    h_n &\defq& H(b_n + \sum_{n' \in \{1,  N\}, n' \ne n} (1 - b_{n'})  - N + 1/2) \\ &=& H(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \\
+    h_0 &\defq& \mbox{H}(\sum_{n' \in \{1,  N\}} (1 - b_{n'}) - N + 1/2) \\ &=& \mbox{H}(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})\\
+    h_n &\defq& \mbox{H}(b_n + \sum_{n' \in \{1,  N\}, n' \ne n} (1 - b_{n'})  - N + 1/2) \\ &=& \mbox{H}(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \\
 \end{array}}
 The 4rd line integrates the $v_n$ variables in the programmatoid sum, since they are binary,
 and provides the same obvious algebraic reduction as for the 3rd line.}: \eqline{\begin{array}{rcl}
 v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \left[ \mbox{ elif } b_n \mbox{ then } v_n \right]_{n \in \{2, N\}} \mbox{ else } v_0 \\
     &=& \prod_{n' \in \{1,  N\}} (1 - b_{n'}) \, v_0  \\&+& \sum_{n \in \{1, N\}} \, b_n \, \prod_{\small \begin{array}{c}n' \in \{1,  N\}, \\ n' \ne n \\ \end{array}} (1 - b_{n'})  \, v_n  \\
    &=& \sum_{n \in \{0, N\}} h_n \, v_n \\
-\mbox{ with } h_0 &\defq& H(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})  \in \{0, 1\}\\
-\mbox{ and } h_n &\defq&  H(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \in \{0, 1\}, n \in \{1, N\} \\
+\mbox{ with } h_0 &\defq& \mbox{H}(1/2 - \sum_{n' \in \{1,  N\}} b_{n'})  \in \{0, 1\}\\
+\mbox{ and } h_n &\defq&  \mbox{H}(b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 1/2) \in \{0, 1\}, n \in \{1, N\} \\
     &&\\ \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, N\}$: }} \\
-    &=& H(v_0 - \sum_{n' \in \{1,  N\}} b_{n'} - 1/2)  \\ &+& \sum_{n \in \{1, N\}} H(v_n + b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 3/2). \\
+    &=& \mbox{H}(v_0 - \sum_{n' \in \{1,  N\}} b_{n'} - 1/2)  \\ &+& \sum_{n \in \{1, N\}} \mbox{H}(v_n + b_n - \sum_{n' \in \{1,  N\}, n' \ne n} b_{n'} - 3/2). \\
 \end{array}}
 
-Let us also notice that all arguments $x$ of the step function $H(\cdot)$ again verify $|x| \ge 1/2$.
+Let us also notice that all arguments $x$ of the step function $\mbox{H}(\cdot)$ again verify $|x| \ge 1/2$.
 
 \begin{quotation}
 As a consequence,
 \\\tab - {\em A $N$-term conditional expression on binary variables reduces to a two layers programmatoid of $N$ and $1$ unit, the former unit being either linear of with a step-wise function.}
-\\ \tab - {\em A $N$-term conditional expression on numerical variables reduces to a  two layers system of $N$ programmatoid and an output unit with $h_n$ exclusive switches.}
+\\ \tab - {\em A $N$-term conditional expression on continuous variables reduces to a  two layers system of $N$ programmatoid and an output unit with $h_n$ exclusive switches, as defined in the sequel.}
 \end{quotation}
   
 \section{Neuronoid computation} \label{neuronoid}
@@ -297,17 +294,17 @@ As a consequence,
 
 By ``neuronoid'' we name the \href{https://en.wikipedia.org/wiki/Biological_neuron_model#Relation_between_artificial_and_biological_neuron_models}{not very biologically plausible} simplest biological neuron or neuron small ensemble inspired by \href{https://inria.hal.science/cel-01095603v1}{mean-field modeling} of the \href{https://en.wikipedia.org/wiki/Hodgkin-Huxley_model}{Hodgkin–Huxley neuronal axon model}.
 
-We define the equation\footnote{
-We also have: \eqline{h(x) \defq \frac{1}{1+e^{-4\,x}} = \frac{1 + \tanh(2 \, x)}{2} = \mbox{sech}(2 \, x) \, e^{2 \, x} /2,}}:
+It is defined the equation:
 \eqline{\begin{array}{rcll}
-  \multicolumn{2}{l}{\tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t),} &
-  \multicolumn{2}{l}{z_i(t) \defq h\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right),} \\ \\
-  h(x) &\defq& \frac{1}{1+e^{-4\,x}} \\
-         &=& \frac{1+ \mbox{tanh}(2 \, x)}{2} & \mbox{(tanh linear relation)}\\
-         &=& h(x_0) + \mbox{sech}(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), & \mbox{(local 1st order behavior)}\\
-         &=& 1 - e^{-4 \,x} + O(e^{-8 \, x)}) & \mbox{(behavior toward infinity)}\\
+  \multicolumn{4}{l}{\tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t), \;\;\;z_i(t) \defq \mbox{h}\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right),} \\ \\
+  \mbox{h}(x) &\defq& 1/\left(1+e^{-4\,x}\right) \\
+         &=& (1+ \mbox{tanh}(2 \, x)) / 2 = \mbox{sech}(2 \, x) \, e^{2 \, x} /2 & \mbox{(tanh linear relation)}\\
+         &=& \mbox{h}(x_0) + \mbox{sech}(2 \, x_0)^2 \, (x - x_0) + O((x - x_0)^2), & \mbox{(local 1st order behavior)}\\
+         &=& 1 - e^{-4 \,x} + O(e^{-8 \, x)}) & \mbox{(behavior toward infinity).}\\
 \end{array}}
-where $v_i$ stands for the membrane potential, so that:
+Here,  $\mbox{h}(\cdot)$ is the normalized sigmoid with: \eqline{\mbox{h}(-\infty) = 0, \mbox{h}(0) = 1/2, h'(0) = 1, \mbox{h}(+\infty) = 1, \mbox{h}(x) = 1 - \mbox{h}(-x),} and is derived from from considerations on mean-field modeling \cite{cessac_neuron_2007}.
+
+Following this weak analogy with biological neurons, $v_i$ stands for the membrane potential, so that:
 \eqline{\begin{array}{rcll} v(t)
   &=& 1/\tau \, \int_0^t e^{-(t-s)/\tau} \, z(s) \, ds + v(0) \, e^{-t/\tau} \\
   &=& \left. z(0) + e^{-t/\tau} \, (v(0) - z(0)) \right|_{z(t)= z(0)} & \mbox{ (constant input)}\\
@@ -317,82 +314,104 @@ where $v_i$ stands for the membrane potential, so that:
   &=& \sum_{s=0}^{t-1} \gamma \, (1-\gamma)^{t-s+1} \, z(s) + v(0) \, (1-\gamma)^t \\
   &=& \left. z(0) + (1-\gamma)^t \, (v(0) - z(0)) \right|_{z(t)= z(0)} & \mbox{ (constant input)}\\
   &=& \left. z(t) \right|_{\gamma = 1} & \mbox{ (no leak)}. \\
-\end{array}}
-with $0 < \gamma < 1$ and $0 < \tau$ in correspondence:
+\end{array}} 
+with $0 < \gamma < 1$ and $0 < \tau$ in one-to-one correspondence:
 \eqline{\gamma \defq 1 - e^{\frac{1}{\tau}} \Leftrightarrow \tau = -\frac{1}{\log\left(1-\gamma\right)},  \mbox{while} \lim_{\gamma \rightarrow 0} \tau = +\infty , \lim_{\gamma \rightarrow 1} \tau = 0.}
-Here,  $h(\cdot)$ is the normalized sigmoid with \eqline{h(-\infty) = 0, h(0) = 1/2, h'(0) = 1, h(+\infty) = 1, h(x) = 1 - h(-x)}
+
 All this is just very standard derivations, available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/neuronoid.mpl.out.txt}{{\tt Maple} code}, of the vanilla neuron model, as already proposed by \cite{lapicque_recherches_1907}.
 
-The leak term, in the discrete case, is computationally equivalent to a recurrent linear connection, it will thus be implemented as such in the sequel.
+The leak term, in the discrete case, is computationally equivalent to a recurrent linear connection: It will thus be implemented as such in the sequel.
 
 \subsection{Definition of a neuronoid computation}
 
-We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination of only neuronoids:
-\eqline{o_n[t] = h(z_n[t), z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
-with the same notations as for programmatoid computations.
+We call ``neuronoid computation'' the conception of an input-output transform based on feed-forward and recurrent combination with only neuronoids as non-linearities:
+\eqline{o_n[t] = \mbox{h}(z_n[t]), z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
+with the same notations as for programmatoid computations, and with determistic evaluation sequence.
 
 \subsection{Step-function mollification}
 
 The step-function approximates sigmoid with a huge slope at zero, i.e.:
-\eqline{\forall x \ne 0, H(x) = \lim_{\omega  \rightarrow +\infty} h(\omega \, x), \left. h'(\omega \, x)  \right|_{x = 0} =  \omega}
-while the convergence is also obtained for $v=0$ in the distribution sense with $H(0) = h(0) = 1/2$.
+\eqline{\forall x \ne 0, \mbox{H}(x) = \lim_{\omega  \rightarrow +\infty} \mbox{h}(\omega \, x), \left. h'(\omega \, x)  \right|_{x = 0} =  \omega}
+while the convergence is also obtained for $v=0$ in the distribution sense with $\mbox{H}(0) = \mbox{h}(0) = 1/2$.
 More precisely, the ${\cal L}_1$ error magnitude, on $]-\infty, +\infty[$, writes:
-\eqline{|\epsilon_{H,\omega}(x) |_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{\omega}, \epsilon_{H,\omega}(x) \defq H(x) - h(\omega \, x)}
+\eqline{|\epsilon_{H,\omega}(x) |_{{\cal L}_1} = \frac{\log(2)}{2} \, \frac{1}{\omega}, \epsilon_{H,\omega}(x) \defq \mbox{H}(x) - \mbox{h}(\omega \, x)}
 while:
 \eqline{|\epsilon_{H,\omega}(x)| = e^{-4\,\omega}+O\left(e^{-8\,\omega}\right)}
 
-It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $H(\cdot)$ verify $|x| \ge 1/2$, and the related error is negligible as soon as, say, $\omega \ge 10$:
+It has been noticed that, except for numerical comparisons, all arguments $x$ of the step function $\mbox{H}(\cdot)$ verify $|x| \ge 1/2$, and the related error is negligible as soon as, say, $\omega \ge 10$:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
   \omega & 1 & 2 & 5 & 10 & 20 & 50 \\ \hline
   \epsilon_\omega(\pm1/2) & 0.119 &  0.0180 &  0.455 \, 10^{-4} &  0.206 \, 10^{-10} &  0.426 \, 10^{-19} &  0.372 \, 10^{-45} \\ \hline
 \end{array}}
 
 \begin{quotation}
-{\em Any programmatoid  computation involving the $H(\cdot)$ function can thus be approximated by a neuronoid, with $\tau = 0$, and sufficiently large $\omega$.}
+- {\em Any programmatoid  computation involving the $\mbox{H}(\cdot)$ function can thus be approximated by a neuronoid, with $\tau = 0$, and sufficiently large $\omega$, with an exponentially decreasing residual.}
 \end{quotation}
   
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/mollificatio.mpl.out.txt}{{\tt Maple} code}.
 
 \subsection{Approximation of the identify function}
 
-We also have to use a sigmoid to approximate the identity function defining:
+We also have to use a the linear part sigmoid to approximate the identity function $\mbox{Id}(x) = x$ defining:
 \eqline{\begin{array}{rcl}
-   l_{\omega'}(x) &\defq& \omega' \, (h(x/\omega') - 1/2) \\
-   &=& x -\frac{4}{3} \frac{1}{\omega'^2} \, x^3 + O\left(x^5\right) \\
-\end{array}}   
+   \mbox{Id}_{\omega'}(x) &\defq& \omega' \, (\mbox{h}(x/\omega') - 1/2) \\
+                           &=& x - \frac{4}{3} \frac{1}{\omega'^2} \, x^3 + O\left(x^5\right) \\
+\end{array}} 
 and writing $\epsilon_{l,\omega'}(x) \defq x - l_{\omega'}(x)$ , the ${\cal L}_1$ error magnitude on $[-M, +M]$ writes:
 \eqline{\int_{x=-M}^{x=+M}|\epsilon_{l,\omega'}(x)| \, dx = \frac{2}{3} \, \frac{M^4}{\omega'^2} + O\left(\frac{1}{\omega'^4}\right)}
 and the related ${\cal L}_0$ error magnitude:
 \eqline{\max(|\epsilon_{l,\omega'}(x)|), x \in [-M, M] = \epsilon_{l,\omega'}(M)  = \frac{4}{3} \, \frac{M^3}{\omega'^2} + O\left(\frac{1}{\omega'^4}\right)}
 
+In a positive interval, by symmetry, the ${\cal L}_1$ error magnitude is divided by $2$, while the ${\cal L}_0$ error magnitude is the same.
+
 The identity function is thus impaired by a bias $\pm \frac{4}{3} \, \frac{M^3}{\omega'^2}$ reducing the output value with respect to the input value.
 
-Assuming values are normalized, in the $[-1, +1]$ we obtain, for the ${\cal L}_0$ error magnitude:
+Assuming values are normalized, in the $[-1, +1]$ interval or in the $[0, 1]$ interval, we obtain, for the ${\cal L}_0$ error magnitude:
 \eqline{\begin{array}{|l|c|c|c|c|c|c|} \hline
 \omega' & 10 & 50 & 100 & 200 & 500 & 1000  \\ \hline
 \epsilon_{l,\omega'}(1) & 0.0131 &  0.533 \, 10^{-3} &  0.133 \, 10^{-3} &  0.333 \, 10^{-4} &  0.54\, 10^{-7} &  0.12\, 10^{-7}  \\ \hline
 \end{array}}
 with a negligible error for, say, $\omega'  \ge 100$.
 
-It must be noted that although continous variables stands in $[0, 1]$ because of negative weights in the linear combination of input, intermediate values may be negative.
+At the implementation level we must introduce a change of variable, and consider:
+\eqline{\mbox{Jd}_{\omega'}(x)  \defq \mbox{h}(x/\omega') \\ \mbox{ with } \left\{\begin{array}{l} \mbox{Id}_{\omega'}(x) = \omega' \, (\mbox{Jd}_{\omega'}(x) - 1/2) \\ \mbox{Jd}_{\omega'}(x) = \mbox{Id}_{\omega'}(x) / \omega' + 1/2 \\ \end{array} \right.}
+in order to define a proper neuronoid computation, in the form given as definition. It is obvious to propagate this change of variable in all the equations.
 
+It must be noted that although continous variables stands in $[0, 1]$ because of negative weights in the linear combination of input, intermediate values may be negative, as considred here.
+
+\begin{quotation}
+- {\em Any programmatoid  computation involving the $\mbox{Id}(\cdot)$ function can thus be approximated by a neuronoid, with $\tau = 0$, up to an affine change of variable, and sufficiently large $\omega'$, and a residual decreasing in a square way.}
+\end{quotation}
+  
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/linearapproximation.mpl.out.txt}{{\tt Maple} code}.
+
+\begin{quotation}
+Collecting the previous results, we obtain:\\
+- {\em Any programmatoid computation can be approximated, up to any precision, by a neuronoid computation.}
+\end{quotation}
 
 \subsection{Approximation of switch mechanisms}
 
 Given normalized floating point variables $v_n \in [-1, 1], n \in \{1, N\}$ and binary variables $b_n \in \{0, 1\}, n \in \{1, N\}$, conditional expressions and related mechanisms require the implementation of formula of the form\footnote{We easily verifies that:
-\\ - if $b_n= 0$, while $|v_n/\omega'| \le 1/\omega' \ll 1$, the term $\omega' \, h(v_n/\omega' + \omega \, b_n - \omega) \simeq h(- \omega) \simeq 0$ up to $O\left(e^{-4\,w}\right)$ as derived previously, while
-\\ - if $b_n= 1$,the term $\omega' \, h(v_n/\omega' + \omega \, b_n - \omega) = \omega' \, h(v_n/\omega')$ corresponds to the approximation of the identity function, up to $O\left(\frac{1}{\omega'}\right)$ as derived previously.}:
+\\ - if $b_n= 0$, while $|v_n/\omega'| \le 1/\omega' \ll 1$, the term $\omega' \, \mbox{h}(v_n/\omega' + \omega \, b_n - \omega) \simeq \mbox{h}(- \omega) \simeq 0$ up to $O\left(e^{-4\,w}\right)$ as derived previously, while
+\\ - if $b_n= 1$,the term $\omega' \, \mbox{h}(v_n/\omega' + \omega \, b_n - \omega) = \omega' \, \mbox{h}(v_n/\omega')$ corresponds to the approximation of the identity function, up to $O\left(\frac{1}{\omega'}\right)$ as derived previously.}:
 \eqline{\begin{array}{rcl}
     v &=& \sum_{n \in \{0, N\}} b_n \, v_n \\
-    &=& \sum_{n \in \{0, N\}} \omega' \, h(v_n/\omega' + \omega \, b_n - \omega) + O\left(\frac{1}{\omega'^2}\right)+ O\left(e^{-4\,w}\right) \\
+    &=& \sum_{n \in \{0, N\}} \omega' \, \mbox{h}(v_n/\omega' + \omega \, b_n - \omega) + O\left((\omega')^{-2}\right)+ O\left(e^{-4\,\omega}\right) \\
 \end{array}}
 
-The implementation as neuronoid, thus allows one to implement more formula than only using programmatoid.
+The key point here is that product of a continuous variable $v_n$ by a binary variable $b_n$, acting as a kind of switch, is not implementable with pure programmatoid computation because only products with constant parametric values, or weights. Up to our best understanding product between two variables, one being continuous can not be defined with lineat combinations unless additional mechanisms are introduced, as discussed below.
+
+We also notice that the $\mbox{Id}(\cdot)$ function mollification approximation is less efficient that the $\mbox{H}(\cdot)$ function mollification, the former being subject to a polynomial remainder, the latter to an exponential one.
+
+\begin{quotation}
+This means that:
+\\\tab - {\em Neuronoid computation allows one to implement more mechanism approximations, that exact programmatoid computation only.}
+\end{quotation}
 
 \section{Examples of programmatoid computation}
 
-A step ahead, we considering neuronoid with $\tau > 0$ it seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc.
+A step ahead, t seems obvious that we can designed temporizing mechanisms, oscillators and sequence generator, sleep sort mechanism, etc.
 
 \subsection{Memory gate}
 
@@ -406,13 +425,13 @@ The key point is that it is now a recurrent system, which stability is obvious a
 but not necessarily at the neuronoid level, since we have an recurrent equation for $i_l = 1$.
 \eqline{\begin{array}{rcl}
      \multicolumn{3}{l}{\mbox{For $i \in \{0, 1\}$, $o \in \{0, 1\}$ at the programmatoid level:}} \\
-     o &\leftarrow& H(i - i_l - 1/2) + H(o + i_l - 3/2) \\
+     o &\leftarrow& \mbox{H}(i - i_l - 1/2) + \mbox{H}(o + i_l - 3/2) \\
     &&\\\multicolumn{3}{l}{\mbox{For $i \in \{0, 1\}$, $o \in \{0, 1\}$:}} \\
-     o &\leftarrow& h(\omega \, (i - i_l - 1/2) ) + h(\omega \, (o + i_l - 3/2)) \\
-    &=& \left. O\left(e^{-4\,\omega}\right) + h(\omega \, (o  - 1/2)) \right|_{i_l = 1} \\
+     o &\leftarrow& \mbox{h}(\omega \, (i - i_l - 1/2) ) + \mbox{h}(\omega \, (o + i_l - 3/2)) \\
+    &=& \left. O\left(e^{-4\,\omega}\right) + \mbox{h}(\omega \, (o  - 1/2)) \right|_{i_l = 1} \\
     &&\\\multicolumn{3}{l}{\mbox{For $i \in [-1, 1]$, $o \in [-1, 1]$:}} \\
-    o &\leftarrow& \omega' \, (h(i/\omega' -  \omega \, i_l) + h(o /\omega' -  \omega \, (1 - i_l)) \\
-    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, h(o/\omega') \right|_{i_l = 1} \\
+    o &\leftarrow& \omega' \, (\mbox{h}(i/\omega' -  \omega \, i_l) + \mbox{h}(o /\omega' -  \omega \, (1 - i_l)) \\
+    &=& \left. O\left(\omega' \, e^{-4\,\omega}\right) + \omega' \, \mbox{h}(o/\omega') \right|_{i_l = 1} \\
 \end{array}}
 
 \begin{itemize}
@@ -424,12 +443,12 @@ For $\left.o\right|_{t=0} = 0$ the derivation is straightforward. For $\left.o\r
 \eqline{\begin{array}{rcll}
     \epsilon
     &\leftarrow& 1 - o \\
-    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (1 - \epsilon + 1 - 3/2)) \\
-    &=& 1 - h(-3/2 \, \omega) - h( \omega \, (-\epsilon + 1/2)) \\
-    &=& - h(-3/2 \, \omega) + h(\omega \, (\epsilon - 1/2)) & \mbox{ since $h(x) = 1 - h(-x)$} \\
+    &=& 1 - \mbox{h}(-3/2 \, \omega) - \mbox{h}( \omega \, (1 - \epsilon + 1 - 3/2)) \\
+    &=& 1 - \mbox{h}(-3/2 \, \omega) - \mbox{h}( \omega \, (-\epsilon + 1/2)) \\
+    &=& - \mbox{h}(-3/2 \, \omega) + \mbox{h}(\omega \, (\epsilon - 1/2)) & \mbox{ since $\mbox{h}(x) = 1 - \mbox{h}(-x)$} \\
   \end{array}} with a similar derivation for $\left.o\right|_{t=0} = 1$ and $i = 1$.}:
 \eqline{\begin{array}{rcl}
-    \epsilon &\leftarrow& (1 - 2 \, \left.o\right|_{t=0}) \,  h(-(3/2 - i) \, \omega) + h( \omega \, (\epsilon - 1/2)) \\
+    \epsilon &\leftarrow& (1 - 2 \, \left.o\right|_{t=0}) \,  \mbox{h}(-(3/2 - i) \, \omega) + \mbox{h}( \omega \, (\epsilon - 1/2)) \\
     &=& \left\{\begin{array}{lrcll}
       0 &\epsilon&=& 0 & \mbox{ if $\left.o\right|_{t=0} = 1$}\\
       e^{-2 \, \omega} + O\left(e^{-4 \, \omega}\right) &\epsilon&=& \varepsilon \, e^{-2 \, \omega}& \mbox{otherwise}\\
@@ -440,11 +459,11 @@ $i = 0$.
 
 \item For the third equation, memorizing $\left.o\right|_{t=0} \in [-1, 1]$, thus with $i_l = 1$, while $i  \in [-1, 1]$, we obtain:
 \eqline{\begin{array}{rcl}
-    o &\leftarrow& \omega' \, (h(i/\omega' -  \omega \, i_l) + h(o /\omega' -  \omega \, (1 - i_l)) \\
+    o &\leftarrow& \omega' \, (\mbox{h}(i/\omega' -  \omega \, i_l) + \mbox{h}(o /\omega' -  \omega \, (1 - i_l)) \\
     \multicolumn{3}{l}{\mbox{while, since $i_l = 1$:}} \\
-    &=& \omega' \, (h(i/\omega' -  \omega) + h(o /\omega') \\
+    &=& \omega' \, (\mbox{h}(i/\omega' -  \omega) + \mbox{h}(o /\omega') \\
     \multicolumn{3}{l}{\mbox{while, when neglecting $|i/\omega'| < 1/\omega' \ll \omega$:}} \\
-    &=& \omega' \, (h(-\omega) + h(o /\omega') \\
+    &=& \omega' \, (\mbox{h}(-\omega) + \mbox{h}(o /\omega') \\
     \multicolumn{3}{l}{\mbox{while, using previous series formula:}} \\
     &=& o \pm \frac{4}{3} \, \frac{1}{\omega'^2} + e^{-4 \omega} + O\left(\frac{1}{\omega'^4}\right) + O\left(e^{-8 \omega}\right) \\
      \multicolumn{3}{l}{\mbox{while, considering only the larger term:}} \\
@@ -578,7 +597,7 @@ Taking benefit of the fact that sigmoid is convex as the exponential function in
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./expneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Approximation in the $[-1, 1]$ interval of the exponential function, in blue, by a sigmoid combination, in green: \eqline{0.182 + 2.34 \,h(x - 1) + 1.55 \, h(x/2): } yielding a ${\cal L}_1$ error of $0.01$, the error being drawn in red.}
+      \caption{Approximation in the $[-1, 1]$ interval of the exponential function, in blue, by a sigmoid combination, in green: \eqline{0.182 + 2.34 \,\mbox{h}(x - 1) + 1.55 \, \mbox{h}(x/2): } yielding a ${\cal L}_1$ error of $0.01$, the error being drawn in red.}
         \label{expneuronoid}
     \end{minipage}
 \end{figure}
@@ -586,7 +605,7 @@ Taking benefit of the fact that sigmoid is convex as the exponential function in
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./logneuronoid.jpg}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Approximation in the $[1, e]$ interval of the logarithm $\log(x)$ function, in blue, by a sigmoid combination, in green: \eqline{-5.10 + 2.60 \,h(x/2) + 4.70 \, h(x/10): } yielding a ${\cal L}_1$ error of $0.001$, the error being drawn in red.}
+      \caption{Approximation in the $[1, e]$ interval of the logarithm $\log(x)$ function, in blue, by a sigmoid combination, in green: \eqline{-5.10 + 2.60 \,\mbox{h}(x/2) + 4.70 \, \mbox{h}(x/10): } yielding a ${\cal L}_1$ error of $0.001$, the error being drawn in red.}
         \label{logneuronoid}
     \end{minipage}
 \end{figure}
@@ -618,17 +637,17 @@ Derivations of this section are available as \href{https://raw.githubusercontent
 Another track is to consider the programmatoid implementation of the maximum operator, given $K$ inputs $i_k \in [-1, 1], k \in \{1, K\}$, as a weighted sum:
 \eqline{o \defq \max_k(i_k) = \sum_k b_k \, i_k}
 with:
-\eqline{b_k \defq And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l),}
+\eqline{b_k \defq And_{l \in \{1, k-1\}} \mbox{H}(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} \mbox{H}(i_k \ge i_l),}
 So that $b_k = 1$ if $i_k$ is the first instantiating of the max value \footnote{
 First, assume that all $i_k$ are different; then $b_k = 1$ if and only if $\forall l \ne k, i_k > i_l$, yielding the expected result.\\
 Then, if more than one value corresponds to $\max_k(i_k)$, let us consider $k_0 = \mbox{ argmin} \{k, k = \max_k(i_k)\}$. \\
-For $k_0$, $And_{l \in \{k_0+1, K\}} H(i_{k_0} \ge i_l) = 1$ because it is a maximum and $And_{l \in \{1, k_0-1\}} H(i_{k_0} >  i_l) =1$ because no previous maximum is encountered, by definition. Then for subsequent values $k_1 = \max_k(i_k)$, because there is $k_0 < k_1$ with $i_{k_0} = i_{k_1}$, then $And_{l \in \{1, k_1-1\}} H(i_{k_1} >  i_l) = 0$, so that we only have one occurrence of $i_k$ which is selected.}, thus with a form similar to the average operator $\mbox{mean}_k(i_k) = 1/K \, \sum_k b_k \, i_k$.
+For $k_0$, $And_{l \in \{k_0+1, K\}} \mbox{H}(i_{k_0} \ge i_l) = 1$ because it is a maximum and $And_{l \in \{1, k_0-1\}} \mbox{H}(i_{k_0} >  i_l) =1$ because no previous maximum is encountered, by definition. Then for subsequent values $k_1 = \max_k(i_k)$, because there is $k_0 < k_1$ with $i_{k_0} = i_{k_1}$, then $And_{l \in \{1, k_1-1\}} \mbox{H}(i_{k_1} >  i_l) = 0$, so that we only have one occurrence of $i_k$ which is selected.}, thus with a form similar to the average operator $\mbox{mean}_k(i_k) = 1/K \, \sum_k b_k \, i_k$.
 
 We easily derive:
 \eqline{\begin{array}{rcl}
-    b_k &\defq& And_{l \in \{1, k-1\}} H(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} H(i_k \ge i_l) \\
+    b_k &\defq& And_{l \in \{1, k-1\}} \mbox{H}(i_k >  i_l) \mbox{ and } And_{l \in \{k+1, K\}} \mbox{H}(i_k \ge i_l) \\
     \multicolumn{3}{l}{\mbox{while, expanding the $And$ operator}}\\
-    &=&  H\left(\sum_{l \in \{1, k-1\}}  H(i_k >  i_l) + \sum_{l \in \{k+1, K\}} H(i_k \ge i_l) - K + 3/2\right). \\
+    &=&  \mbox{H}\left(\sum_{l \in \{1, k-1\}}  \mbox{H}(i_k >  i_l) + \sum_{l \in \{k+1, K\}} \mbox{H}(i_k \ge i_l) - K + 3/2\right). \\
 \end{array}}
 
 Then, introducing a linearly combination of both operators:
@@ -651,20 +670,20 @@ We also could have considered $g$ as an input value, yielding product of two val
 
 Derivations of this subsection are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/softmax.mpl.out.txt}{{\tt Maple} code}.
 
-\section{Comparing {\tt tanh} with other non linearity}
+\section{Comparing the $h(\cdot)$ sigmoid with other non linearity}
 
-We have $h(x) = \frac{1 + \tanh(2 \, x)}{2}$ thus based on the {\tt tanh} non linearity. This corresponds most common activation function
+We have $\mbox{h}(x) = \frac{1 + \mbox{tanh}(2 \, x)}{2}$ thus based on the {\tt tanh} non linearity. This corresponds most common activation function
 when deriving a rate-based reduced neural network from bio-physical elements  \cite{cessac_neuron_2007}. This is far from being the only choice,
 as reviewed in \cite{szandala_review_2020}, and we could have considered, for instance
 $\bar{h}$ functions of the form:
 \eqline{\begin{array}{|l|c|c|c|c|ll}\hline
  \mbox{Name:} &   \mbox{Tanh} & \mbox{Erf} & \mbox{Arctan} & \mbox{Softsign} \\\hline
  \mbox{Formula:} &
-   \frac{1}{2} + \frac{\tanh(2 \, x)}{2} &
+   \frac{1}{2} + \frac{\tan\mbox{h}(2 \, x)}{2} &
    \frac{1}{2} + \frac{\mbox{arctan}\left(\pi  \, x\right)}{\pi} &
    \frac{1}{2} + \frac{\mbox{erf}(\sqrt{\pi} \, x)}{2} &
   \frac{1}{2} + \frac{x}{1 + |2 \, x|} \\\hline
-  \mbox{Sharpness:} & & |h(x)| < |\bar{h}(x)| & |h(x)| > |\bar{h}(x)| & |h(x)| > |\bar{h}(x)| \\\hline
+  \mbox{Sharpness:} & & |\mbox{h}(x)| < |\bar{h}(x)| & |\mbox{h}(x)| > |\bar{h}(x)| & |\mbox{h}(x)| > |\bar{h}(x)| \\\hline
   {\cal L}_1 = & 0 & -\frac{\pi  \,\log\left(2\right)-2}{2 \,\pi} & +\infty & +\infty \\\hline
   {\cal L}_0 \simeq & 0 & 0.018 & 0.082 & 0.81 \\\hline
   \kappa_{max} & 1.53 & 1.52 & 2.04 & 4 \\\hline

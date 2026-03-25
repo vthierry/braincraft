@@ -6,8 +6,6 @@ import numpy as np
 from bot import Bot
 from camera import Camera
 
-# Defines some non-linear functions
-
 def sigmoid(x):
     """Defines the normalized sigmoid function.
     """
@@ -18,52 +16,62 @@ def step(x):
     """
     return 0 if x < 0 else 1 if x > 0 else 1/2
 
-def init_state_from_network(state):
-    """Inits the state from a neuronoid network
-	"""
-    W_in, W, w, W_out = state["network"]
-    n = w.size
-    state["X"] = np.zeros((n,1))
+# Implements the network state init and update
 
-def update_state_from_network(state):
-    """Updates the state from a neuronoid network
+class State:
+    """ Implements a programmatoid state.
+    """
 
-    Parameters
-    ----------
-    state: dictionary
-    - "network" : The network parameters list as defined below.
-        - It is a `W_in, W, w, W_out` list for this next_output_from_network() callback, where:
-            - `p = bot.camera.resolution`, available as `state["camera.resolution"]`.
-            - `n` # The network size.
-            - `W_in(n,2*p+3)` is the input weights.
-            - `W(n,n)` is the internal weights, thus `W(row-count,column-count)`.
-            - `w(n)` is the internal offsets..
-            - `W_out(1,n)` is the output weights.
-         - The following elements are constant in this implementation:
-            - `warmup = 0` is the number of iteration, before the bot starts, NOT used.
-            - `leak(n, 1) = 0`  the leak vector, or scalar, ALWAYS 0 (leak is integrated in the reccurent connections).
-            - `f = sigmoid`  is the internal non-linearity, ALWAYS a sigmoid.
-            - `g = identity`  is the output non-linearity, ALWAYS the  identity.
-    - "X"   : The network current state.
-        - `X[0:n]` is the local state, initialized to 0.
-    - "I"   : The network current input.
-          - `I[:p] = 1 - bot.camera.depths`.
-          - `I[p:2*p] = bot.camera.values`.
-          - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
-    - "d_o" : The network returned output
-	"""
-    W_in, W, w, W_out = state["network"]
-    I, X = state["I"], state["X"]
-    X = sigmoid(np.dot(W_in, I) + np.dot(W, X) + w)
-    state["d_o"] = np.dot(W_out, X)
-    state["X"] = X
+    data = dict()
+    """ The state data: dictionary.
+    """
+    
+    def init(self):
+    	""" Inits some data, if needed.
+    	"""
+        
+    def update(self):
+    	""" Updates, at each step, the data from input and sets the output value.
+        """
 
-def evaluate(Bot, Environment, challenge, timeout = 1000, runs = 1, debug = False):
+class NetworkState(State):
+    """ Implements a neuronoid network
+       data: dictionary
+       - "network" : The network parameters list as defined below.
+           - It is a `W_in, W, w, W_out` list
+               - `p = bot.camera.resolution`
+               - `n` # The network size.
+               - `W_in(n,2*p+3)` is the input weights.
+               - `W(n,n)` is the internal weights, thus `W(row-count,column-count)`.
+               - `w(n)` is the internal offsets..
+               - `W_out(1,n)` is the output weights.
+           - The following elements are constant in this implementation:
+               - `warmup = 0` number of iteration before start, NOT used.
+               - `leak(n, 1) = 0`  the leak vector, or scalar, ALWAYS 0 (leak is integrated in the reccurent connections).
+               - `f = sigmoid`  is the internal non-linearity, ALWAYS a sigmoid.
+               - `g = identity`  is the output non-linearity, ALWAYS the  identity.
+       - "X"   : The network current state.
+           - `X[0:n]` is the local state, initialized to 0.
+       - "I"   : The current input.
+           - `I[:p] = 1 - bot.camera.depths`.
+           - `I[p:2*p] = bot.camera.values`.
+           - `I[2*p,2*p+3] = (bot.hit, bot.energy, 1.0)`.
+       - "O" : The returned output
+     """
+    def init(self):
+        W_in, W, w, W_out = data["network"]
+        n = w.size
+        data["X"] = np.zeros((n,1))
+        
+    def update(self):
+        W_in, W, w, W_out = data["network"]
+        I, X = data["I"], data["X"]
+        X = sigmoid(np.dot(W_in, I) + np.dot(W, X) + w)
+        data["O"] = np.dot(W_out, X)
+        data["X"] = X
+
+def evaluate(Bot, Environment, State, challenge, timeout = 1000, runs = 1, debug = False):
     """Evaluates a programatoid
-
-    - It calls init_state(state) which initializes the state parameters and variables, at the beggining of each run.
-
-    - It calls update_state(state)  which computes the next `d_o` value from the input `I` or preprocessed input, at each step.
 
     Parameters
     ----------
@@ -73,8 +81,14 @@ def evaluate(Bot, Environment, challenge, timeout = 1000, runs = 1, debug = Fals
     Environment: class.
     - The Environment class to use for evaluation.
 
+    State: class.
+    - The system State used  for evaluation.
+        - It calls state.init() which initializes the state parameters and variables, at the beggining of each run.
+        - It calls state.update()  which computes the next `O` value from the input `I` or preprocessed input, at each step.
+         - It uses the dict state.data for input and ouput values.
+
     challenge : int
-    - Challenge number 1, 2, 3
+    - Challenge number 1, 2, or 3
 
     timeout : int
     - Maximum number of iterations
@@ -136,8 +150,8 @@ def evaluate(Bot, Environment, challenge, timeout = 1000, runs = 1, debug = Fals
         
         p = bot.camera.resolution
 
-        state = dict({"d_o" : 0, "g_e" : 1, "g_e1" : 1, "g_e2" : 1, "g_c1" : 0, "g_c2" : 0, "camera.resolution" : bot.camera.resolution})
-        init_state(state)
+        state = State()
+        state.init()
         
         distance = 0
         hit = 0
@@ -161,27 +175,21 @@ def evaluate(Bot, Environment, challenge, timeout = 1000, runs = 1, debug = Fals
             I[:p,0] = 1 - bot.camera.depths
             I[p:2*p,0] = bot.camera.values
             I[2*p:,0] = bot.hit, bot.energy, 1.0
-            state["I"] = I
+            state.data["I"] = I
 
             ##  Input preprocessing
-            state["p_l"] = np.mean(I[0:int(p/2),0])
-            state["p_r"] = np.mean(I[int(p/2):p,0])
-            state["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
-            state["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
-            state["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0
-            state["c_rr"] = 1 if 5 in I[p+int(p/2):2*p,0] else 0
-            state["g_e2"] = state["g_e1"]
-            state["g_e1"] = state["g_e"]
-            state["g_e"] = bot.energy
-            if  state["g_e"] > state["g_e1"] and state["g_e1"] < state["g_e2"]:
-                state["g_c2"] = state["g_c1"]
-                state["g_c1"] = state["g_e"] - state["g_e1"]
-            if  state["g_e"] > state["g_e1"] and state["g_e1"] > state["g_e2"]:
-                state["g_c1"] += state["g_e"] - state["g_e1"]
+            state.data["p_l"] = np.mean(I[0:int(p/2),0])
+            state.data["p_r"] = np.mean(I[int(p/2):p,0])
+            state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
+            state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
+            state.data["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0
+            state.data["c_rr"] = 1 if 5 in I[p+int(p/2):2*p,0] else 0
 
-            update_state(state)
-            
-            O = state["d_o"]
+            state.update()
+
+            if "d_l" in state.data.keys() and "d_r" in state.data.keys():
+                state.data["O"] = 5 * (state.data["d_l"] - state.data["d_r"])
+            O = state.data["O"]
 
             iteration += 1
             p = bot.position
