@@ -1,5 +1,6 @@
-prgm_default_options := table([(omega)=1000,(python)=true,(networking)=false,(
-mollification)=false,(licence)="CeCILL-C"]);
+prgm_default_options := table([(licence)="CeCILL-C",(python)=true,(runs)=1,(
+timeout)=100,(networking)=false,(debug)=true,(mollification)=false,(omega)=1000
+]);
 prgm_functions := {And = (() -> H(sum(H_(_passed[k]),k = 1 .. _npassed)-
 _npassed+.5)), Delay = proc (o, i, T) local v, g; v := new_symbol("v"); g := if
 0 < T then 1-2^(-1/T) else 1 end if; v = (1-g)*v+g*i, o = If_b(.5 < v,1,0) end

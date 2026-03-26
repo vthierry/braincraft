@@ -4,9 +4,8 @@
 if [ -z "$1" ] ; then cat <<EOF 
 Usage $0 \$prgm
   - The programmatoid source is in a \$prgm.mpl file.
-     - The \$prgm name must have a 1, 2, or 3 digit to define the braincraft task number, thus which environment.
   - The compilation output is saved:
-    -  In a \$prgm.py file for the init_state() and update_state() procedures.
+    -  In a \$prgm.py file for the init() and update() procedures.
      - In a \$prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated \$prgm_test.py file
   - The compilation and execution output is available in \$prgm_test.out.wjson (in weak JSON syntax) and \$prgm_test.out.html files 
@@ -14,15 +13,15 @@ EOF
 exit -1
 fi
 
-## The environment number 1, 2, or 3
-n="echo `$1 | sed 's/[^123]*\([123]\).*/\1' | grep '^[123]$'`"
-if [ -z "$n" ] ; then echo "No 1, 2, or 3 digit in the '$1' name" ; exit -1 ; fi
-
 ## The input file name without extension
 f="${1%.*}"
 ## The log file name
 l="$f_test.out.wjson"
 echo "{\n  date: `date '+%Y-%m-%d_%H-%M-%S'`\n" > $l
+
+## The environment number 1, 2, or 3
+n="`grep 'challenge *= *[123]' < $f.mpl | sed 's/.*challenge *= *\([123]\).*/\\1/'`"
+if [ -z "$n" ] ; then echo "No 1, 2, or 3 digit in the '$1' name" ; exit -1 ; fi
 
 ## Compiles the programmatoid specifications
 echo "Compiling …"
@@ -36,11 +35,11 @@ then
 import numpy as np
 from bot import Bot
 from environment_$n import Environment
-from programmatoid_challenge import evaluate
-from $f import init_state, update_state
+from programmatoid_challenge import sigmoid, step, State, NetworkState, evaluate
+from $f import MyState
 
 if __name__ == "__main__":
-	evaluate(Bot, Environment, challenge  = $n, runs = 10, debug = True)
+	evaluate(Bot, Environment, MyState)
 EOF
    echo "Executing …"
    (python3 $f_test.py) | tee -a $l

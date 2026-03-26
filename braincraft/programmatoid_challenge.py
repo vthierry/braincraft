@@ -70,7 +70,7 @@ class NetworkState(State):
         data["O"] = np.dot(W_out, X)
         data["X"] = X
 
-def evaluate(Bot, Environment, State, challenge, timeout = 1000, runs = 1, debug = False):
+def evaluate(Bot, Environment, State):
     """Evaluates a programatoid
 
     Parameters
@@ -86,20 +86,27 @@ def evaluate(Bot, Environment, State, challenge, timeout = 1000, runs = 1, debug
         - It calls state.init() which initializes the state parameters and variables, at the beggining of each run.
         - It calls state.update()  which computes the next `O` value from the input `I` or preprocessed input, at each step.
          - It uses the dict state.data for input and ouput values.
-
-    challenge : int
-    - Challenge number 1, 2, or 3
-
-    timeout : int
-    - Maximum number of iterations
-
-    runs : int
-    - Number of runs.
-
-    debug : boolean
-    - Whether to display animation or not.
+   - The system state contains the following parameters for evaluation
+      - state.data["challenge"] : Challenge number 1, 2, or 3
+      - state.data["timeout"] :  Maximum number of iterations (default is 100).
+     - state.data["runs"] :  Number of runs (default is 1).
+     - state.data["display"] : Whether to display animation or not (default is True).
      """
-
+    state = State()
+ 
+    debug = False if "display" in state.data.keys() and state.data["display"] == false else True
+    if debug:
+        print ("OK debug")
+    else:
+        print ("Ko debug")
+    runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 1
+    timeout = int(state.data["timeout"]) if "timeout" in state.data.keys() else 100
+    if "challenge" in state.data.keys():
+        challenge = int(state.data["challenge"])
+    else:
+        print(f"  no execution of the evaluation, state.data[\"challenge\"] is not specified")
+        return
+    
     if debug:
         start_time = time.time()
         
@@ -150,7 +157,6 @@ def evaluate(Bot, Environment, State, challenge, timeout = 1000, runs = 1, debug
         
         p = bot.camera.resolution
 
-        state = State()
         state.init()
         
         distance = 0

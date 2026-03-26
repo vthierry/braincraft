@@ -7,6 +7,9 @@ from programmatoid_challenge import sigmoid, step, State, NetworkState, evaluate
 from environment_1 import Environment
 
 class ProgrammaticState(State):
+        def __init__(self):
+                self.data["challenge"] = 1
+                
         def update(self):
                 """ Here the bot simply moves forward and turn left when possible
                 """
@@ -15,4 +18,4 @@ class ProgrammaticState(State):
 
 ## Runs and evaluate the bot behavior for the given task
 if __name__ == "__main__":
-	evaluate(Bot, Environment, ProgrammaticState, challenge = 1, runs = 10, debug = True)
+	evaluate(Bot, Environment, ProgrammaticState)

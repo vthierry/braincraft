@@ -813,7 +813,12 @@ In fact this compilation option is simply used to verify numerically that such a
 {\tt python}                & Boolean    &  true    & \parbox{6cm}{If defined, generates a Python piece of code of name {\tt update\_state} with the flattened code.} \\ &&&\\
 {\tt inputs}                 & list(name)          &  \parbox{3cm}{r.h.s. variables \\ not in l.h.s.} & \parbox{6cm}{Input variables, user defined or deduced.} \\ &&&\\
 {\tt outputs}               & list(name)          &  \parbox{3cm}{l.h.s. variables \\ not in r.h.s.} & \parbox{6cm}{Input variables, user defined or deduced.} \\ &&&\\
- &&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\
+&&&\\ \multicolumn{4}{|l|}{{\bf Evaluation parameters.}} \\
+{\tt challenge}            & int & & \parbox{6cm}{Challenge number 1, 2, or 3; mandatory} \\ &&&\\
+{\tt timeout}              & int & 100 & \parbox{6cm}{Maximum number of iterations.} \\ &&&\\
+{\tt runs}                   & int & 1 & \parbox{6cm}{Number of runs, for the evaluation.} \\ &&&\\
+{\tt display}               & Boolean & true & \parbox{6cm}{Whether to display animation or not.} \\ &&&\\
+&&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\
 {\tt error}                      & string                     & … or not :) & \parbox{6cm}{The error message, if any} \\&&&\\
 {\tt source}                     & string                     & & \parbox{6cm}{The parsed input source, without the user options.} \\&&&\\
 {\tt expanded}             & string                     & & \parbox{6cm}{The parsed source, with known functions expanded.} \\&&&\\

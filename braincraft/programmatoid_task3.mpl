@@ -10,7 +10,7 @@ subs(
   s = 1/100,              	###  Speed: location increment at each steps.
   b = 3/2 	      	 	###  Distance bound between the starting point and the putative energy sources.
 ,[
-  prgm_options = { all_neuronoid = false },
+  prgm_options = { all_neuronoid = false, challenge = 3 },
  ## Direction choice
  b_di = And(g_e > g_e1,  g_e1 < g_e2), ### Increase starts, after a decrease.
  b_ii = And(g_e > g_e1,  g_e1 > g_e2),  ### Increase continues.

@@ -7,7 +7,10 @@ prgm_default_options := table([
     mollification = false,
     networking = false,
     python = true,
-    licence = "CeCILL-C"
+    licence = "CeCILL-C",
+    timeout = 100,
+    runs = 1,
+    debug = true
 ]):
 
 ## Defines expandable functions
@@ -311,7 +314,7 @@ end:
 
 ## Saves the package
 
-save prgm_default_options,  prgm_functions, prgm_compile, "../../braincraft/programmatoid.mw":
+save prgm_default_options,  prgm_functions, prgm_compile, "./programmatoid.mw":
 
 ## Functional tests 
 
