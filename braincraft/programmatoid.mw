@@ -1,6 +1,6 @@
-prgm_default_options := table([(licence)="CeCILL-C",(python)=true,(runs)=1,(
-timeout)=100,(networking)=false,(debug)=true,(mollification)=false,(omega)=1000
-]);
+prgm_default_options := table([(runs)=1,(timeout)=0,(licence)="CeCILL-C",(
+python)=true,(omega)=1000,(networking)=false,(display)=true,(mollification)=
+false]);
 prgm_functions := {And = (() -> H(sum(H_(_passed[k]),k = 1 .. _npassed)-
 _npassed+.5)), Delay = proc (o, i, T) local v, g; v := new_symbol("v"); g := if
 0 < T then 1-2^(-1/T) else 1 end if; v = (1-g)*v+g*i, o = If_b(.5 < v,1,0) end
@@ -13,41 +13,42 @@ H_ = (v -> if type(v,{`<`, `<=`, `<>`, `=`}) then H(v) else v end if), Id = (v
 -> if mollification then h(omega*h(v/omega)) else Id(v) end if), If_b = ((c, b1
 , b0) -> if _npassed = 3 then H(H_(b0)-H_(c)-.5)+H(H_(b1)+H_(c)-1.5) else If_b(
 c,b1,If_b(_passed[3 .. _npassed])) end if), If_v = ((c, v1, v0) -> if _npassed
-= 3 then Bprod(H_(c),v1,1-H_(c),v0) else If_v(c,v1,If_v(_passed[3 .. _npassed])
-) end if), Latch_b = ((o, b_1, b_c) -> o = If_b(H_(b_c) = 1,o,b_1)), Latch_v =
+= 3 then Prod_b(H_(c),v1,1-H_(c),v0) else If_v(c,v1,If_v(_passed[3 .. _npassed]
+)) end if), Latch_b = ((o, b_1, b_c) -> o = If_b(H_(b_c) = 1,o,b_1)), Latch_v =
 ((o, v_1, v_c) -> o = If_v(H_(b_c) = 1,o,v_1)), Log_v = (v -> -5.103555789+2.59\
 7614937*h(.5*v)+4.702926636*h(.1*v)), Not = (v -> H(1-H_(v))), Or = (() -> H(
 sum(H_(_passed[k]),k = 1 .. _npassed)+.5)), Prod_b = (() -> if type(_npassed,
-odd) then Bprod(_passed,0) else sum(omega*h(_passed[2*i]/omega+omega(H_(_passed
-[2*i])-1)),k = 1 .. 1/2*_npassed) end if), Prod_v = ((v1, v2) -> evalf(subs({b
-= 4/(exp(1)-1)^2, c = coth(.5), l = (v -> Log_v(1/2*(exp(1)-1)*v+1/2*exp(1)+1/2
-))},b*Exp_v(l(v1)+l(v2))-c*(v1+v2+c)))), Softmax = proc () local k, g, b; g :=
-_passed[_npassed]; b := proc (k, a) local l; H(add(H(a[l] < a[k]),l = 1 .. k-1)
-+add(H(a[l] <= a[k]),l = k+1 .. nops(a))-nops(a)+1.5) end proc; add((g/_npassed
-+(1-g)*b(k,[_passed[1 .. _npassed-1]]))*_passed[k],k = 1 .. _npassed-1) end 
-proc, Spikeup = proc (o, i) local r; r := new_symbol("r"); r = If_b(o = 1,1,i =
-0,0,r), o = If_b(And(r = 0,i = 1),1,0) end proc, h = (v -> if type(v,constant)
-then evalf(1.0/(1.0+exp(-4.0*x))) else h(v) end if), Bistable = proc (o, i) if
-_npassed = 3 then o = If_b(And(o = 0,_passed[2] = 1),1,And(o = 1,_passed[3] = 0
-),0,o) else proc (o, i) local i0, i1; i0 := new_symbol("i0"); i1 := new_symbol(
-"i1"); i1 = If_b(And(i1 = 0,i = 1),1,o = 0,0,i1), i0 = If_b(And(i0 = 0,i = 0),1
-,o = 1,0,i0), o = If_b(And(o = 0,i1 = 1),1,And(o = 1,i0 = 0),0,0) end proc(o,i)
-end if end proc, Oscillator = proc (o, c, T) local v, gamma; v := new_symbol(
-"v"); gamma := if 0 < T then 2-2^(1-1/T) else 2 end if; v = (1-g)*v+g*(1-o)*c,
-o = If_b(v < 1/3,0,0,2/3 < v,1,o) end proc};
+odd) then Prod_b(_passed,0) else sum(omega*h(_passed[2*k]/omega+omega*(H_(
+_passed[2*k-1])-1)),k = 1 .. 1/2*_npassed) end if), Prod_v = ((v1, v2) -> evalf
+(subs({b = 4/(exp(1)-1)^2, c = coth(.5), l = (v -> Log_v(1/2*(exp(1)-1)*v+1/2*
+exp(1)+1/2))},b*Exp_v(l(v1)+l(v2))-c*(v1+v2+c)))), Softmax = proc () local k, g
+, b; g := _passed[_npassed]; b := proc (k, a) local l; H(add(H(a[l] < a[k]),l =
+1 .. k-1)+add(H(a[l] <= a[k]),l = k+1 .. nops(a))-nops(a)+1.5) end proc; add((g
+/_npassed+(1-g)*b(k,[_passed[1 .. _npassed-1]]))*_passed[k],k = 1 .. _npassed-1
+) end proc, Spikeup = proc (o, i) local r; r := new_symbol("r"); r = If_b(o = 1
+,1,i = 0,0,r), o = If_b(And(r = 0,i = 1),1,0) end proc, h = (v -> if type(v,
+constant) then evalf(1.0/(1.0+exp(-4.0*x))) else h(v) end if), Bistable = proc
+(o, i) if _npassed = 3 then o = If_b(And(o = 0,_passed[2] = 1),1,And(o = 1,
+_passed[3] = 0),0,o) else proc (o, i) local i0, i1; i0 := new_symbol("i0"); i1
+:= new_symbol("i1"); i1 = If_b(And(i1 = 0,i = 1),1,o = 0,0,i1), i0 = If_b(And(
+i0 = 0,i = 0),1,o = 1,0,i0), o = If_b(And(o = 0,i1 = 1),1,And(o = 1,i0 = 0),0,0
+) end proc(o,i) end if end proc, Oscillator = proc (o, c, T) local v, gamma; v
+:= new_symbol("v"); gamma := if 0 < T then 2-2^(1-1/T) else 2 end if; v = (1-g)
+*v+g*(1-o)*c, o = If_b(v < 1/3,0,0,2/3 < v,1,o) end proc};
 prgm_compile := proc (prgm_file::string) local prgm, next_symbol, 
 next_symbol_count; next_symbol_count := 0; try prgm := proc () global 
 prgm_default_options; op(prgm_default_options) end proc(); prgm[file] := 
-prgm_file; prgm[name] := FileTools[Basename](prgm_file); prgm[version] := 
+StringTools[RegSubs](".mpl$" = "",prgm_file); try mkdir(prgm[file]) catch: NULL
+end try; prgm[name] := FileTools[Basename](prgm_file); prgm[version] := 
 StringTools[RegSubs]("T" = "_",StringTools[RegSubs](" .*" = "",convert(Date(),
-string))); if not FileTools[Exists](prgm[file]) then error cat(
+string))); if not FileTools[Exists](cat(prgm[file],".mpl")) then error cat(
 "Syntax error: The file '",prgm[file],"' does not exist, it must.") end if; 
-prgm[text] := FileTools[Text][ReadFile](prgm[file]); prgm[source] := parse(
-StringTools[RegSubs]("#[^\n]*\n" = "",prgm[text])); if type(prgm[source],list)
-and 0 < nops(prgm[source]) then if type(op(1,prgm[source]),`=`) and op(1,op(1,
-prgm[source])) = prgm_options then if type(op(2,op(1,prgm[source])),{list, set}
-) then map(o -> if type(o,`=`) then prgm[op(1,o)] := op(2,o) else prgm[o] := 
-true end if,op(2,op(1,prgm[source]))) else error 
+prgm[text] := FileTools[Text][ReadFile](cat(prgm[file],".mpl")); prgm[source] 
+:= eval(parse(StringTools[RegSubs]("#[^\n]*\n" = "",prgm[text]))); if type(prgm
+[source],list) and 0 < nops(prgm[source]) then if type(op(1,prgm[source]),`=`)
+and op(1,op(1,prgm[source])) = prgm_options then if type(op(2,op(1,prgm[source]
+)),{list, set}) then map(o -> if type(o,`=`) then prgm[op(1,o)] := op(2,o) else
+prgm[o] := true end if,op(2,op(1,prgm[source]))) else error 
 "Syntax error: The prgm_options is not a set or a list, it must." end if; prgm[
 source] := [op(2 .. nops(prgm[source]),prgm[source])] end if; map(eq -> if type
 (eq,`=`) and op(1,eq) = prgm_options then error 
@@ -58,10 +59,13 @@ if; if prgm[networking] then prgm[mollification] := true end if; proc (eqs)
 local function_names, alert; global prgm_functions; function_names := map(eq ->
 op(1,eq),prgm_functions); alert := e -> if e then error cat("Syntax error: ",op
 (map(a -> convert(a,string),[_passed[2 .. nops([_passed])]]))) end if; alert(
-not type(eqs,list),"The  input is not a list (of equations)"); map(proc (l, eqs
-) local eq; eq := eqs[l]; if type(eq,`=`) then alert(not type(op(1,eq),name),
-"The left hand side of '",eq,"', line number '",l,"' is not a name"); alert(
-type(op(2,eq),function) and not op(0,op(2,eq)) in function_names,
+not type(eqs,list),"The  input is not a list (of equations)"); proc (eqs) local
+v; v := convert(ListTools[FindRepetitions](map(eq -> if type(eq,`=`) then op(1,
+eq) end if,eqs)),set); alert(0 < nops(v),
+"The input has redundant left-hand-size variables: ",v) end proc(eqs); map(proc
+(l, eqs) local eq; eq := eqs[l]; if type(eq,`=`) then alert(not type(op(1,eq),
+name),"The left hand side of '",eq,"', line number '",l,"' is not a name"); 
+alert(type(op(2,eq),function) and not op(0,op(2,eq)) in function_names,
 "The right hand side of '",eq,"', line number '",l,"' is not a known function")
 else alert(not (type(eq,function) and op(0,eq) in function_names),"The '",eq,
 "', line number '",l,"' is not a known function") end if end proc,[$ 1 .. nops(
@@ -73,8 +77,8 @@ fixed_point; fixed_point := proc (f, v_0, context, max_iterations::posint := 10
 ,context); if v0 = v1 then return v0 end if; v1 := v0 end do; error 
 "Iteratively expanding '", v_0, ", => '", v0, "' toward a fixed point failed."
 end proc; fixed_point(proc (eqs, prgm) global prgm_function; map(proc (eq1) 
-local eq2; eq2 := evalf(eq1); if type(eq2,`=`(name,{`*`, `+`})) then op(1,eq2)
-= Id(op(2,eq2)) else eq2 end if end proc,eval(subs(prgm_functions,prgm,
+local eq2; eq2 := evalf(eq1); if type(eq2,`=`(name,{`*`, `+`, name})) then op(1
+,eq2) = Id(op(2,eq2)) else eq2 end if end proc,eval(subs(prgm_functions,prgm,
 new_symbol = next_symbol,eqs))) end proc,prgm[source],prgm) end proc(prgm); 
 prgm[flattened] := proc (eqs1) local eqs2, expand_args, expand_arg, add_eq; 
 eqs2 := []; expand_args := proc (a) if type(a,{`*`, `+`, function}) then op(0,a
@@ -124,35 +128,50 @@ network][lhs]),1,(s, r) -> subs(map(v -> v = 0,prgm[network][state]),op(1,op(2,
 prgm[flattened][s])))); prgm[network][connectivity] := convert(map(M -> 
 rtable_scanblock(M,[],'NonZeros'),[prgm[network][W_out], prgm[network][W], prgm
 [network][w], prgm[network][W_in]]),`+`); if prgm[python] then proc (prgm) 
-local c, d, wl; c := subs(map(n -> n = data[convert(n,string)],indets(prgm[
-flattened],name)),prgm[flattened]); wl := interface(warnlevel = 0); c := 
-StringTools[RegSubs]("^" = "\t",StringTools[RegSubs]("\n(.)" = "\n\t\t\\1",
-CodeGeneration[Python](c,defaulttype = float,output = string))); d := 
-StringTools[RegSubs]("cg" = "data[\"network]",StringTools[RegSubs]("[]][\t\n ]*\
-$" = "",StringTools[RegSubs]("= [[]" = "= ",CodeGeneration[Python]([prgm[
-network][W_in], prgm[network][W], prgm[network][w], prgm[network][W_out]],
-defaulttype = float,output = string)))); interface(warnlevel = wl); c := cat("#\
- This file is automatically generated by the programmatoid compiler, better not\
- edit\n",if prgm[networking] then cat("class MyState(NetworkState)\n",
-"\tdef init(self)\n","\t\t",d,"\n\t\tsuper().init(self)\n") else cat(
-"class MyState(State)\n","\tdef init(self)\n","\t\tdata.update(dict({",op(map(n
--> cat("\"",n,"\": 0, "),indets(prgm[flattened],name)))," \"init\": True}))\n\n\
-","\tdef update(self)\n",if not prgm[mollification] then cat(
-"\n\t\tdef H(x):\n\t\t\treturn 0 if x < 0 else 1 if x > 0 else 0.5\t\n",
-"\n\t\tdef Id(x):\n\t\t\treturn x\n") else "" end if,
-"\n\t\tdef h(x):\n\t\t\treturn 1 / (1 + np.exp(-4 * x))\n","\n",c) end if,"\n")
-; FileTools[Text][WriteFile](StringTools[RegSubs](".mpl$" = ".py",prgm[file]),c
-); c end proc(prgm) end if catch: prgm["error"] := lastexception end try; save
-prgm, StringTools[RegSubs](".mpl$" = ".mw",prgm[file]); StringTools[RegSubs](
-"\"(\\[[^\"\n]*\\])\"" = "\\1",StringTools[RegSubs]("\"([a-z_-]*)\"" = "\\1",
-StringTools[RegSubs]("\\\\n" = " \\\n\t\t",cat("  compilation: ",JSON[ToString]
-([op(map((n, prgm) -> if assigned(prgm[n]) then n = prgm[n] end if,[file, name,
-excerpt, homepage, version, license, author, omega, mollification, networking,
-python, inputs, outputs, count, "error"],prgm)), op(map((n, prgm) -> n = cat(
-"\n",op(map(l -> cat(convert(l,string),"\n"),prgm[n]))),[source, expanded, 
-flattened],prgm)), network = [dimension = prgm[network][dimension], 
-connectivity = prgm[network][connectivity], f = convert(prgm[network][rhs_f],
-string), op(map((n, prgm) -> n = StringTools[RegSubs](
-"cg.*= numpy.mat\\(([^)]*)\\)\n" = "\\1",CodeGeneration[Python](prgm[network][n
-],defaulttype = float,output = string)),[W_in, W, w, W_out],prgm))]],style = 
-block))))) end proc;
+local c, wl; wl := interface(warnlevel = 0); c := cat("# This file is automatic\
+ally generated by the programmatoid compiler, better not edit\n",
+"import numpy as np\n",if prgm[networking] then "from programmatoid_challenge i\
+mport NetworkState\n\nclass MyState(NetworkState):\n", "\tdef init(self):\n", 
+"\t\tself.data.update(dict({", op(map((n, prgm) -> cat("\"",n,"\": ",subs({
+false = False, true = True},prgm[n]),", "),[challenge, timeout, runs, display],
+prgm)), " \"init\": True}))\n", "\t\t", StringTools[RegSubs]("cg" = 
+"self.data[\"network]",StringTools[RegSubs]("[]][\t\n ]*$" = "",StringTools[
+RegSubs]("= [[]" = "= ",CodeGeneration[Python]([prgm[network][W_in], prgm[
+network][W], prgm[network][w], prgm[network][W_out]],defaulttype = float,output
+= string)))), "\n", "\t\tsuper().init(self)\n" else 
+"from programmatoid_challenge import State\n\nclass MyState(State):\n", 
+"\tdef init(self):\n", "\t\tself.data.update(dict({", op(map((n, prgm) -> cat(
+"\"",n,"\": ",subs({false = False, true = True},prgm[n]),", "),[challenge, 
+timeout, runs, display],prgm)), " \"init\": True}))\n", 
+"\t\tself.data.update(dict({", op(map(n -> cat("\"",n,"\": 0, "),indets(prgm[
+flattened],name))), " \"init\": True}))\n", "\n", "\tdef update(self):\n", if 
+not prgm[mollification] then 
+"\n\t\tdef H(x):\n\t\t\treturn 0 if x < 0 else 1 if x > 0 else 0.5\t\n", 
+"\n\t\tdef Id(x):\n\t\t\treturn x\n" else "" end if, 
+"\n\t\tdef h(x):\n\t\t\treturn 1 / (1 + np.exp(-4 * x))\n", "\n", StringTools[
+RegSubs]("self_data" = "self.data",StringTools[RegSubs]("^" = "\t\t",
+StringTools[RegSubs]("\n(.)" = "\n\t\t\\1",CodeGeneration[Python](subs(map(n ->
+n = self_data[convert(n,string)],indets(prgm[flattened],name)),prgm[flattened])
+,defaulttype = float,output = string)))) end if); interface(warnlevel = wl); 
+FileTools[Text][WriteFile](cat(prgm[file],"/prgm.py"),c) end proc(prgm) end if
+catch: print(cat("\tcompilation-error: \"",lastexception,"\"")); prgm["error"]
+:= lastexception; `quit`(1) end try; save prgm, cat(prgm[file],"/prgm.mw"); 
+proc (prgm) local mpl2json; mpl2json := proc (v) if type(v,{list, record, 
+rtable, table, set(equation)}) then map(procname,v) elif type(v,`=`) then 
+convert(op(1,v),string) = procname(op(2,v)) elif not type(v,{boolean, numeric,
+string}) then convert(v,string) else v end if end proc; StringTools[RegSubs](
+"\\@" = "\n\t\t\t",StringTools[RegSubs]("\n  " = "\n\t\t",StringTools[RegSubs](
+"\n    " = "\n\t\t   ",StringTools[RegSubs]("\"([A-Za-z_-]*)\"" = "\\1",
+StringTools[RegSubs]("\"(\\[[^\"\n]*\\])\"" = "\\1",cat("\tcompilation: ",JSON[
+ToString](mpl2json([op(map((n, prgm) -> if assigned(prgm[n]) then n = prgm[n] 
+end if,[file, name, excerpt, homepage, version, license, author, omega, 
+mollification, networking, python, inputs, outputs, challenge, timeout, runs, 
+display, "error"],prgm)), op(map((n, prgm) -> if assigned(prgm[n]) then n = 
+StringTools[RegSubs]("\n" = "\n\t\t",cat("@",op(map(l -> cat(convert(l,string),
+"@"),prgm[n])))) end if,[source, expanded, flattened],prgm)), if assigned(prgm[
+network]) then network = [dimension = prgm[network][dimension], connectivity =
+prgm[network][connectivity], f = convert(prgm[network][rhs_f],string), op(map((
+n, prgm) -> n = StringTools[RegSubs]("cg.*= numpy.mat\\(([^)]*)\\)\n" = "\\1",
+CodeGeneration[Python](prgm[network][n],defaulttype = float,output = string)),[
+W_in, W, w, W_out],prgm))] else network = false end if]),style = block))))))) 
+end proc(prgm) end proc;

@@ -10,13 +10,13 @@ subs(
   s = 1/100,              	###  Speed: location increment at each steps.
   b = 3/2 	      	 	###  Distance bound between the starting point and the putative energy sources.
 ,[
-  prgm_options = { all_neuronoid = false, challenge = 1 },
+  prgm_options = { challenge = 1 },
  ## Direction choice
   q_p = If_b(Or(q_p = 1, eta > g_e), 1, 0),
   ## Navigation equations
   t_l = If_b(And(q_p = 1, beta > p_l), 1, 0),
   t_r = If_b(And(q_p = 0, beta > p_r), 1, 0),
-  d_l = gamma * p_r + alpha t_l,
-  d_r = gamma * p_l + alpha t_r
+  d_l = gamma * p_r + alpha * t_l,
+  d_r = gamma * p_l + alpha * t_r
  ]):
 

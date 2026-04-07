@@ -23,7 +23,7 @@ Let us consider this example:
    age: 107
    address: "314 Pi road, Quadrature city"
    friends: [ him, her, "somebody else" ]
-   imaginative // (which a boolean attribute, equal to true)
+   imaginative // (which is a boolean attribute, equal to true)
    presentation: "
     Under the moonlight
     Write a word in white
@@ -32,7 +32,7 @@ Let us consider this example:
  }
 ```
 This structured data is a kind of business card type, with field names (ex: `last-name` or` age`), 
-textual or numeric values, a list of values, and a textual value on several lines.
+textual or numeric values, a list of values, with and a textual value on several lines.
 
 We read that a guy called `Pierrejean, Jean-Pierre` who is very old and provides his address,
 has a list of three friends, and is a (very poor) writer, while he is imaginative.

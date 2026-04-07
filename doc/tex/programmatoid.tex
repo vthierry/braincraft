@@ -44,7 +44,7 @@ With respect to the original braincraft challenge:
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
 \item[Implementation] A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
-  \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in } p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
+  \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in K_\dagger} p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
   where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
 We also can use a softmax mechanism as derived in the sequel, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
 \end{description}
@@ -56,7 +56,7 @@ We also can use a softmax mechanism as derived in the sequel, enjoying a neurono
  where $K_\dagger$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
 \end{description}
 
-\subsubsection{Output normalization}\begin{description}
+\subsubsection{Output unsigned normalization}\begin{description}
   \item[Motivation] As far as biologically plausible signals related to neuronal firing rate is concerned, we better consider only positive value, normalized by the maximal firing rate.
   \item[Implementation] This can be considered as a minimal output linear unit: \eqline{O \leftarrow 5 \, (d_l - d_r)}
 \end{description}
@@ -727,16 +727,19 @@ while using a virtual environment, is advised, but not mandatory.
 
 \subsection{Running at the programmatic level}
 
-The bot behavior is defined by:
-\\- A state which is a very standard {\tt name $\rightarrow$ value} map, i.e., a dictionary in the {\tt Python} language. It stores all state input, output, and internal state variables, and some parameters.
-\\- Two procedures:
-\\\tab- {\tt init\_state(state)} called once at the beginning of each run, and
-\\\tab-{\tt update\_state(state)} called at each run step.
+At the programmatic level, the bot behavior is directly programmed implementing a {\tt State} in the target programming language: \begin{verbatim}
+# Implements a programmatoid state.
+class State:
+  # The state data: dictionary.
+  #  Stores all input, output, and internal variables, including parameters.
+  data = dict()
+  # Inits some data, if needed.
+  def init(self):
+  # Updates, at each step, the data from input and sets the output value.\end{verbatim}
 
-At the programmatic level, the bot behavior is directly programmed using the target programming language, following this simple example:
+In {\tt Python} one can start from the followinh example:
 \begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatic_challenge_example.py}{\tt programmatic\_challenge\_example}\end{center}
-
-The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.py}{{\tt programmatoid\_challenge.py}} source file includes all documented methods and the related API is available here:
+The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.py}{{\tt programmatoid\_challenge.py}} source file includes all documented methods and the related API documentation is available here:
 \begin{center}\href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/programmatoid_challenge.html}{\tt programmatoid challenge API}\end{center}
   
 \subsection{Running at the programmatoid level}
@@ -762,12 +765,11 @@ It is output as a piece of {\tt Python} code and then executed in the desired en
 \begin{verbatim}
 Usage ./programmatoid_challenge.sh $prgm
   - The programmatoid source is in a $prgm.mpl file.
-     - The $prgm name must have a 1, 2, or 3 digit to define the braincraft task number, thus which environment.
   - The compilation output is saved:
-    -  In a $prgm.py file for the init_state() and update_state() procedures.
+    -  In a $prgm.py file for the init() and update() procedures.
      - In a $prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated $prgm_test.py file
-  - The compilation and execution output is available in $prgm_test.out.wjson (in weak JSON syntax) and $prgm_test.out.html files.
+  - The compilation and execution output is available in $prgm_test.out.wjson (in weak JSON syntax) and $prgm_test.out.html files 
 \end{verbatim}
 
 The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document.
@@ -799,7 +801,7 @@ In fact this compilation option is simply used to verify numerically that such a
 \begin{tabular}{|l|l|l|l|} \hline
 {\bf Name}                & {\bf Format}                & {\bf Value} & \\ \hline
  &&&\\\multicolumn{4}{|l|}{{\bf Package meta-data.}} \\
-{\tt file} 		& string & {\tt path/name.mpl} & \parbox{6cm}{The package source path name.}\\
+{\tt file} 		& string & {\tt path/name} & \parbox{6cm}{The package source path name, without the '.mpl' extension.}\\
 {\tt name} 	& string & from file name& \parbox{6cm}{The package name.}\\
 {\tt excerpt} 	& string & … & \parbox{6cm}{A one or two lines description.}\\
 {\tt homepage} & URL & … & \parbox{6cm}{A link to the package, e.g., a git page.}\\
@@ -815,7 +817,7 @@ In fact this compilation option is simply used to verify numerically that such a
 {\tt outputs}               & list(name)          &  \parbox{3cm}{l.h.s. variables \\ not in r.h.s.} & \parbox{6cm}{Input variables, user defined or deduced.} \\ &&&\\
 &&&\\ \multicolumn{4}{|l|}{{\bf Evaluation parameters.}} \\
 {\tt challenge}            & int & & \parbox{6cm}{Challenge number 1, 2, or 3; mandatory} \\ &&&\\
-{\tt timeout}              & int & 100 & \parbox{6cm}{Maximum number of iterations.} \\ &&&\\
+{\tt timeout}              & int & 0 & \parbox{6cm}{Maximum number of iterations, no bound if 0.} \\ &&&\\
 {\tt runs}                   & int & 1 & \parbox{6cm}{Number of runs, for the evaluation.} \\ &&&\\
 {\tt display}               & Boolean & true & \parbox{6cm}{Whether to display animation or not.} \\ &&&\\
 &&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\

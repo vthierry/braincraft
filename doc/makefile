@@ -16,7 +16,7 @@ api/programmatoid_challenge.html: ../braincraft/programmatoid_challenge.py
 build_tex: $(patsubst %.odg,%.png,$(wildcard tex/*.odg)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl)) $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) tex/programmatoid.png
 
 tex/%.pdf: tex/%.tex $(wildcard tex/*.odg) $(wildcard tex/*.mpl) $(wildcard tex/*.bib) 
-	cd tex; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; ok=
+	cd tex; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; rm -f $*.aux $*.bbl $*.blg $*.toc ; ok=
 
 tex/%.mpl.out.txt: tex/%.mpl
 	cd tex ; maple ../$^ > ../$@

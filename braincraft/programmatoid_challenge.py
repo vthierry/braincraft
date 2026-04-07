@@ -24,6 +24,7 @@ class State:
 
     data = dict()
     """ The state data: dictionary.
+         - Stores all input, output, and internal variables, including parameters.
     """
     
     def init(self):
@@ -88,23 +89,20 @@ def evaluate(Bot, Environment, State):
          - It uses the dict state.data for input and ouput values.
    - The system state contains the following parameters for evaluation
       - state.data["challenge"] : Challenge number 1, 2, or 3
-      - state.data["timeout"] :  Maximum number of iterations (default is 100).
+      - state.data["timeout"] :  Maximum number of iterations (default is 0, i.e., no bound).
      - state.data["runs"] :  Number of runs (default is 1).
      - state.data["display"] : Whether to display animation or not (default is True).
      """
     state = State()
  
-    debug = False if "display" in state.data.keys() and state.data["display"] == false else True
-    if debug:
-        print ("OK debug")
-    else:
-        print ("Ko debug")
-    runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 1
-    timeout = int(state.data["timeout"]) if "timeout" in state.data.keys() else 100
-    if "challenge" in state.data.keys():
-        challenge = int(state.data["challenge"])
-    else:
-        print(f"  no execution of the evaluation, state.data[\"challenge\"] is not specified")
+    state.init()
+        
+    debug = False if "display" in state.data.keys() and state.data["display"] == False else True
+    runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 10
+    timeout = int(state.data["timeout"]) if "timeout" in state.data.keys() else 0
+    challenge = int(state.data["challenge"]) if "challenge" in state.data.keys() else 0
+    if not challenge in (1, 2, 3):
+        print(f"  no execution of the evaluation, state.data[\"challenge\"] = '{challenge}' is not 1,2, or 3")
         return
     
     if debug:
@@ -172,7 +170,7 @@ def evaluate(Bot, Environment, State):
                               environment.world, environment.colormap)
 
         # Run until no energy
-        while bot.energy > 0 and timeout > iteration:
+        while bot.energy > 0 and (timeout == 0 or timeout > iteration):
 
             energy = bot.energy
 
@@ -230,6 +228,6 @@ def evaluate(Bot, Environment, State):
         iterations.append(iteration)
     if debug:
         elapsed = time.time() - start_time
-        print(f"  execution: \u007b\n\t\"challenge\": \"{challenge}\", \n\t\"runs\": \"{runs}\", \n\t\"debug\": \"{debug}\",  \n\t\"evaluation-time\": \"{elapsed:.2f} sec\",  \n\t\"iterations\": \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\",  \n\t\"distances\": \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\",  \n\t\"hits\": \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\"\t\n\u007d\n")
+        print(f"\texecution: \u007b\n\t\tchallenge: {challenge}\n\t\ttimeout: {timeout}\n\t\truns: {runs}\n\t\tdisplay: {"true" if debug else "false"}\n\t\tevaluation-time: \"{elapsed:.2f} sec\" \n\t\titerations: \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\" \n\t\tdistances: \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\"\n\t\thits: \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\"\t\n \t\u007d")
 
 

@@ -179,7 +179,7 @@ var wJSON = {
    *  - If true properly format in 2D.
    *  - If "html" returns a colored HTML 2D string to vizualize the result.
    *  - If "latex" returns a latex header and a latex body to copy paste, as [shown here](./wjson_test.js_latex_stringify.pdf) [(source)](./wjson_test.js_latex_stringify.tex).
-   *  - If "minimized" returns a string with a minimal number of chars.
+   *  - If "minified" returns a string with a minimal number of chars.
    *  - If false returns a readable one-line raw format.
    * @return {string} A 2D formated string view of the value.
    */
@@ -227,16 +227,41 @@ var wJSON = {
 
         return (pretty == "html" ? css_style + "<div class='wjson'>" : pretty == "latex" ? latex_header + "\n\\begin{document}\n\n\\begin{lstlisting}[language=json]\n" : "") + this.write_value(value) + (pretty == true ? "\n" : pretty == "html" ? "</div>" : pretty == "latex" ? "\n\\end{lstlisting}\n\n\\end{document}\n" : "");
       },
+      flat_array: function(value) {
+	if (value instanceof Array) {
+          for (let label = 0; label < value.length; label++) {
+	    switch(typeof value[label]) {
+	    case "boolean":
+	    case "string":
+	    case "number":
+	    case "bigint":
+	    case "symbol":
+	      break;
+	    default:
+	      if (value[label] instanceof Array && this.flat_array(value[label]))
+		break;
+	      else
+		return false;
+	    }
+	  }
+	  return true;
+	}
+	return false;
+      },
       write_value: function(value) {
         if (!(value instanceof Object)) {
           return this.write_word(value);
         } else if (value instanceof Array) {
+	  let old_pretty = pretty;
+	  pretty = this.flat_array(value) ? false : pretty;
           this.itab++;
           let strings = [];
           for (let label = 0; label < value.length; label++) {
             strings.push(this.write_value(value[label]));
           }
-          return this.write_strings("[", "]", strings);
+          let result = this.write_strings("[", "]", strings);
+	  pretty = old_pretty;
+	  return result;
         } else {
           this.itab++;
           let strings = [];
@@ -250,6 +275,7 @@ var wJSON = {
       write_word: function(value, what = "value") {
         let string = String(value);
         let quoted = string == "" || new RegExp("[\\s,;:={}[\\]]").test(string);
+	string = string.replaceAll("\n", "<br/>\n").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
         if (quoted)
           string = string.replace(new RegExp("([\"\\\\])", "g"), "\\$1");
         return (quoted ? "\"" : "") + (pretty == "html" ? "<span class='" + what + "'>" + string + "</span>" : string) + (quoted ? "\"" : "");
