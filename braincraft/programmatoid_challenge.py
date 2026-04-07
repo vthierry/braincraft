@@ -9,7 +9,7 @@ from camera import Camera
 def sigmoid(x):
     """Defines the normalized sigmoid function.
     """
-    return 1 / (1 + np.exp(-4 * x))
+    return 1 if x > 700 else 0 if x < -700 else 1 / (1 + np.exp(-4 * x))
 
 def step(x):
     """Defines the step (or Heavyside) function.

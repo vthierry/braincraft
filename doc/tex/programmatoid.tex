@@ -763,18 +763,23 @@ This piece of {\tt Maple} code, stored in a file of the form {\tt prgm\_name.mpl
 It is output as a piece of {\tt Python} code and then executed in the desired environment using the:
 \begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.sh}{\tt programmatoid challenge script}\end{center}
 \begin{verbatim}
-Usage ./programmatoid_challenge.sh $prgm
+Usage: programmatoid_challenge.sh [-h | [-s] $prgm]
+  - The programmatic  source is in a $prgm.py  file.
+    or
   - The programmatoid source is in a $prgm.mpl file.
   - The compilation output is saved:
-    -  In a $prgm.py file for the init() and update() procedures.
-     - In a $prgm.mw file for the maple compilation output.
-  - The test is run executing an automatically generated $prgm_test.py file
-  - The compilation and execution output is available in $prgm_test.out.wjson (in weak JSON syntax) and $prgm_test.out.html files 
+    -  In a out/$prgm/prgm.py file for the init() and update() procedures.
+     - In a out/$prgm/prgm.mw file for the maple compilation output.
+  - The test is run executing an automatically generated out/$prgm/test.py file
+  - The compilation and execution output is available in out/$prgm/test.out.wjson (in weak JSON syntax) and out/$prgm/test.out.html files.
+  Options:
+  -s : shows the result in the current BROWSER if defined.
+  -h : shows this usage and exit.Usage ./programmatoid_challenge.sh $prgm
 \end{verbatim}
 
 The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document.
 
-The {\tt \$prgm\_test.out.wjson} output file format uses a dialect of the \href{https://www.json.org/json-en.html}{JSON} syntax, called {\tt wJSON}, for weak-json as \href{https://line.gitlabpages.inria.fr/aide-group/wjson/}{presented here}.
+The {\tt ./out/\$prgm/test.out.wjson} output file format uses a dialect of the \href{https://www.json.org/json-en.html}{JSON} syntax, called {\tt wJSON}, for weak-json as \href{https://line.gitlabpages.inria.fr/aide-group/wjson/}{presented here}.
 
 \subsection{Running at the artificial neural network level}
 

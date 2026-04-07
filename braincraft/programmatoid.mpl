@@ -102,7 +102,7 @@ prgm_compile := proc(prgm_file :: string)
 
     prgm := (proc() global prgm_default_options: op(prgm_default_options) end)():
     prgm[file] :=  StringTools[RegSubs](".mpl$" = "", prgm_file):
-    try  mkdir(prgm[file])  catch: end try:
+    try  mkdir(cat("out/", prgm[file]))  catch: end try:
     prgm[name] :=  FileTools[Basename](prgm_file):
     prgm[version] :=  StringTools[RegSubs]("T" = "_", StringTools[RegSubs](" .*" = "", convert(Date(), string))):
 
@@ -298,7 +298,7 @@ prgm_compile := proc(prgm_file :: string)
 	      "\n\t\tdef H(x):\n\t\t\treturn 0 if x < 0 else 1 if x > 0 else 0.5\t\n",
 	      "\n\t\tdef Id(x):\n\t\t\treturn x\n"
 	      else "" fi),
-	     "\n\t\tdef h(x):\n\t\t\treturn 1 / (1 + np.exp(-4 * x))\n",
+	     "\n\t\tdef h(x):\n\t\t\treturn 1 if x > 700 else 0 if x < -700 else 1 / (1 + np.exp(-4 * x))\n",
 	     "\n",
 	     #### Implements the update equations
 	     StringTools[RegSubs]("self_data" = "self.data",
@@ -308,7 +308,7 @@ prgm_compile := proc(prgm_file :: string)
 	  fi)):
        interface(warnlevel=wl):
        #### Saves and returns
-      FileTools[Text][WriteFile](cat(prgm[file], "/prgm.py"), c):
+      FileTools[Text][WriteFile](cat("out/", prgm[file], "/prgm.py"), c):
     end)(prgm)
   fi:
 
@@ -321,7 +321,7 @@ prgm_compile := proc(prgm_file :: string)
   end try:
 
   ## Outputs the results 
-  save prgm, cat(prgm[file], "/prgm.mw"):
+  save prgm, cat("out/", prgm[file], "/prgm.mw"):
  (proc(prgm) 
     local mpl2json := proc(v) if type(v, {list, rtable, record, set(equation), table}) then map(procname, v) elif type(v, `=`) then convert(op(1,v), string) = procname(op(2, v)) elif not type(v, {numeric, boolean, string}) then convert(v, string) else v fi end:
     StringTools[RegSubs]("\\@" = "\n\t\t\t",     ### Better indent

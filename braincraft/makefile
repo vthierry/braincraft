@@ -1,16 +1,18 @@
 export SHELL = /bin/bash
 
+once: rebuild programmatic_challenge_example/test.out.html
+
 test: \
   rebuild \
-  programmatic_challenge_example/test.out.html \
-  programmatoid_task1/test.out.html \
-  programmatoid_task2/test.out.html \
-  programmatoid_task3/test.out.html
+  programmatic_challenge_example/results/test.out.html \
+  programmatoid_task1/results/test.out.html \
+  programmatoid_task2/results/test.out.html \
+  programmatoid_task3/results/test.out.html
 
-%/test.out.html: %.py
+results/%/test.out.html: %.py
 	./programmatoid_challenge.sh $*
 
-%/test.out.html: %.mpl
+results/%/test.out.html: %.mpl
 	./programmatoid_challenge.sh $*
 
 rebuild:
