@@ -803,7 +803,7 @@ In fact this compilation option is simply used to verify numerically that such a
 
 \subsection{Package and compiler options and outputs}\label{package-options}
 
-\begin{tabular}{|l|l|l|l|} \hline
+\centerline{\small \begin{tabular}{|l|l|l|l|} \hline
 {\bf Name}                & {\bf Format}                & {\bf Value} & \\ \hline
  &&&\\\multicolumn{4}{|l|}{{\bf Package meta-data.}} \\
 {\tt file} 		& string & {\tt path/name} & \parbox{6cm}{The package source path name, without the '.mpl' extension.}\\
@@ -824,6 +824,7 @@ In fact this compilation option is simply used to verify numerically that such a
 {\tt challenge}            & int & & \parbox{6cm}{Challenge number 1, 2, or 3; mandatory} \\ &&&\\
 {\tt timeout}              & int & 0 & \parbox{6cm}{Maximum number of iterations, no bound if 0.} \\ &&&\\
 {\tt runs}                   & int & 1 & \parbox{6cm}{Number of runs, for the evaluation.} \\ &&&\\
+{\tt delay}                 & float & 0 & \parbox{6cm}{delay in second bewtween two iterations.} \\ &&&\\
 {\tt display}               & Boolean & true & \parbox{6cm}{Whether to display animation or not.} \\ &&&\\
 &&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\
 {\tt error}                      & string                     & … or not :) & \parbox{6cm}{The error message, if any} \\&&&\\
@@ -837,14 +838,14 @@ In fact this compilation option is simply used to verify numerically that such a
 {\tt network[W]}             & matrix                    & & \parbox{6cm}{The recurrent weight's matrix.}\\
 {\tt network[w]}              & matrix                    & & \parbox{6cm}{The recurrent weights offset, or bias.}\\
 {\tt network[W\_out]}     & matrix                    & & \parbox{6cm}{The output weight's matrix.}\\
-\hline \end{tabular}
+\hline \end{tabular}}
 
 {\bf Note:} All package meta-data and compiler parameters can be overwritten in the source {\tt prgm\_options} first-line.
 
-\newpage \subsection{Programmatoid functions}\label{programmatoid-functions}
+\subsection{Programmatoid functions}\label{programmatoid-functions}
 
 For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
-functions, defined previously, are implemented: \\ \centerline{\begin{tabular}{ll}&\\
+functions, defined previously, are implemented: \\ \centerline{\small \begin{tabular}{ll}&\\
   {\tt v\_o = h(v)} & The normalized sigmoid. \\
   {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{v<0}, 1/2_{v=0}, 1_{v>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
   {\tt v\_o = Id(v)} & Identity function\\& Converted to a neuronoid when the option {\tt prgm["neuronoid"] =  true}.\\

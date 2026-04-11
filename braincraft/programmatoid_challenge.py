@@ -155,6 +155,7 @@ def evaluate(Bot, Environment, State):
         
         p = bot.camera.resolution
 
+        state.data["time"] = 0
         state.init()
         
         distance = 0
@@ -171,7 +172,6 @@ def evaluate(Bot, Environment, State):
 
         # Run until no energy
         while bot.energy > 0 and (timeout == 0 or timeout > iteration):
-
             energy = bot.energy
 
             p = bot.camera.resolution
@@ -182,6 +182,8 @@ def evaluate(Bot, Environment, State):
             state.data["I"] = I
 
             ##  Input preprocessing
+            state.data["time"] = state.data["time"] + 1
+            state.data["g_e"] = bot.energy
             state.data["p_l"] = np.mean(I[0:int(p/2),0])
             state.data["p_r"] = np.mean(I[int(p/2):p,0])
             state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
@@ -221,7 +223,11 @@ def evaluate(Bot, Environment, State):
                     graphics["camera"].set_data(bot.camera.framebuffer)
                     bot.camera.render(bot.position, bot.direction,
                                       environment.world, environment.colormap)
+
                     plt.pause(1/60)
+
+                if "delay" in state.data.keys():
+                    plt.pause(state.data["delay"])
 
         distances.append(distance)
         hits.append(hit)

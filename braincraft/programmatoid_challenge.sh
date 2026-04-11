@@ -35,7 +35,7 @@ f="${1%.*}"
 l="out/$f/test.out.wjson"
 
 ## Cleans previous files and starts the log file
-rm -rf out/$f ; mkdir out/$f
+rm -rf out/$f ; mkdir -p out/$f
 echo -e "{\n\tprogrammatoid_challenge: \"$*\"\n\tdate: `date '+%Y-%m-%d_%H-%M-%S'`" | tee $l
 
 ## Runs at the programmatic level
@@ -77,7 +77,8 @@ if __name__ == "__main__":
 EOF
      echo -e "\tstart-executing: true" | tee -a $l
      cp bot.py camera.py environment_$n.py programmatoid_challenge.py out/$f
-     python3 out/$f/test.py | tee -a $l
+     python3 out/$f/test.py
+#     python3 out/$f/test.py | tee -a $l
   else
      echo -e "\tfatal-compilation-error: \"the '$f.mpl' programmatoid compilation fails, look at '$l'\"" | tee -a $l
   fi
