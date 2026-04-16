@@ -42,7 +42,7 @@ if [ -f "$f.py" ]
 then ## Runs at the programmatic level
    kill `ps -ef | ps -ef | grep 'xterm.*-geometry 71x4+100+100' | awk '{print $2}'` >/dev/null 2>&1
    (sleep 1 ; xdotool search --name "Figure 1" windowmove 100 260) &    
-    xterm -geometry 71x4+100+100 -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e "python3 $f.py | tee -a $l" 
+   xterm -geometry 71x4+100+100 -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $f.py | tee -a $l ; read -p 'Type enter to close' cont "
 
 else ##Runs at the programmatoid or neuronoid leve;l
     
@@ -79,8 +79,7 @@ if __name__ == "__main__":
 EOF
      echo -e "\tstart-executing: true" | tee -a $l
      cp bot.py camera.py environment_$n.py programmatoid_challenge.py out/$f
-     python3 out/$f/test.py
-#     python3 out/$f/test.py | tee -a $l
+     python3 out/$f/test.py | tee -a $l
   else
      echo -e "\tfatal-compilation-error: \"the '$f.mpl' programmatoid compilation fails, look at '$l'\"" | tee -a $l
   fi

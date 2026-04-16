@@ -21,7 +21,29 @@ def Id(x):
     """
     return x
 
-# Implements the network state init and update
+class TimeDelay:
+    """ Implements a time delay.
+    """
+
+    def start(self, now, delay):
+        """ Starts now a step of delay duration.
+         Parameter
+         ----------
+         now:float.
+         - The current time in second.
+         delay: float.
+          - The duration of the step in second.
+        """
+        self.stop = now + delay
+       
+    def is_on(self, now):
+        """ Returns true while on time.
+        """          
+        return now < self.stop
+
+    stop = 0
+    """ The last stop time
+    """
 
 class State:
     """ Implements a programmatoid state.
@@ -191,8 +213,8 @@ def evaluate(Bot, Environment, State):
             ##  Input preprocessing
             state.data["time"] = state.data["time"] + 1
             state.data["g_e"] = bot.energy
-            state.data["p_r"] = I[0,0] # np.mean(I[0:int(p/2),0])
-            state.data["p_l"] = I[p-1,0] # np.mean(I[int(p/2):p,0])
+            state.data["p_r"] = I[0,0]
+            state.data["p_l"] = I[p-1,0]
             state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
             state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
             state.data["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0

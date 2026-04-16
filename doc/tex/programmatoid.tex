@@ -43,13 +43,19 @@ With respect to the original braincraft challenge:
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the left-right navigation by using as a simple pair of input.
 \item[Implementation] ~
-\\- A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
+\\- We now simply considered the two lateral sensors of maximal angle.
+\\- A simple sum or average could also be used, thus using directly a linear combination of the input in afferent units. \\
   \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in K_\dagger} p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
   where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
- \\- We also can use a softmax mechanism as derived in the sequel, enjoying a neuronoid approximation,
-  and allowing to balance between averaging and computing the maximum.
-\\- We could also have considered the two lateral sensors of maximal angle, through less stable.
-\end{description}
+ \\- A softmax mechanism could also be used, as derived in the sequel, enjoying a neuronoid approximation,
+ and allowing to balance between averaging and computing the maximum.
+ \end{description}
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth,valign=c]{./starting-moves.png}
+  \caption{Typical values of the maximal angle lateral sensors values in a corridor and before a quarter turn.}
+  \label{starting-moves}
+\end{figure}
 
 \subsubsection{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
@@ -80,15 +86,9 @@ With respect to the original braincraft challenge:
     t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_l < \beta \mbox{ then } 1 \mbox{ else } 0} \\
     t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
-    w &\simeq& 1/4 & \mbox{\parbox{8cm}{Rough estimation of the path-width.}} \\
-    \gamma &=& \frac{5}{w/2} & \mbox{\parbox{8cm}{Saturates the correction at 5° if the depth difference is half of the path-width.}} \\
-    \alpha    &=& 90 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter summits the former.}}} \\
-    \beta      &=& w & \mbox{\parbox{8cm}{Triggers the quarter-turn if the depth is higher than the path-width.}} \\
-    \omega &=& 10 & \mbox{\parbox{8cm}{Constant to transform a boolean product to a step-function threshold.}} \\
-\end{array}} while: \eqline{\begin{array}{rclcl}
- t_l =1&\mbox{if and only if}& q_p = 0 &\mbox{and while}& \beta < p_l \\
- t_r =1&\mbox{if and only if}& q_p = 1 &\mbox{and while}& \beta < p_r \\
-\end{array}}  in words: we execute the quarter-turn until another wall is detected.
+    \gamma &=& 0.0 & \mbox{\parbox{8cm}{Experimentally adjusted to maximize stability without oscillation.}} \\
+    \alpha    &=& 0.0 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter summits the former.}}} \\
+\end{array}} in words: we execute the quarter-turn until another wall is detected.
 \end{description}
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
