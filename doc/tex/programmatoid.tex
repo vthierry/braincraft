@@ -1,5 +1,4 @@
-\documentclass[a4]{article}
-\usepackage[left=2cm,right=3cm,top=1cm,bottom=2cm]{geometry}
+\documentclass[a4]{article} \usepackage[left=2cm,right=3cm,top=1cm,bottom=2cm]{geometry}
 \usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
@@ -42,11 +41,14 @@ With respect to the original braincraft challenge:
 \subsection{Preprocessing}
 
 \subsubsection{Proximity sensors}\begin{description}
-\item[Motivation] Simplifies the left-right navigation by compacting the leftward and rightward sensors as a simple pair of input.
-\item[Implementation] A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
+\item[Motivation] Simplifies the left-right navigation by using as a simple pair of input.
+\item[Implementation] ~
+\\- A simple sum or average could be used, thus using directly a linear combination of the input in afferent units. \\
   \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in K_\dagger} p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
   where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
-We also can use a softmax mechanism as derived in the sequel, enjoying a neuronoid approximation, and allowing to balance between averaging and computing the maximum.
+ \\- We also can use a softmax mechanism as derived in the sequel, enjoying a neuronoid approximation,
+  and allowing to balance between averaging and computing the maximum.
+\\- We could also have considered the two lateral sensors of maximal angle, through less stable.
 \end{description}
 
 \subsubsection{Color sensors}\begin{description}
@@ -538,6 +540,25 @@ The previous developments leads to solutions for several temporal systems, as br
 
 Derivations are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/delayastable.mpl.out.txt}{{\tt Maple} code}.
 
+\begin{tabular}{cc}
+  {\bf Delay on rising front} &  {\bf Time bounded output} \\
+  \parbox{0.4\textwidth}{~
+\\  - $i_1$ starts the delay
+\\  - $i_0$ resets the state and the output
+\eqline{\begin{array}{rcl}
+             o &\leftarrow& \mbox{ if } v > 1/2 \mbox{ then } 1 \mbox{ else } 0 \\
+             v &\leftarrow& \mbox{ if } i_0 = 1 \mbox{ then } 0  \mbox{ else } (1-\gamma) \, v + \gamma \, s \\
+             s &\leftarrow& \mbox{ if } s = 0 \mbox{ and } i_1 = 1 \mbox{ then } 1 \\&& \mbox{ elif } s = 1 \mbox{ and } i_0 = 1 \mbox{ then } 0 \\&& \mbox{ else } s \\
+  \end{array}}} & \parbox{0.4\textwidth}{~
+\\  - $i_1$ starts the bounded time output
+\\  - $i_0$ resets the state and the output
+\eqline{\begin{array}{rcl}
+             o &\leftarrow& \mbox{ if } v < 1/2 \mbox{ and } s = 1 \mbox{ then } 1 \mbox{ else } 0 \\
+             v &\leftarrow& \mbox{ if } i_0 = 1 \mbox{ then } 0  \mbox{ else } (1-\gamma) \, v + \gamma \, s \\
+             s &\leftarrow& \mbox{ if } s = 0 \mbox{ and } i_1 = 1 \mbox{ then } 1 \\&& \mbox{ elif } s = 1 \mbox{ and } i_0 = 1 \mbox{ then } 0 \\&& \mbox{ else } s \\
+  \end{array}}} \\
+\end{tabular}
+
 \subsubsection{Oscillation}
 
 \begin{figure}[H]
@@ -864,7 +885,9 @@ functions, defined previously, are implemented: \\ \centerline{\small \begin{tab
   {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
   {\tt Bistable(b\_o, b\_i)} & One input bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the two-way input.\\
   {\tt Spikeup(b\_o, b\_i)} & Spike generation on input rising front. \\& {\tt b\_i} is the input, which rising front is detected.\\
-  {\tt Delay(b\_o, b\_i, T)} & Delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the delayed input.\\
+  {\tt Delay(b\_o, b\_i, T)} & Basic delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input, that must  remains to 1.\\
+  {\tt Delay\_0(b\_o, b\_1, b\_0, T)} & Delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_1} is the input, \\& {\tt b\_0} is the optional reset.\\
+  {\tt Delay\_1(b\_o, b\_1, b\_0, T)} & Time bounded output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_1} is the input, \\& {\tt b\_0} is the optional reset.\\
   {\tt Oscillator(b\_o, b\_c, T)} & Oscillatory output. \\& $\mbox{{\tt T}} > 0$ is the period, in number of global clock event. \\& {\tt b\_o} is the  output, \\& $\mbox{{\tt b\_c}} \in \{0_{stop}, 1_{run}\}$ is the control.\\
 \end{tabular}}
 

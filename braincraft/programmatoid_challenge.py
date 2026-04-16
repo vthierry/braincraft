@@ -6,15 +6,20 @@ import numpy as np
 from bot import Bot
 from camera import Camera
 
-def sigmoid(x):
+def h(x):
     """Defines the normalized sigmoid function.
     """
     return 1 if x > 700 else 0 if x < -700 else 1 / (1 + np.exp(-4 * x))
 
-def step(x):
+def H(x):
     """Defines the step (or Heavyside) function.
     """
     return 0 if x < 0 else 1 if x > 0 else 1/2
+
+def Id(x):
+    """Defines the identity function.
+    """
+    return x
 
 # Implements the network state init and update
 
@@ -145,6 +150,8 @@ def evaluate(Bot, Environment, State):
     distances = []
     hits = []
 
+    plt.pause(2)
+
     for i in range(runs):
         environment = Environment()
 
@@ -184,8 +191,8 @@ def evaluate(Bot, Environment, State):
             ##  Input preprocessing
             state.data["time"] = state.data["time"] + 1
             state.data["g_e"] = bot.energy
-            state.data["p_l"] = np.mean(I[0:int(p/2),0])
-            state.data["p_r"] = np.mean(I[int(p/2):p,0])
+            state.data["p_r"] = I[0,0] # np.mean(I[0:int(p/2),0])
+            state.data["p_l"] = I[p-1,0] # np.mean(I[int(p/2):p,0])
             state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
             state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
             state.data["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0

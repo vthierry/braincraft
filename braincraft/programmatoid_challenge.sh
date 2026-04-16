@@ -38,10 +38,12 @@ l="out/$f/test.out.wjson"
 rm -rf out/$f ; mkdir -p out/$f
 echo -e "{\n\tprogrammatoid_challenge: \"$*\"\n\tdate: `date '+%Y-%m-%d_%H-%M-%S'`" | tee $l
 
-## Runs at the programmatic level
 if [ -f "$f.py" ]
-then
-  python3 $f.py | tee -a $l
+then ## Runs at the programmatic level
+   kill `ps -ef | ps -ef | grep 'xterm.*-geometry 71x4+100+100' | awk '{print $2}'` >/dev/null 2>&1
+   (sleep 1 ; xdotool search --name "Figure 1" windowmove 100 260) &    
+    xterm -geometry 71x4+100+100 -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e "python3 $f.py | tee -a $l" 
+
 else ##Runs at the programmatoid or neuronoid leve;l
     
   ## The environment number 1, 2, or 3
@@ -69,7 +71,7 @@ EOF
 import numpy as np
 from bot import Bot
 from environment_$n import Environment
-from programmatoid_challenge import sigmoid, step, State, NetworkState, evaluate
+from programmatoid_challenge import h, H, Id, State, NetworkState, evaluate
 from prgm import MyState
 
 if __name__ == "__main__":
