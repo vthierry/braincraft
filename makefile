@@ -1,6 +1,3 @@
-
-all : wjson-install
-
 usage:
 	echo 'make (sync|git|home) # see makefile'
 

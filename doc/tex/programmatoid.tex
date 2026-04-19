@@ -21,8 +21,8 @@ Let us consider the following digital experimental setup, as described in \href{
 As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}, \href{https://github.com/rougier/braincraft}{the braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
 \eqline{\begin{array}{|ll|l|}
   \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
-  p_l \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[ && \mbox{\parbox{5cm}{~\\Leftward proximity, {\small max value of the [0, +30°] range 32 left sensors.\\}}} \\\hline 
-  p_r \in [0_{\mbox{wall-hit}}, 1_{\mbox{no-wall}}[ && \mbox{\parbox{5cm}{~\\Rightward proximity, {\small max value of the [-30°, 0] range 32 right sensors.\\}}} \\\hline 
+  p_l \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Leftward proximity, at +30° on the left.\\}} \\\hline 
+  p_r \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Rightward proximity, at -30° on the  right.\\}} \\\hline 
   c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
   c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
   g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
@@ -32,7 +32,7 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
  \end{array}}
 
 With respect to the original braincraft challenge:
-\\ \tab - we consider two leftward and rightward ``average'' sensors only,
+\\ \tab - we consider two leftward and rightward external sensors only,
 \\ \tab - color is input as binary variables, and always available,
 \\ \tab - the output stands on positive normalized signal,
 \\ \tab - the wall hit indicator is not used,
@@ -53,7 +53,7 @@ With respect to the original braincraft challenge:
 
 \begin{figure}[H]
   \includegraphics[width=0.9\textwidth,valign=c]{./starting-moves.png}
-  \caption{Typical values of the maximal angle lateral sensors values in a corridor and before a quarter turn.}
+  \caption{Typical values of the maximal angle lateral sensors values}
   \label{starting-moves}
 \end{figure}
 
@@ -71,10 +71,28 @@ With respect to the original braincraft challenge:
 
 \subsection{A generic controller}
 
+radius (constant, 0.05)
+speed (constant, 0.01)
+camera (constant, fov = 60, resolution = 64)
+camera.depths (wall distances, n=resolution=64)
+camera.values (walls color, n=resolution=64)
+position (initially 0.5, 0.5, task dependent)
+direction (inititally 90° ± 5°, task dependent)
+energy (initially 1)
+move_penalty (constant, 1/1000)
+hit_penalty (constant, 5/1000)
+as well as the Environment (task dependent) class that also gives access to energy sources:
+
+energy (initially 2)
+probability (constant, 1.0, task & source dependent)
+quality (constant, 1.0, task & source dependent)
+leak (constant, 2/1000)
+refill (constant, 5/1000)
+
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
-\\\tab (ii) attempts to perform a quarter-turn in the preferred orientation as soon as passing is detected.
+\\\tab (ii) perform a quarter-turn in the preferred orientation as soon as passing is aivalble.
 \\With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
 \item[Internal variable] \eqline{\begin{array}{lll}
   q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
@@ -87,7 +105,7 @@ With respect to the original braincraft challenge:
     t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
     \gamma &=& 0.0 & \mbox{\parbox{8cm}{Experimentally adjusted to maximize stability without oscillation.}} \\
-    \alpha    &=& 0.0 & \mbox{\parbox{8cm}{Saturates the correction at $\pm$ 90° to make the quarter-turn, {\small since the linear $|\gamma \, (p_l - p_r)| < 40°$ is lower than the quarter-turn term, the latter summits the former.}}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal tunr angle, allowing to perform a quatuer turn in $18$ time steps.}}} \\
 \end{array}} in words: we execute the quarter-turn until another wall is detected.
 \end{description}
 
@@ -95,6 +113,8 @@ We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r
 
 Given this controller the design reduces to navigation direction choice, i.e.,
 control the $q_p$ variable.
+
+
 
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.

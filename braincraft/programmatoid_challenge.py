@@ -22,7 +22,7 @@ def Id(x):
     return x
 
 class TimeDelay:
-    """ Implements a time delay.
+    """ Implements a time state delay.
     """
 
     def start(self, now, delay):
