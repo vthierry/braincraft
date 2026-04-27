@@ -29,7 +29,7 @@ class TimeDelay:
         """ Starts now a step of delay duration.
          Parameter
          ----------
-         now:float.
+         now: float.
          - The current time in second.
          delay: float.
           - The duration of the step in second.

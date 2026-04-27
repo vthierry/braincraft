@@ -19,7 +19,8 @@ home:
 # These are only to be used by vthierry
 
 vthierry-install:
-#	sudo apt install python3-tqdm
+#	sudo apt install python3-tqdm 
+#	sudo apt install simplescreenrecorder
 #	git remote add master git@github.com:rougier/braincraft.git
 	git fetch master
 	git commit -a -m 'sync from makefile to fetch'
@@ -32,8 +33,3 @@ wjson-install:
 	cd etc ; wget -q https://gitlab.inria.fr/line/aide-group/wjson/-/archive/master/wjson-master.zip ; unzip -q wjson-master.zip
 	/bin/bash -c '/bin/rm -rf etc/{*.zip,wjson-master/{.git*,public,src/{makefile,.make*,*.md,*.*pp,*.C,*.tex,*.odg,*.bib,run_protege*,test.*,ttl2n3.js}}}'
 	git add etc/wjson-master
-
-
-
-
-

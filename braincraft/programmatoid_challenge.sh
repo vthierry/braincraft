@@ -40,11 +40,22 @@ echo -e "{\n\tprogrammatoid_challenge: \"$*\"\n\tdate: `date '+%Y-%m-%d_%H-%M-%S
 
 if [ -f "$f.py" ]
 then ## Runs at the programmatic level
-   kill `ps -ef | ps -ef | grep 'xterm.*-geometry 71x4+100+100' | awk '{print $2}'` >/dev/null 2>&1
-   (sleep 1 ; xdotool search --name "Figure 1" windowmove 100 260) &    
-   xterm -geometry 71x4+100+100 -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $f.py | tee -a $l ; read -p 'Type enter to close' cont "
-
-else ##Runs at the programmatoid or neuronoid leve;l
+    ### Kills any previous running xterm console with the same geometry
+    kill `ps -ef | ps -ef | grep 'xterm.*-geometry 70x11+50+50' | awk '{print $2}'` >/dev/null 2>&1
+    ### Starts a pipe for the simplescreenrecorder stdin
+    /bin/rm -f  /tmp/ssr-input ; mkfifo /tmp/ssr-input
+    ### Copies the simplescreenrecorder in /tmp to avoid any change
+    cp ssr-settings.conf /tmp
+    ### Starts a delayed move of the graphic window
+    (sleep 1 ; xdotool search --name "Figure 1" windowmove 50 415) &
+    ### Starts the simplescreenrecorder using predefined settings in background and piped input
+    (sleep 1 ; tail -f /tmp/ssr-input | simplescreenrecorder --settingsfile=/tmp/ssr-settings.conf --start-recording --start-hidden >/dev/null 2>&1) &
+    ### Starts the program in an xterm console
+    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $f.py | tee -a $l ; read -p 'Type enter to close' cont "
+    ### When done, stops and saves the screen recording and dumps the log file
+    (echo  record-pause    ; echo  record-save ) >  /tmp/ssr-input ; cat $l | tail -n 3
+   
+else ## Runs at the programmatoid or neuronoid leve;l
     
   ## The environment number 1, 2, or 3
   n="`grep 'challenge *= *[123]' < $f.mpl | sed 's/.*challenge *= *\([123]\).*/\\1/'`"

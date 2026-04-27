@@ -126,7 +126,7 @@ prgm_compile := proc(prgm_file :: string)
     prgm[text] := FileTools[Text][ReadFile](cat(prgm[file], ".mpl")):
     prgm[source] := eval(parse(StringTools[RegSubs]("#[^\n]*\n" = "", prgm[text]))):
 
-    ### Extracts options from the first  input line
+    ### Extracts options from the first  input line, if any
 
     if type(prgm[source], list) and nops(prgm[source]) > 0 then
       if type(op(1, prgm[source]), `=`) and op(1, op(1, prgm[source])) = prgm_options then
@@ -189,8 +189,16 @@ prgm_compile := proc(prgm_file :: string)
    end:
    fixed_point(proc(eqs, prgm)
      global prgm_function:
+    #### Manages the `*`(constant, function) terms by change of variable
+    map(proc(eq1)
+      local eq2 := evalf(eq1):
+      if eq2ype(eq2, `*`) and nops(eq2) = 2 and type(op(1, eq2), constant) and type(op(2, eq2), function) then
+      else
+        eq2
+     fi
+    end:
     #### Manages the Id function on linear combination
-   map(proc(eq1)
+    map(proc(eq1)
       local eq2 := evalf(eq1):
       if type(eq2, `=`(name, {name,`*`, `+`})) then
          op(1, eq2) = Id(op(2, eq2))
