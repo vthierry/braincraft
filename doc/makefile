@@ -7,7 +7,7 @@ build : build_tex build_api
 build_api: api/programmatoid_challenge.html
 
 api/programmatoid_challenge.html: ../braincraft/programmatoid_challenge.py
-	rm -rf api/* ; ~/.local/bin/pdoc --logo ../../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../../data/braincraft-favicon.png   --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o api
+	rm -rf api/* ; pdoc --logo ../../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../../data/braincraft-favicon.png   --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o api
 	rm -f api/index.html
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 
