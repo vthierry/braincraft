@@ -1,3 +1,12 @@
+
+define TODO
+
+Voir comment naviguer proprement !
+
+Changer de variable pour les omega * f(…)
+
+endef
+
 export SHELL = /bin/bash
 
 once: rebuild out/programmatic_navigation/test.out.html

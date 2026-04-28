@@ -122,6 +122,7 @@ def evaluate(Bot, Environment, State):
      """
     state = State()
  
+    state.data["time"] = 0
     state.init()
         
     debug = False if "display" in state.data.keys() and state.data["display"] == False else True
@@ -131,6 +132,8 @@ def evaluate(Bot, Environment, State):
     if not challenge in (1, 2, 3):
         print(f"  no execution of the evaluation, state.data[\"challenge\"] = '{challenge}' is not 1,2, or 3")
         return
+
+    print(f" execution: \u007b\n  challenge: {challenge}\n  timeout: {timeout}\n  runs: {runs}\n  display: {"true" if debug else "false"}\n  trace: [", flush=True)
     
     if debug:
         start_time = time.time()
@@ -184,9 +187,6 @@ def evaluate(Bot, Environment, State):
         
         p = bot.camera.resolution
 
-        state.data["time"] = 0
-        state.init()
-        
         distance = 0
         hit = 0
         iteration = 0
@@ -263,6 +263,7 @@ def evaluate(Bot, Environment, State):
         iterations.append(iteration)
     if debug:
         elapsed = time.time() - start_time
-        print(f"\texecution: \u007b\n\t\tchallenge: {challenge}\n\t\ttimeout: {timeout}\n\t\truns: {runs}\n\t\tdisplay: {"true" if debug else "false"}\n\t\tevaluation-time: \"{elapsed:.2f} sec\" \n\t\titerations: \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\" \n\t\tdistances: \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\"\n\t\thits: \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\"\t\n \t\u007d")
+
+    print(f"  ]\n  evaluation-time: \"{elapsed:.2f} sec\" \n  iterations: \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\" \n  distances: \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\"\n  hits: \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\" \n  \u007d", flush=True)
 
 

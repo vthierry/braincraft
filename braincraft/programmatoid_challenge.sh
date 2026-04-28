@@ -14,14 +14,17 @@ esac ; done
 ## Usage of the script
 if [ -z "$1" ] ; then cat <<EOF 
 Usage: $0 [-h | [-s] \$prgm]
-  - The programmatic  source is in a \$prgm.py  file.
-    or
-  - The programmatoid source is in a \$prgm.mpl file.
+  - The input is:
+     - Either a programmatic  source in a \$prgm.py  file,
+     - Or a programmatoid source is in a \$prgm.mpl file.
   - The compilation output is saved:
     -  In a out/\$prgm/prgm.py file for the init() and update() procedures.
      - In a out/\$prgm/prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated out/\$prgm/test.py file
-  - The compilation and execution output is available in out/\$prgm/test.out.wjson (in weak JSON syntax) and out/\$prgm/test.out.html files.
+  - The compilation and execution output is available:
+     - In out/\$prgm/test.out.wjson (in weak JSON syntax) in text form.
+     - In out/\$prgm/test.out.html in HTML format.
+     - In out/\$prgm/test.mkv for the screen cast format, when in programmatic mode.
   Options:
    -s : shows the result in the current BROWSER if defined.
    -h : shows this usage and exit.
@@ -30,54 +33,57 @@ exit -1
 fi
 
 ## The input file name without extension
-f="${1%.*}"
+prgm="${1%.*}"
 ## The log file name
-l="out/$f/test.out.wjson"
+l="out/$prgm/test.out.wjson"
 
-## Cleans previous files and starts the log file
-rm -rf out/$f ; mkdir -p out/$f
-echo -e "{\n\tprogrammatoid_challenge: \"$*\"\n\tdate: `date '+%Y-%m-%d_%H-%M-%S'`" | tee $l
+## Cleans previous files
+mkdir -p out/$prgm ; rm -rf out/$prgm/*.*
 
-if [ -f "$f.py" ]
+if [ -f "$prgm.py" ]
 then ## Runs at the programmatic level
+    
+    echo -e "{\n programmatic_challenge: \"$*\"\n date: `date '+%Y-%m-%d_%H-%M-%S'`" > $l
     ### Kills any previous running xterm console with the same geometry
     kill `ps -ef | ps -ef | grep 'xterm.*-geometry 70x11+50+50' | awk '{print $2}'` >/dev/null 2>&1
     ### Starts a pipe for the simplescreenrecorder stdin
     /bin/rm -f  /tmp/ssr-input ; mkfifo /tmp/ssr-input
-    ### Copies the simplescreenrecorder in /tmp to avoid any change
-    cp ssr-settings.conf /tmp
+    ### Copies the simplescreenrecorder in /tmp to avoid any change and to set the proper output
+    sed < ssr-settings.conf > /tmp/ssr-settings.conf "s/PRGM/$prgm/"
     ### Starts a delayed move of the graphic window
     (sleep 1 ; xdotool search --name "Figure 1" windowmove 50 415) &
     ### Starts the simplescreenrecorder using predefined settings in background and piped input
     (sleep 1 ; tail -f /tmp/ssr-input | simplescreenrecorder --settingsfile=/tmp/ssr-settings.conf --start-recording --start-hidden >/dev/null 2>&1) &
     ### Starts the program in an xterm console
-    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $f.py | tee -a $l ; read -p 'Type enter to close' cont "
+    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $prgm.py | tee -a $l ; read -p 'Type enter to close' cont "
     ### When done, stops and saves the screen recording and dumps the log file
-    (echo  record-pause    ; echo  record-save ) >  /tmp/ssr-input ; cat $l | tail -n 3
+    (echo  record-pause  ; echo  record-save ) >  /tmp/ssr-input
+    cat $l
    
-else ## Runs at the programmatoid or neuronoid leve;l
+else ## Runs at the programmatoid or neuronoid level
+  echo -e "{\n programmatoid_challenge: \"$*\"\n date: `date '+%Y-%m-%d_%H-%M-%S'`" | tee $l
     
   ## The environment number 1, 2, or 3
-  n="`grep 'challenge *= *[123]' < $f.mpl | sed 's/.*challenge *= *\([123]\).*/\\1/'`"
-  if [ -z "$n" ] ; then echo -e "\tfatal-error: \"no 1, 2, or 3 challenge specify in '$f.mpl'\"." | tee -a $l ; exit -1 ; fi
+  n="`grep 'challenge *= *[123]' < $prgm.mpl | sed 's/.*challenge *= *\([123]\).*/\\1/'`"
+  if [ -z "$n" ] ; then echo -e " fatal-error: \"no 1, 2, or 3 challenge specify in '$prgm.mpl'\"." | tee -a $l ; exit -1 ; fi
 
   ## Compiles the programmatoid specifications
-  echo -e "\tstart-compiling: true" | tee -a $l 
+  echo -e " start-compiling: true" | tee -a $l 
   ### Updates the compiler if needed
   make -f - <<EOF
 programmatoid.mw: programmatoid.mpl
 	maple -q $^
 EOF
   ### Checks the file syntax
-  c="`maple -q $f.mpl`"
-  if [ \! -z "$c" ] ; then echo -e "\tfatal-syntax-error : \"`echo $c| sed 's/"//g'`\"\n" | tee -a $l ; exit -1 ; fi
+  c="`maple -q $prgm.mpl`"
+  if [ \! -z "$c" ] ; then echo -e " fatal-syntax-error : \"`echo $c| sed 's/"//g'`\"\n" | tee -a $l ; exit -1 ; fi
   ### Runs the compilation
-  (echo 'read "./programmatoid.mw": prgm_compile("'$f'");' | maple -q) | sed 's/^"//' | sed 's/  }"/\t}/' | grep -v '^$' | tee -a $l 
+  (echo 'read "./programmatoid.mw": prgm_compile("'$prgm'");' | maple -q) | sed 's/^"//' | sed 's/  }"/ }/' | grep -v '^$' | tee -a $l 
 
   ## Builds and executes the given challenge
-  if [ -f "out/$f/prgm.py" ]
+  if [ -f "out/$prgm/prgm.py" ]
   then
-     cat <<EOF  > out/$f/test.py
+     cat <<EOF  > out/$prgm/test.py
 # This file is automatically generated, better not edit them
 import numpy as np
 from bot import Bot
@@ -88,30 +94,30 @@ from prgm import MyState
 if __name__ == "__main__":
 	evaluate(Bot, Environment, MyState)
 EOF
-     echo -e "\tstart-executing: true" | tee -a $l
-     cp bot.py camera.py environment_$n.py programmatoid_challenge.py out/$f
-     python3 out/$f/test.py | tee -a $l
+     echo -e " start-executing: true" | tee -a $l
+     cp bot.py camera.py environment_$n.py programmatoid_challenge.py out/$prgm
+     python3 out/$prgm/test.py | tee -a $l
   else
-     echo -e "\tfatal-compilation-error: \"the '$f.mpl' programmatoid compilation fails, look at '$l'\"" | tee -a $l
+     echo -e " fatal-compilation-error: \"the '$prgm.mpl' programmatoid compilation fails, look at '$l'\"" | tee -a $l
   fi
 fi
 
 ## Finalizes the output file in html
 if [ -f "../etc/wjson-master/src/wjson2html.js" ]
 then
-    echo -e "\treporting-in-html: true" | tee -a $l
-    ../etc/wjson-master/src/wjson2html.js < $l > out/$f/test.out.html
+    echo -e " reporting-in-html: true" | tee -a $l
+    ../etc/wjson-master/src/wjson2html.js < $l > out/$prgm/test.out.html
     if [ \! -z "$show" ] ; then
       if [ \! -z "$BROWSER" ] ; then
- 	  echo -e "\tshowing-in-browser: true" | tee -a $l ; $BROWSER out/$f/test.out.html
+ 	  echo -e " showing-in-browser: true" | tee -a $l ; $BROWSER out/$prgm/test.out.html
       else
-	  echo -e "\tinstallation-error: \"The BROWSER environment variable must be defined to show the result\"" | tee -a $l
+	  echo -e " installation-error: \"The BROWSER environment variable must be defined to show the result\"" | tee -a $l
       fi
     else
-	echo -e "\tshowing-in-browser: false" | tee -a $l
+	echo -e " showing-in-browser: false" | tee -a $l
     fi
 else
-    echo -e "\tinstallation-error: \"The wjson2html utility is not installed, are you in the right directory of the right branch of the right project ? \"" | tee -a $l
-    (cat $l ; echo "}") > out/$f/test.out.html
+    echo -e " installation-error: \"The wjson2html utility is not installed, are you in the right directory of the right branch of the right project ? \"" | tee -a $l
+    (cat $l ; echo "}") > out/$prgm/test.out.html
 fi
 echo -e "}"  | tee -a $l 

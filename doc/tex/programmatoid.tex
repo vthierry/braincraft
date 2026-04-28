@@ -71,24 +71,6 @@ With respect to the original braincraft challenge:
 
 \subsection{A generic controller}
 
-radius (constant, 0.05)
-speed (constant, 0.01)
-camera (constant, fov = 60, resolution = 64)
-camera.depths (wall distances, n=resolution=64)
-camera.values (walls color, n=resolution=64)
-position (initially 0.5, 0.5, task dependent)
-direction (inititally 90° ± 5°, task dependent)
-energy (initially 1)
-move_penalty (constant, 1/1000)
-hit_penalty (constant, 5/1000)
-as well as the Environment (task dependent) class that also gives access to energy sources:
-
-energy (initially 2)
-probability (constant, 1.0, task & source dependent)
-quality (constant, 1.0, task & source dependent)
-leak (constant, 2/1000)
-refill (constant, 5/1000)
-
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
@@ -105,7 +87,7 @@ refill (constant, 5/1000)
     t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
     \gamma &=& 0.0 & \mbox{\parbox{8cm}{Experimentally adjusted to maximize stability without oscillation.}} \\
-    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal tunr angle, allowing to perform a quatuer turn in $18$ time steps.}}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal tunr angle, allowing to perform a quatuer turn in $18$ time steps.}} \\
 \end{array}} in words: we execute the quarter-turn until another wall is detected.
 \end{description}
 
@@ -804,18 +786,21 @@ This piece of {\tt Maple} code, stored in a file of the form {\tt prgm\_name.mpl
 It is output as a piece of {\tt Python} code and then executed in the desired environment using the:
 \begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.sh}{\tt programmatoid challenge script}\end{center}
 \begin{verbatim}
-Usage: programmatoid_challenge.sh [-h | [-s] $prgm]
-  - The programmatic  source is in a $prgm.py  file.
-    or
-  - The programmatoid source is in a $prgm.mpl file.
+Usage: $0 [-h | [-s] $prgm]
+  - The input is:
+     - Either a programmatic  source in a $prgm.py  file,
+     - Or a programmatoid source is in a $prgm.mpl file.
   - The compilation output is saved:
     -  In a out/$prgm/prgm.py file for the init() and update() procedures.
      - In a out/$prgm/prgm.mw file for the maple compilation output.
   - The test is run executing an automatically generated out/$prgm/test.py file
-  - The compilation and execution output is available in out/$prgm/test.out.wjson (in weak JSON syntax) and out/$prgm/test.out.html files.
+  - The compilation and execution output is available:
+     - In out/$prgm/test.out.wjson (in weak JSON syntax) in text form.
+     - In out/$prgm/test.out.html in HTML format.
+     - In out/$prgm/test.mkv for the screen cast format, when in programmatic mode.
   Options:
-  -s : shows the result in the current BROWSER if defined.
-  -h : shows this usage and exit.Usage ./programmatoid_challenge.sh $prgm
+   -s : shows the result in the current BROWSER if defined.
+   -h : shows this usage and exit.
 \end{verbatim}
 
 The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document.

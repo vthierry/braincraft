@@ -227,40 +227,16 @@ var wJSON = {
 
         return (pretty == "html" ? css_style + "<div class='wjson'>" : pretty == "latex" ? latex_header + "\n\\begin{document}\n\n\\begin{lstlisting}[language=json]\n" : "") + this.write_value(value) + (pretty == true ? "\n" : pretty == "html" ? "</div>" : pretty == "latex" ? "\n\\end{lstlisting}\n\n\\end{document}\n" : "");
       },
-      flat_array: function(value) {
-	if (value instanceof Array) {
-          for (let label = 0; label < value.length; label++) {
-	    switch(typeof value[label]) {
-	    case "boolean":
-	    case "string":
-	    case "number":
-	    case "bigint":
-	    case "symbol":
-	      break;
-	    default:
-	      if (value[label] instanceof Array && this.flat_array(value[label]))
-		break;
-	      else
-		return false;
-	    }
-	  }
-	  return true;
-	}
-	return false;
-      },
       write_value: function(value) {
         if (!(value instanceof Object)) {
           return this.write_word(value);
         } else if (value instanceof Array) {
-	  let old_pretty = pretty;
-	  pretty = this.flat_array(value) ? false : pretty;
           this.itab++;
           let strings = [];
-          for (let label = 0; label < value.length; label++) {
-            strings.push(this.write_value(value[label]));
+          for (let i = 0; i < value.length; i++) {
+            strings.push(this.write_value(value[i]));
           }
           let result = this.write_strings("[", "]", strings);
-	  pretty = old_pretty;
 	  return result;
         } else {
           this.itab++;
@@ -275,21 +251,30 @@ var wJSON = {
       write_word: function(value, what = "value") {
         let string = String(value);
         let quoted = string == "" || new RegExp("[\\s,;:={}[\\]]").test(string);
-	string = string.replaceAll("\n", "<br/>\n").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+	if (pretty == "html")
+	  string = string.replaceAll("\n", "<br/>\n").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
         if (quoted)
           string = string.replace(new RegExp("([\"\\\\])", "g"), "\\$1");
         return (quoted ? "\"" : "") + (pretty == "html" ? "<span class='" + what + "'>" + string + "</span>" : string) + (quoted ? "\"" : "");
       },
       write_strings: function(start, stop, strings) {
-        let string = start;
+        let string = start, length = 2, old_pretty = pretty;
+	// Computes the total lengths to sdecide if write inline
+	{
+          for (let i in strings) {
+	    let s = (pretty == "html") ? strings[i].replaceAll(new RegExp("(<[^>]*>|&[^;]*;)", "g"), "") : strings[i];
+	    length += 1 + s.length;
+	  }
+	}
+	if (pretty != "minified"  && length < 120) {
+	  pretty = false;
+	}
         for (let i in strings) {
           string += (pretty != "minified" || (0 < i && string[string.length - 1] != '}' && string[string.length - 1] != ']') ? this.write_line() : "") + strings[i];
         }
         this.itab--;
         string = string + (pretty != "minified" ? this.write_line() : "") + stop;
-        if ((pretty == true || pretty == "html" || pretty == "latex") && start == "[" && string.length < 1200 && !string.substring(1).match(new RegExp("[[{]"))) {
-          string = string.replaceAll(new RegExp(pretty == "html" ? "<br/>(&nbsp;)*" : "\\s+", "g"), " ");
-        }
+	pretty = old_pretty;
         return string;
       },
       write_line: function() {
