@@ -9,39 +9,28 @@ from environment_1 import Environment
 class ProgrammaticState(State):
 
         delay = TimeDelay()
-        b_f = 0  # Detects a future turn
-        b_w = 0 # Turn start latence
-        delay_before_turning = 17
-        b_t = 0 # Starts turning and wait until the quarter-turn is done
-        delay_during_turning = 18
+        quater_turn_step_delay = 18
+        turning = 0 
 
         def __init__(self):
                 self.data["challenge"] = 1
                 self.data["runs"] = 1
                 self.data["delay"] = 0.4
-                self.data["timeout"] = 120
+                self.data["timeout"] = 1000
 
         def update(self):
                 """ Here the bot simply moves forward and turn left when possible
                 """
-                o = self.delay.is_on(self.data["time"])
-                if self.data["p_l"] < 0.7 and self.data["p_r"] < 0.7:
-                        self.b_f = 1
-                if self.b_w == 0 and self.b_f == 1:
-                        self.b_w =1
-                        self.b_f = 0
-                        self.delay.start(self.data["time"], self.delay_before_turning)
-                elif self.b_w == 1 and self.b_t == 0 and not self.delay.is_on(self.data["time"]):
-                        self.b_t = 1
-                        self.delay.start(self.data["time"], self.delay_during_turning)
-                elif self.b_t == 1 and not self.delay.is_on(self.data["time"]):
-                       self.b_t = 0
-                       self.b_w = 0
-                if  self.b_t == 1:
+                if self.turning == 0 and self.data["p_a"] > 0.8:
+                        self.turning = 1
+                        self.delay.start(self.data["time"], self.quater_turn_step_delay)
+                elif  self.turning == 1 and not self.delay.is_on(self.data["time"]):
+                        self.turning = 0
+                if  self.turning == 1:
                         self.data["d_l"], self.data["d_r"]  = 5, 0
                 else:
                         self.data["d_l"], self.data["d_r"] = 0.02 * self.data["p_l"], 0.02 * self.data["p_r"]
-                print(f"   \u007b t:{self.data["time"]:3d} d:{self.delay.stop:3d} g_e: {self.data["g_e"]:.2f} p: [{self.data["p_l"]:.2f} {self.data["p_r"]:.2f}] b_fwto: {self.b_f:1d}{self.b_w:1d}{self.b_t:1d}{o:1d} \u007d", flush=True)
+                print(f"   \u007b t:{self.data["time"]:3d} g_e: {self.data["g_e"]:.2f} p: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] turning: {self.turning} \u007d", flush=True)
 
 ## Runs and evaluate the bot behavior for the given task
 if __name__ == "__main__":

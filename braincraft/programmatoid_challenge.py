@@ -215,6 +215,7 @@ def evaluate(Bot, Environment, State):
             state.data["g_e"] = bot.energy
             state.data["p_r"] = I[0,0]
             state.data["p_l"] = I[p-1,0]
+            state.data["p_a"] = 0.5 * (I[round(p/2),0] + I[round(p/2)-1,0]) # here p even is assumed
             state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
             state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
             state.data["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0

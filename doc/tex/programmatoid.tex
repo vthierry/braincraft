@@ -23,6 +23,7 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
   \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
   p_l \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Leftward proximity, at +30° on the left.\\}} \\\hline 
   p_r \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Rightward proximity, at -30° on the  right.\\}} \\\hline 
+  p_a \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Ahead proximity, at 0°.\\}} \\\hline 
   c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
   c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
   g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
@@ -32,7 +33,7 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
  \end{array}}
 
 With respect to the original braincraft challenge:
-\\ \tab - we consider two leftward and rightward external sensors only,
+\\ \tab - we consider three leftward, ahead, and rightward external sensors only,
 \\ \tab - color is input as binary variables, and always available,
 \\ \tab - the output stands on positive normalized signal,
 \\ \tab - the wall hit indicator is not used,
@@ -41,7 +42,7 @@ With respect to the original braincraft challenge:
 \subsection{Preprocessing}
 
 \subsubsection{Proximity sensors}\begin{description}
-\item[Motivation] Simplifies the left-right navigation by using as a simple pair of input.
+\item[Motivation] Simplifies the navigation by using a simple triplet of input.
 \item[Implementation] ~
 \\- We now simply considered the two lateral sensors of maximal angle.
 \\- A simple sum or average could also be used, thus using directly a linear combination of the input in afferent units. \\
@@ -74,7 +75,7 @@ With respect to the original braincraft challenge:
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
-\\\tab (ii) perform a quarter-turn in the preferred orientation as soon as passing is aivalble.
+\\\tab (ii) perform a quarter-turn in the preferred orientation as soon as a wall is closed ahead.
 \\With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
 \item[Internal variable] \eqline{\begin{array}{lll}
   q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
@@ -83,20 +84,18 @@ With respect to the original braincraft challenge:
     d_l &\leftarrow& \gamma \, p_r   & +&  \alpha \, t_l \\
     d_r &\leftarrow& \gamma \, p_l   & +&  \alpha \, t_r \\
            &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \\ \\
-    t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_l < \beta \mbox{ then } 1 \mbox{ else } 0} \\
-    t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_r < \beta \mbox{ then } 1 \mbox{ else } 0} \\
+    t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ else } 0} \\
+    t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ else } 0} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
     \gamma &=& 0.0 & \mbox{\parbox{8cm}{Experimentally adjusted to maximize stability without oscillation.}} \\
-    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal tunr angle, allowing to perform a quatuer turn in $18$ time steps.}} \\
-\end{array}} in words: we execute the quarter-turn until another wall is detected.
+    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal turn angle, allowing to perform a quatuer turn in $18$ time steps.}} \\
+    \beta     &=& 0.8 & \mbox{\parbox{8cm}{Proximity threshold that induces a quater turn.}} \\
+\end{array}} in words: we execute the quarter-turn when a wall is detected ahead.
 \end{description}
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
-Given this controller the design reduces to navigation direction choice, i.e.,
-control the $q_p$ variable.
-
-
+Given this controller the design reduces to navigation direction choice, i.e., control the $q_p$ variable.
 
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
