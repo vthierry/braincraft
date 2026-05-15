@@ -119,6 +119,7 @@ def evaluate(Bot, Environment, State):
       - state.data["timeout"] :  Maximum number of iterations (default is 0, i.e., no bound).
      - state.data["runs"] :  Number of runs (default is 1).
      - state.data["display"] : Whether to display animation or not (default is True).
+     - state.data["rate"] : Delay in second between two iterations (used for display).
      """
     state = State()
  
@@ -256,8 +257,8 @@ def evaluate(Bot, Environment, State):
 
                     plt.pause(1/60)
 
-                if "delay" in state.data.keys():
-                    plt.pause(state.data["delay"])
+                if "rate" in state.data.keys():
+                    plt.pause(state.data["rate"])
 
         distances.append(distance)
         hits.append(hit)

@@ -1,9 +1,7 @@
 
 define TODO
 
-Voir comment naviguer proprement
-
-Mieux nommer le paramètre delay
+Voir comment naviguer proprement: quart de tour au milieu
 
 Changer de variable pour les omega * f(…)
 

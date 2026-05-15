@@ -52,12 +52,6 @@ With respect to the original braincraft challenge:
  and allowing to balance between averaging and computing the maximum.
  \end{description}
 
-\begin{figure}[H]
-  \includegraphics[width=0.9\textwidth,valign=c]{./starting-moves.png}
-  \caption{Typical values of the maximal angle lateral sensors values}
-  \label{starting-moves}
-\end{figure}
-
 \subsubsection{Color sensors}\begin{description}
 \item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit:
@@ -81,17 +75,29 @@ With respect to the original braincraft challenge:
   q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
 \end{array}}
 \item[Programmatoid solution]:\eqline{\begin{array}{rcccc}
-    d_l &\leftarrow& \gamma \, p_r   & +&  \alpha \, t_l \\
-    d_r &\leftarrow& \gamma \, p_l   & +&  \alpha \, t_r \\
+    d_l &\leftarrow& \mbox{if } q_t = 0 \mbox{ then } \gamma \, p_r  \mbox{ else } 0 & +&  \mbox{if } q_p = 0 \mbox { and } q_t = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
+    d_r &\leftarrow& \mbox{if } q_t = 0 \mbox{ then } \gamma \, p_l   \mbox{ else } 0 & +&  \mbox{if } q_p = 1 \mbox { and } q_t = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
            &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \\ \\
-    t_l &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 0 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ else } 0} \\
-    t_r &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_p = 1 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ else } 0} \\
+    q_t &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_t = 0 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ elif } q_t = 0 \mbox { and } q_d = 0 \mbox{ then } 0 \mbox{ else } q_t} \\
+    \multicolumn{5}{l}{\mbox{Delay\_1}(q_d, q_t, \delta)} \\
 \end{array}}  where: \eqline{\begin{array}{rcll}
-    \gamma &=& 0.0 & \mbox{\parbox{8cm}{Experimentally adjusted to maximize stability without oscillation.}} \\
-    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal turn angle, allowing to perform a quatuer turn in $18$ time steps.}} \\
+    \gamma &=& 0.035 & \mbox{\parbox{8cm}{Maximize stability without oscillation.}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal turn angle, allowing to perform a quater turn in $18$ time steps.}} \\
+    \delta    &=& 18 & \mbox{\parbox{8cm}{Quarter-turn duration in number of time steps.}} \\
     \beta     &=& 0.8 & \mbox{\parbox{8cm}{Proximity threshold that induces a quater turn.}} \\
 \end{array}} in words: we execute the quarter-turn when a wall is detected ahead.
 \end{description}
+
+The $\mbox{Delay\_1}(q_d, q_t, \delta)$ constructs, precisely defined in the sequel, stands for a time bounded output:\\
+\tab \tab $q_d \leftarrow 1$ when $q_t$ raises to $1$ during $\delta$ time steps, before being reset to $q_d \leftarrow 0$.
+
+\begin{figure}[H]
+  \includegraphics[width=0.5\textwidth,valign=c]{./starting-moves.png}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Illustrates the quarter turn implementation: it starts when the ahead proximity to a wall exceeds a threshold, and has a predefined duration, using a timer.}
+        \label{starting-moves}
+    \end{minipage}
+\end{figure}
 
 We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
 
@@ -849,8 +855,8 @@ In fact this compilation option is simply used to verify numerically that such a
 {\tt challenge}            & int & & \parbox{6cm}{Challenge number 1, 2, or 3; mandatory} \\ &&&\\
 {\tt timeout}              & int & 0 & \parbox{6cm}{Maximum number of iterations, no bound if 0.} \\ &&&\\
 {\tt runs}                   & int & 1 & \parbox{6cm}{Number of runs, for the evaluation.} \\ &&&\\
-{\tt delay}                 & float & 0 & \parbox{6cm}{delay in second bewtween two iterations.} \\ &&&\\
 {\tt display}               & Boolean & true & \parbox{6cm}{Whether to display animation or not.} \\ &&&\\
+{\tt rate}                    & float & 0 & \parbox{6cm}{Delay in second between two iterations (used for display).} \\ &&&\\
 &&&\\ \multicolumn{4}{|l|}{{\bf Compiler output.}} \\
 {\tt error}                      & string                     & … or not :) & \parbox{6cm}{The error message, if any} \\&&&\\
 {\tt source}                     & string                     & & \parbox{6cm}{The parsed input source, without the user options.} \\&&&\\

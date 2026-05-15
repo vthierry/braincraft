@@ -15,8 +15,8 @@ class ProgrammaticState(State):
         def __init__(self):
                 self.data["challenge"] = 1
                 self.data["runs"] = 1
-                self.data["delay"] = 0.4
-                self.data["timeout"] = 1000
+                self.data["rate"] = 0.2
+                self.data["timeout"] = 500
 
         def update(self):
                 """ Here the bot simply moves forward and turn left when possible
@@ -29,7 +29,7 @@ class ProgrammaticState(State):
                 if  self.turning == 1:
                         self.data["d_l"], self.data["d_r"]  = 5, 0
                 else:
-                        self.data["d_l"], self.data["d_r"] = 0.02 * self.data["p_l"], 0.02 * self.data["p_r"]
+                        self.data["d_l"], self.data["d_r"] = 0.035 * self.data["p_l"], 0.035 * self.data["p_r"]
                 print(f"   \u007b t:{self.data["time"]:3d} g_e: {self.data["g_e"]:.2f} p: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] turning: {self.turning} \u007d", flush=True)
 
 ## Runs and evaluate the bot behavior for the given task
