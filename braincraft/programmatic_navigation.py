@@ -24,9 +24,12 @@ class ProgrammaticState(State):
                 if self.turning == 0 and self.data["p_a"] > 0.8:
                         self.turning = 1
                         self.delay.start(self.data["time"], self.quater_turn_step_delay)
+                elif self.turning == 0 and self.data["p_a"] < 0.5 and abs(self.data["p_l"] - self.data["p_r"]) > 0.15:
+                        self.turning = 2
+                        self.delay.start(self.data["time"], self.quater_turn_step_delay)
                 elif  self.turning == 1 and not self.delay.is_on(self.data["time"]):
                         self.turning = 0
-                if  self.turning == 1:
+                if  self.turning > 0:
                         self.data["d_l"], self.data["d_r"]  = 5, 0
                 else:
                         self.data["d_l"], self.data["d_r"] = 0.035 * self.data["p_l"], 0.035 * self.data["p_r"]
