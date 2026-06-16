@@ -27,7 +27,7 @@ class TimeDelay:
 
     def start(self, now, delay):
         """ Starts now a step of delay duration.
-         Parameter
+         Parameters
          ----------
          now: float.
          - The current time in second.
@@ -36,10 +36,14 @@ class TimeDelay:
         """
         self.stop = now + delay
        
-    def is_on(self, now):
+    def is_done(self, now):
         """ Returns true while on time.
-        """          
-        return now < self.stop
+         Parameter
+         ----------
+         now: float.
+         - The current time in second.
+         """          
+        return now >= self.stop
 
     stop = 0
     """ The last stop time
@@ -127,7 +131,7 @@ def evaluate(Bot, Environment, State):
     state.init()
         
     debug = False if "display" in state.data.keys() and state.data["display"] == False else True
-    runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 10
+    runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 1
     timeout = int(state.data["timeout"]) if "timeout" in state.data.keys() else 0
     challenge = int(state.data["challenge"]) if "challenge" in state.data.keys() else 0
     if not challenge in (1, 2, 3):
@@ -214,8 +218,8 @@ def evaluate(Bot, Environment, State):
             ##  Input preprocessing
             state.data["time"] = state.data["time"] + 1
             state.data["g_e"] = bot.energy
-            state.data["p_r"] = I[0,0]
-            state.data["p_l"] = I[p-1,0]
+            state.data["p_l"] = I[0,0]
+            state.data["p_r"] = I[p-1,0]
             state.data["p_a"] = 0.5 * (I[round(p/2),0] + I[round(p/2)-1,0]) # here p even is assumed
             state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
             state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0

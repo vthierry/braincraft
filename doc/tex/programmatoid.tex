@@ -38,13 +38,12 @@ With respect to the original braincraft challenge:
 \\ \tab - the output stands on positive normalized signal,
 \\ \tab - the wall hit indicator is not used,
 
-
 \subsection{Preprocessing}
 
 \subsubsection{Proximity sensors}\begin{description}
 \item[Motivation] Simplifies the navigation by using a simple triplet of input.
 \item[Implementation] ~
-\\- We now simply considered the two lateral sensors of maximal angle.
+\\- We now simply considered the frontal and the two lateral sensors of maximal angle.
 \\- A simple sum or average could also be used, thus using directly a linear combination of the input in afferent units. \\
   \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in K_\dagger} p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
   where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
@@ -53,10 +52,21 @@ With respect to the original braincraft challenge:
  \end{description}
 
 \subsubsection{Color sensors}\begin{description}
-\item[Motivations] Again, color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
+\item[Motivation] The color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit:
-  \eqline{c_{\dagger\bullet} \leftarrow \mbox{ if } Or_{k \in K_\dagger} (i_{\bullet} - c[k]) = 0 \mbox{ then } 1 \mbox{ else } 0, \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}}
+  \eqline{c_{\dagger\bullet} \leftarrow \mbox{ if } \mbox{Or}_{k \in K_\dagger} (i_{\bullet} - c[k]) = 0 \mbox{ then } 1 \mbox{ else } 0, \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}}
  where $K_\dagger$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
+\end{description}
+
+\subsubsection{Energy increase or decrease}\begin{description}
+\item[Motivation] In order to detect if the bot has been reefed, we must save the energy value at different moment, and compare the values, because among the trajectory the absolute value varies.
+\item[Implementation] It uses three variables
+\eqline{\begin{array}{lll}
+  g_{e1} \in [0, 1], &\left.g_{e1}\right|_{t = 0} = 0 & \mbox{Energy before turning in the feeding corridor.} \\
+  g_{e0} \in [0, 1], &\left.g_{e0}\right|_{t = 0} = 0 & \mbox{Energy when turning out from the feeding corridor.} \\
+  g_{ed} \in [0, 1], &\left.g_{ed}\right|_{t = 0} = 0 & \mbox{Previous feeding corridor energy difference, positive if an energy source.} \\
+\end{array}}
+which are updated during the navigation as detailled in the next section.
 \end{description}
 
 \subsubsection{Output unsigned normalization}\begin{description}
@@ -71,44 +81,53 @@ With respect to the original braincraft challenge:
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
 \\\tab (ii) perform a quarter-turn in the preferred orientation as soon as a wall is closed ahead.
 \\With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
-\item[Internal variable] \eqline{\begin{array}{lll}
-  q_p \in \{0_{\mbox{leftward},} 1_{\mbox{rightward}}\}, &\left.q_p\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
+In fact, the situation is quite complex because the sensors do {\em not} detect any crossing, because the field of view is too narrow. Therefore, proximity to the wall, and predefined delays are to be used.
+
+\begin{figure}[H]
+  \includegraphics[width=0.5\textwidth,valign=c]{./navigation.png}
+    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+      \caption{Illustrates the navigation implementation. The navigation is a loop  made of 4 quarter-turns.
+        \\-Turns 0, 1 and 2 are triggered by the wall ahead proximity.
+        \\-Turn 3 is triggered by a delay after turn 2 and has a predefined precalibrated duration.}
+        \label{navigation}
+    \end{minipage}
+\end{figure}
+
+\item[Internal variables] \eqline{\begin{array}{lll}
+  b_d \in \{0_{\mbox{rightward}}, 1_{\mbox{leftward}}\}, &\left.b_d\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
+  b_t \in \{0_{\mbox{forward}}, 1_{\mbox{turning}}\}, &\left.b_t\right|_{t = 0} = 0 & \mbox{Forward versus turning mode.} \\
+  b_{t\bullet} \in \{0,  1\}, \bullet \in \{0, 1, 2, 3_0, 3\} &\left.b_{t\bullet}\right|_{t = 0} = 0 & \mbox{Turn0, Turn1, Turn2, Turn3-delay, and Turn3 modes respectively.} \\
 \end{array}}
-\item[Programmatoid solution]:\eqline{\begin{array}{rcccc}
-    d_l &\leftarrow& \mbox{if } q_t = 0 \mbox{ then } \gamma \, p_r  \mbox{ else } 0 & +&  \mbox{if } q_p = 0 \mbox { and } q_t = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
-    d_r &\leftarrow& \mbox{if } q_t = 0 \mbox{ then } \gamma \, p_l   \mbox{ else } 0 & +&  \mbox{if } q_p = 1 \mbox { and } q_t = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
-           &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} && \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \\ \\
-    q_t &\leftarrow& \multicolumn{3}{l}{\mbox{if } q_t = 0 \mbox { and } p_a > \beta \mbox{ then } 1 \mbox{ elif } q_t = 0 \mbox { and } q_d = 0 \mbox{ then } 0 \mbox{ else } q_t} \\
-    \multicolumn{5}{l}{\mbox{Delay\_1}(q_d, q_t, \delta)} \\
-\end{array}}  where: \eqline{\begin{array}{rcll}
-    \gamma &=& 0.035 & \mbox{\parbox{8cm}{Maximize stability without oscillation.}} \\
-    \alpha    &=& 5.0 & \mbox{\parbox{8cm}{Maximal turn angle, allowing to perform a quater turn in $18$ time steps.}} \\
-    \delta    &=& 18 & \mbox{\parbox{8cm}{Quarter-turn duration in number of time steps.}} \\
-    \beta     &=& 0.8 & \mbox{\parbox{8cm}{Proximity threshold that induces a quater turn.}} \\
-\end{array}} in words: we execute the quarter-turn when a wall is detected ahead.
+
+\item[Internal constants]  \eqline{\begin{array}{rcll}
+    \gamma &=& 0.035 & \mbox{\parbox{12cm}{Linear feedback gain in forward mode, maximize stability without oscillation.}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{12cm}{Maximal turn angle, allowing to perform a quater turn in $18$ time steps.}} \\
+    \beta_1   &=& 0.8 & \mbox{\parbox{12cm}{Proximity threshold triggering a quater-turn.}} \\
+    \beta_0   &=& 0.7 & \mbox{\parbox{12cm}{Proximity threshold ending a quater-turn.}} \\
+    \delta _1   &=& 18 & \mbox{\parbox{12cm}{Quarter-turn duration in number of time steps.}} \\
+    \delta _0   &=& 8 & \mbox{\parbox{12cm}{Delay between two quarter-turns in number of time steps.}} \\
+\end{array}}
+  
+\item[Programmatoid solution]:\eqline{\begin{array}{rccc}
+    d_l &\leftarrow& \mbox{if } b_t = 0 \mbox{ then } \gamma \, p_r  &  \mbox{elif } b_d = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
+    d_r &\leftarrow& \mbox{if } b_t = 0 \mbox{ then } \gamma \, p_l   &  \mbox{elif } b_d = 0 \mbox{ then } \alpha \mbox{ else } 0 \\
+    &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} & \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \end{array}}
+ while the bot turning state implementation writes:
+\eqline{\begin{array}{rcll}
+\end{array}}
 \end{description}
 
 The $\mbox{Delay\_1}(q_d, q_t, \delta)$ constructs, precisely defined in the sequel, stands for a time bounded output:\\
 \tab \tab $q_d \leftarrow 1$ when $q_t$ raises to $1$ during $\delta$ time steps, before being reset to $q_d \leftarrow 0$.
 
-\begin{figure}[H]
-  \includegraphics[width=0.5\textwidth,valign=c]{./starting-moves.png}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Illustrates the quarter turn implementation: it starts when the ahead proximity to a wall exceeds a threshold, and has a predefined duration, using a timer.}
-        \label{starting-moves}
-    \end{minipage}
-\end{figure}
-
-We thus have a linear output unit for $d_o$ and two step-unit for $t_l$ and $t_r$.
-
-Given this controller the design reduces to navigation direction choice, i.e., control the $q_p$ variable.
+Given this controller the design reduces to navigation direction choice, i.e., control the $b_d$ variable.
 
 \subsubsection{Task 1: Simple decision} \begin{description}
   \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
   \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
-    At start $q_p = 0$. Then, if the energy is too low it changes once to $q_p = 1$.
+    At start $b_d = 0$. Then, if the energy is too low it changes once to $b_d = 1$.
 \item[Programmatoid solution] \eqline{\begin{array}{l}
-          q_p \leftarrow \mbox{if } q_p = 1  \mbox{ or } \eta > g_e \mbox{ then } 1 \mbox{ else } 0 \\
+          b_d \leftarrow \mbox{if } b_d = 1  \mbox{ or } \eta > g_e \mbox{ then } 1 \mbox{ else } 0 \\
       \end{array}}
    where: \eqline{\begin{array}{rcll}
       c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
@@ -129,7 +148,7 @@ Given this controller the design reduces to navigation direction choice, i.e., c
     \end{array}}
     \item[Programmatoid solution] \eqline{\begin{array}{rcl}
         \multicolumn{3}{l}{\mbox{Inverts the direction if to be changed.}} \\
-        q_p &\leftarrow& \mbox{if }  \eta > g_e  \mbox{ and } g_c = 0 \mbox{ then } 1 - q_p \mbox{ else } q_p \\
+        b_d &\leftarrow& \mbox{if }  \eta > g_e  \mbox{ and } g_c = 0 \mbox{ then } 1 - b_d \mbox{ else } b_d \\
        \multicolumn{3}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
        g_c &\leftarrow& \mbox{if } g_c = 0  \mbox{ and } \eta > g_e  \mbox{ then } 1 \mbox{ elif } g_c = 1 \mbox{ and } 2 \, \eta < g_e  \mbox{ then } 0 \mbox{ else } g_c \\
     \end{array}} In the sequel, we are going to derive a generic way to compile such an expression with binary values as a programmatoid .
@@ -153,7 +172,7 @@ Given this controller the design reduces to navigation direction choice, i.e., c
         c_{cb} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lb} = 1 \mbox{ or } c_{rb} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else } c_{cb} \\
         c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{rr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
         \multicolumn{3}{l}{\mbox{Set the direction according to the cue}} \\
-        q_p &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } q_p \\
+        b_d &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } b_d \\
    \end{array}} \end{description}
 
 \subsubsection{Task 3: Valued environment decision} \begin{description}
@@ -167,7 +186,7 @@ Given this controller the design reduces to navigation direction choice, i.e., c
     \multicolumn{2}{l}{b_{i} \defq g_{c2} > g_{c1}} & \mbox{Previous energy increase is higher.} \\
    \end{array}}
   \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-      q_p &\leftarrow& \mbox{if } b_{id} \mbox{ and }  b_{i} \mbox{ then } 1 - q_p \mbox{ else } q_p \\
+      b_d &\leftarrow& \mbox{if } b_{id} \mbox{ and }  b_{i} \mbox{ then } 1 - b_d \mbox{ else } b_d \\
    \multicolumn{3}{l}{\mbox{Then, in sequence:}} \\
      g_{c2} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{c1} \mbox{ else } g_{c2} \\
      g_{c1} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{e} - g_{e1} \mbox{ elif } b_{ii} \mbox{ then } g_{c1} + (g_{e} - g_{e1}) \mbox{ else } g_{c1} \\
