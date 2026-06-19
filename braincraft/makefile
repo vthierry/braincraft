@@ -9,11 +9,16 @@ endef
 
 export SHELL = /bin/bash
 
-once: rebuild out/programmatic_navigation/test.out.html
+once: rebuild out/programmaticoid_task1/test.out.html
 
 test: \
   rebuild \
-  out/programmatic_navigation/test.out.html \
+  out/programmatic_task1/test.out.html \
+  out/programmatic_task2/test.out.html \
+  out/programmatic_task3/test.out.html \
+  out/programmaticoid_task1/test.out.html \
+  out/programmaticoid_task2/test.out.html \
+  out/programmaticoid_task3/test.out.html \
   out/programmatoid_task1/test.out.html \
   out/programmatoid_task2/test.out.html \
   out/programmatoid_task3/test.out.html

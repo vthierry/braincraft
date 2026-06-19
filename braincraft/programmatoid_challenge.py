@@ -261,8 +261,7 @@ def evaluate(Bot, Environment, State):
 
                     plt.pause(1/60)
 
-                if "rate" in state.data.keys():
-                    plt.pause(state.data["rate"])
+            plt.pause(state.data["rate"] if "rate" in state.data.keys() and state.data["rate"] > 0 else 0.0001)
 
         distances.append(distance)
         hits.append(hit)

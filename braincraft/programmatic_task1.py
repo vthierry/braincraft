@@ -7,7 +7,6 @@ from programmatoid_challenge import h, H, Id, TimeDelay, State, NetworkState, ev
 from environment_1 import Environment
 
 class ProgrammaticState(State):
-        delay = TimeDelay()
 
         ### Turning state of the bot
         # - b_d : Quarter-turn direction, either left (1) or right (0).
@@ -15,13 +14,18 @@ class ProgrammaticState(State):
         # - b_t0, b_t1, b_t2, b_t3: Turn 0, 1, or 2 mode.
         # - b_t30, b_t3: Turn 3 before and during the turn modes.
         # - ge_0, ge_1: energy after and before turning in the feeding corridor.
+        b_d, b_t, b_t0, b_t1, b_t2, b_t30, b_t3, g_e0, g_e1 = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ### Delay variables
+        # - b_3w0, b_3w1: delay variables for turn 3 start and stop.
+        delay0, delay1, b_3w0, b_3w1  = TimeDelay(), TimeDelay(), 0, 0
+        ### Patch because feeding sometime fails
         # - g_ok : lock the quarter-turn direction if it has been feeding at least 5 times, avoiding spurious direction change, set to -1 to avoid the lock
-        b_d, b_t, b_t0, b_t1, b_t2, b_t30, b_t3, g_e0, g_e1, g_ok = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        g_ok = 0
 
         def __init__(self):
                 self.data["challenge"] = 1
                 self.data["runs"] = 1
-                self.data["rate"] = 0.01
+                self.data["rate"] = 0
                 self.data["timeout"] = 0
 
         def update(self):
@@ -49,17 +53,24 @@ class ProgrammaticState(State):
                                 self.g_e1 = 0
                 elif self.b_t == 1 and self.b_t30 + self.b_t3 == 0 and self.data["p_a"] < 0.7:
                         self.b_t = 0
+                 # Updates time delay variables
+                if self.b_t == 0 and self.b_t30 == 0 and self.b_t3 == 0 and self.b_t2 == 1:
+                        self.b_t3w0 = 0
+                        self.delay0.start(self.data["time"], 8)
+                self.b_t3w0 = self.delay0.is_done(self.data["time"])
+                if self.b_t30 == 1 and self.b_t3w0 == 1:
+                        self.b_t3w1 = 0
+                        self.delay1.start(self.data["time"], 18)
+                self.b_t3w1 = self.delay1.is_done(self.data["time"])
                 # Starts turning because of a left crossing
                 if self.b_t == 0 and self.b_t30 + self.b_t3 == 0 and self.b_t2 == 1:
                         self.b_t2 = 0
                         self.b_t30 = 1
-                        self.delay.start(self.data["time"], 8)
-                elif self.b_t30 == 1 and self.delay.is_done(self.data["time"]):
+                elif self.b_t30 == 1 and self.b_t3w0 == 1:
                         self.b_t = 1
                         self.b_t3 = 1
                         self.b_t30 = 0
-                        self.delay.start(self.data["time"], 18)
-                elif self.b_t3 == 1 and self.delay.is_done(self.data["time"]):
+                elif self.b_t3 == 1 and self.b_t3w1 == 1:
                         self.b_t = 0
                         self.b_t3 = 0
                         # Changes direction if energy did not increase

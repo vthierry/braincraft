@@ -55,7 +55,7 @@ then ## Runs at the programmatic level
     ### Starts the simplescreenrecorder using predefined settings in background and piped input
     (sleep 1 ; tail -f /tmp/ssr-input | simplescreenrecorder --settingsfile=/tmp/ssr-settings.conf --start-recording --start-hidden >/dev/null 2>&1) &
     ### Starts the program in an xterm console
-    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $prgm.py | tee -a $l ; read -p 'Type enter to close' cont "
+    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $prgm.py | tee -a $l ; read -t 5 -p 'Type enter to close' cont "
     ### When done, stops and saves the screen recording and dumps the log file
     (echo  record-pause  ; echo  record-save ) >  /tmp/ssr-input
     cat $l
