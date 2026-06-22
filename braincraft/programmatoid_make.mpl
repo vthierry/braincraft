@@ -105,7 +105,7 @@ prgm_functions := {
 
 ## Compiles a set of equation as a piece of code
 
-prgm_compile := proc(prgm_file :: string)
+prgm_compile := proc(out_directory :: string, prgm_file :: string)
   local prgm, next_symbol, next_symbol_count := 0:
 
   try 
@@ -113,17 +113,19 @@ prgm_compile := proc(prgm_file :: string)
     ### Sets basic options
 
     prgm := (proc() global prgm_default_options: op(prgm_default_options) end)():
-    prgm[file] :=  StringTools[RegSubs](".mpl$" = "", prgm_file):
-    try  mkdir(cat("out/", prgm[file]))  catch: end try:
-    prgm[name] :=  FileTools[Basename](prgm_file):
+    prgm[out] :=  out_directory:
+    prgm[file] :=  prgm_file:
+    prgm[name] :=  FileTools[Basename](out):
     prgm[version] :=  StringTools[RegSubs]("T" = "_", StringTools[RegSubs](" .*" = "", convert(Date(), string))):
 
     ### Reads and parses the source text
-
-    if not FileTools[Exists](cat(prgm[file], ".mpl")) then
+    if not FileTools[Exists](prgm[file]) then
       error cat("Syntax error: The file '", prgm[file], "' does not exist, it must.")
     fi:
-    prgm[text] := FileTools[Text][ReadFile](cat(prgm[file], ".mpl")):
+    if StringTools[RegSubs]("[^.]*[.]", "", prgm_file) <> ".mpl" then 
+      error cat("Syntax error: The file '", prgm[file], "' does not have a '.mpl' extension, it must.")
+    fi:
+    prgm[text] := FileTools[Text][ReadFile](prgm[file]):
     prgm[source] := eval(parse(StringTools[RegSubs]("#[^\n]*\n" = "", prgm[text]))):
 
     ### Extracts options from the first  input line, if any
@@ -321,7 +323,7 @@ prgm_compile := proc(prgm_file :: string)
 	  fi)):
        interface(warnlevel=wl):
        #### Saves and returns
-      FileTools[Text][WriteFile](cat("out/", prgm[file], "/prgm.py"), c):
+      FileTools[Text][WriteFile](cat(prgm[out], "/prgm.py"), c):
     end)(prgm)
   fi:
 
@@ -334,7 +336,7 @@ prgm_compile := proc(prgm_file :: string)
   end try:
 
   ## Outputs the results 
-  save prgm, cat("out/", prgm[file], "/prgm.mw"):
+  save prgm, cat(prgm[out], "/prgm.mw"):
  (proc(prgm) 
     local mpl2json := proc(v) if type(v, {list, rtable, record, set(equation), table}) then map(procname, v) elif type(v, `=`) then convert(op(1,v), string) = procname(op(2, v)) elif not type(v, {numeric, boolean, string}) then convert(v, string) else v fi end:
     StringTools[RegSubs]("\\@" = "\n\t\t\t",     ### Better indent
@@ -343,7 +345,7 @@ prgm_compile := proc(prgm_file :: string)
     StringTools[RegSubs]("\"([A-Za-z_-]*)\"" = "\\1",   ### Suppress "" on identifier
     StringTools[RegSubs]("\"(\\[[^\"\n]*\\])\"" = "\\1", ### Suppress "" on one line array
     cat("\tcompilation: ", JSON[ToString](mpl2json([
-      op(map((n, prgm) -> if assigned(prgm[n]) then n = prgm[n] fi, [file, name, excerpt, homepage, version, license, author, omega, mollification, networking, python, inputs, outputs, challenge, timeout, runs, display, "error"], prgm)), ### Outputs meta-data in sequence
+      op(map((n, prgm) -> if assigned(prgm[n]) then n = prgm[n] fi, [file, out, name, excerpt, homepage, version, license, author, omega, mollification, networking, python, inputs, outputs, challenge, timeout, runs, display, "error"], prgm)), ### Outputs meta-data in sequence
      op(map((n, prgm) -> if assigned(prgm[n]) then n = StringTools[RegSubs]("\n" = "\n\t\t", cat("\@", op(map(l -> cat(convert(l, string), "\@"), prgm[n])))) fi, [source, expanded, flattened], prgm)),  ### Outputs code as multi-line string
      if assigned(prgm[network]) then
        network = [  ### Outputs network meta-data
@@ -357,7 +359,7 @@ end:
 
 ## Saves the package
 
-save prgm_default_options,  prgm_functions, prgm_compile, "./programmatoid.mw":
+save prgm_default_options,  prgm_functions, prgm_compile, "./programmatoid_make.mw":
 
 ## Functional tests 
 test := true:

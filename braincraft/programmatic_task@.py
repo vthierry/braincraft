@@ -4,7 +4,7 @@ import numpy as np
 from bot import Bot
 from programmatoid_utils import h, H, Id, TimeDelay, State, NetworkState, evaluate
 ## Here consider the environment for task
-from environment_3 import Environment
+from environment_@ import Environment
 
 class ProgrammaticState(State):
 
@@ -21,7 +21,7 @@ class ProgrammaticState(State):
         # - b_r: Blue detected on the right
 
         def __init__(self):
-                self.data["challenge"] = 3
+                self.data["challenge"] = @
                 self.data["runs"] = 1
                 self.data["rate"] = 0
                 self.data["timeout"] = 1000

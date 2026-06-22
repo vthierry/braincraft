@@ -1,37 +1,32 @@
 
 define TODO
 
-Voir comment naviguer proprement: quart de tour au milieu
-
 Changer de variable pour les omega * f(…)
 
 endef
 
 export SHELL = /bin/bash
 
-once: rebuild out/programmaticoid_tasks/test.out.html
+all: rebuild \
+  out/programmatic_task1 \
+  out/programmatic_task2 \
+  out/programmatic_task3 \
+  out/programmaticoid_task1 \
+  out/programmaticoid_task2 \
+  out/programmaticoid_task3 \
+  out/programmatoid_task1 \
+  out/programmatoid_task2 \
+  out/programmatoid_task3
 
-test: \
-  rebuild \
-  out/programmatic_task1/test.out.html \
-  out/programmatic_task2/test.out.html \
-  out/programmatic_task3/test.out.html \
-  out/programmaticoid_task1/test.out.html \
-  out/programmaticoid_task2/test.out.html \
-  out/programmaticoid_task3/test.out.html \
-  out/programmatoid_task1/test.out.html \
-  out/programmatoid_task2/test.out.html \
-  out/programmatoid_task3/test.out.html
+out/programmatic_task%: programmatic_task@.py
+	echo ./programmatoid_challenge.sh -c $* $^
 
-out/%/test.out.html: %.py
-	./programmatoid_challenge.sh $*
+out/programmaticoid_task%: programmaticoid_task@.py
+	echo ./programmatoid_challenge.sh -c $* $^
 
-out/%/test.out.html: %.mpl
-	./programmatoid_challenge.sh $*
+out/programmatoid_task%: programmatoid_task@.mpl
+	echo ./programmatoid_challenge.sh -c $* $^
 
 rebuild:
 	rm -rf programmatoid.mw out/*
-
-clean:
-	rm -f ssr-last-programmatic-run*.mkv
 

@@ -4,22 +4,14 @@ import numpy as np
 from bot import Bot
 from programmatoid_utils import h, H, Id, TimeDelay, State, NetworkState, evaluate
 ## Here consider the task environment
-from environment_3 import Environment
+from environment_@ import Environment
 
 class ProgrammaticState(State):
 
-        ### Turning state of the bot
-        # - b_d: Initial quarter-turn direction, either rightward (1) or rightward (0).
-        # - b_k: Unknown (0) versus (1) known direction from a blue cue.
-        # - b_t:  Forward (0) versus turning (1) mode.
-        # - b_a: Quarter-turn (0) versus About-turn (a) turning mode.
-        # - b_w: About-turn delay.
         delay = TimeDelay()
-        # - g_e1: Energy after the last turn.
-        # - g_d1: Energy difference, before the next turn, and after the last turn.
-
+ 
         def __init__(self):
-                self.data["challenge"] = 3
+                self.data["challenge"] = @
                 self.data["runs"] = 10
                 self.data["rate"] = 0
                 self.data["timeout"] = 500
@@ -47,8 +39,6 @@ class ProgrammaticState(State):
                 # Forward versus backward control
                 self.data["d_l"] = 0.035 * self.data["p_r"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 1 else 0
                 self.data["d_r"] = 0.035 * self.data["p_l"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 0 else 0
-                # Dumps data state
-                print(f"   \u007b t: {self.data["time"]:3d} g_e: [{self.data["g_e"]:.2f} {self.data["g_e1"]:.2f}] p_lar: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] b_d: {self.data["b_d"]} b_t: {self.data["b_t"]}  b_a: {self.data["b_a"]}  b_h: {1 if self.data["b_h"] else 0}  \u007d", flush=True)
 
 ## Runs and evaluate the bot behavior for the given task
 if __name__ == "__main__":
