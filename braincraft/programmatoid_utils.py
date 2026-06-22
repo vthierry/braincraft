@@ -127,9 +127,6 @@ def evaluate(Bot, Environment, State):
      """
     state = State()
  
-    state.data["time"] = 0
-    state.init()
-        
     debug = False if "display" in state.data.keys() and state.data["display"] == False else True
     runs = int(state.data["runs"]) if "runs"  in state.data.keys() else 1
     timeout = int(state.data["timeout"]) if "timeout" in state.data.keys() else 0
@@ -183,12 +180,16 @@ def evaluate(Bot, Environment, State):
     plt.pause(2)
 
     for i in range(runs):
+        state.data["time"] = 0
+        state.init()
         environment = Environment()
 
         if debug:
             graphics["topview"].set_data(environment.world_rgb)
             
         bot = Bot()
+        if challenge == 2:
+            bot.position = 0.5, 0.17
         
         p = bot.camera.resolution
 
@@ -218,13 +219,14 @@ def evaluate(Bot, Environment, State):
             ##  Input preprocessing
             state.data["time"] = state.data["time"] + 1
             state.data["g_e"] = bot.energy
-            state.data["p_l"] = I[0,0]
-            state.data["p_r"] = I[p-1,0]
-            state.data["p_a"] = 0.5 * (I[round(p/2),0] + I[round(p/2)-1,0]) # here p even is assumed
-            state.data["c_lb"] = 1 if 4 in I[p:p+int(p/2),0] else 0
-            state.data["c_lr"] = 1 if 5 in I[p:p+int(p/2),0] else 0
-            state.data["c_rb"] = 1 if 4 in I[p+int(p/2):2*p,0] else 0
-            state.data["c_rr"] = 1 if 5 in I[p+int(p/2):2*p,0] else 0
+            state.data["b_h"] = bot.hit
+            state.data["p_l"] = 1 - bot.camera.depths[0]
+            state.data["p_r"] = 1 - bot.camera.depths[p-1]
+            state.data["p_a"] = 1 - 0.5 * (bot.camera.depths[round(p/2)]+bot.camera.depths[round(p/2)-1]) # assuming p is even
+            state.data["c_lb"] = 1 if 4 in bot.camera.values[0:2] else 0
+            state.data["c_lr"] = 1 if 5 in bot.camera.values[0:2] else 0
+            state.data["c_rb"] = 1 if 4 in bot.camera.values[p-2:p] else 0
+            state.data["c_rr"] = 1 if 5 in bot.camera.values[p-2:p] else 0
 
             state.update()
 

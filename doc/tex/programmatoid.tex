@@ -12,18 +12,18 @@
 
 \section{The braincraft challenge}
 
-Let us consider the following digital experimental setup, as described in \href{https://github.com/rougier/braincraft/blob/master/README.md#introduction}{braincraft challenge presentation}.
+Let us consider the following digital experimental setup, as described in the \href{https://github.com/rougier/braincraft/blob/master/README.md#introduction}{braincraft challenge presentation}.
 
 \subsection{Simplified problem statement}
 
 \centerline{\includegraphics[width=0.9\textwidth]{../../data/debug.png}}
 
-As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}, \href{https://github.com/rougier/braincraft}{the braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and oriented at $90°$, i.e., upward.
+As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}, \href{https://github.com/rougier/braincraft}{the braincraft challenge} bot moves at a constant with sensor inputs and one orientation output, it uses some energy and refill this energy on a given yellow location. The 2D space size is $[0, 1] \times [0, 1]$. The bot starts in the middle and is oriented upward.
 \eqline{\begin{array}{|ll|l|}
   \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
-  p_l \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Leftward proximity, at +30° on the left.\\}} \\\hline 
-  p_r \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Rightward proximity, at -30° on the  right.\\}} \\\hline 
-  p_a \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Ahead proximity, at 0°.\\}} \\\hline 
+  p_l \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Leftward wall proximity, at +30° on the left.\\}} \\\hline 
+  p_r \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Rightward wall proximity, at -30° on the  right.\\}} \\\hline 
+  p_a \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Ahead eall proximity, at 0°.\\}} \\\hline 
   c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
   c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
   g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
@@ -33,10 +33,13 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
  \end{array}}
 
 With respect to the original braincraft challenge:
-\\ \tab - we consider three leftward, ahead, and rightward external sensors only,
+\\ \tab - three leftward, ahead, and rightward external sensors only are considered,
 \\ \tab - color is input as binary variables, and always available,
 \\ \tab - the output stands on positive normalized signal,
-\\ \tab - the wall hit indicator is not used,
+\\ \tab - the wall hit indicator is not used, and wall hits are ignored,
+\\ \tab - the heuristics consider the energy source as constant and unbounded.
+
+Neglecting the energy source bound, leak and refill mechanism, and ignoring wall hits yields sub-optimal heuristics, but the goal is not to ``win'' but the challeng, but to implement programmatoid and neuronoid mechanisms.
 
 \subsection{Preprocessing}
 
@@ -44,15 +47,13 @@ With respect to the original braincraft challenge:
 \item[Motivation] Simplifies the navigation by using a simple triplet of input.
 \item[Implementation] ~
 \\- We now simply considered the frontal and the two lateral sensors of maximal angle.
-\\- A simple sum or average could also be used, thus using directly a linear combination of the input in afferent units. \\
-  \eqline{p_\dagger \leftarrow 1 / 32 \, \sum_{k \in K_\dagger} p[k], \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}},\}}
-  where $K_\dagger$ stands for the left or right sensor related $32$ indexes.
+\\- A simple sum or average could also be used, or  any linear combination of the input in afferent units. 
  \\- A softmax mechanism could also be used, as derived in the sequel, enjoying a neuronoid approximation,
  and allowing to balance between averaging and computing the maximum.
  \end{description}
 
 \subsubsection{Color sensors}\begin{description}
-\item[Motivation] The color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. Since the setup color input is a discrete color index, the channel value is binary, accounting for the presence, or not, of a least one related color index.  
+\item[Motivation] The color blob detection is to perform either on the left or on the right, allowing the color input to be compacted. For each color, a channel is specified, simplifying the programmatoid implementation and providing an input closer to biological colored vision. The setup original color input is a discrete color index. The preprocessed color output is binary, accounting for the presence, or not, of a least one related color index.  
 \item[Implementation] For the distributed implementation, each camera color index value is mapped on each color channel input with the 0 value if the color is different and the 1 value if equal, e.g., using step unit:
   \eqline{c_{\dagger\bullet} \leftarrow \mbox{ if } \mbox{Or}_{k \in K_\dagger} (i_{\bullet} - c[k]) = 0 \mbox{ then } 1 \mbox{ else } 0, \dagger \in \{l_{\mbox{left}}, r_{\mbox{right}}\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\}}
  where $K_\dagger$ stands for the left or right sensor related indexes, $i_{\bullet}$ stands for the color index, and $c[k]$ stands for the sensor color index value.
@@ -60,11 +61,10 @@ With respect to the original braincraft challenge:
 
 \subsubsection{Energy increase or decrease}\begin{description}
 \item[Motivation] In order to detect if the bot has been reefed, we must save the energy value at different moment, and compare the values, because among the trajectory the absolute value varies.
-\item[Implementation] It uses three variables
+\item[Implementation] It uses two variables
 \eqline{\begin{array}{lll}
-  g_{e1} \in [0, 1], &\left.g_{e1}\right|_{t = 0} = 0 & \mbox{Energy before turning in the feeding corridor.} \\
-  g_{e0} \in [0, 1], &\left.g_{e0}\right|_{t = 0} = 0 & \mbox{Energy when turning out from the feeding corridor.} \\
-  g_{ed} \in [0, 1], &\left.g_{ed}\right|_{t = 0} = 0 & \mbox{Previous feeding corridor energy difference, positive if an energy source.} \\
+  g_{e1} \in [0, 1], &\left.g_{e1}\right|_{t = 0} = 0 & \mbox{Energy after the last turn.} \\
+  g_{d1} \in [0, 1], &\left.g_{ed}\right|_{t = 0} = 0 & \mbox{Energy difference, before the next turn, and after the last turn.} \\
 \end{array}}
 which are updated during the navigation as detailled in the next section.
 \end{description}
@@ -78,131 +78,93 @@ which are updated during the navigation as detailled in the next section.
 
 \subsubsection{Navigation}\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
-\\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
-\\\tab (ii) perform a quarter-turn in the preferred orientation as soon as a wall is closed ahead.
-\\With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
-In fact, the situation is quite complex because the sensors do {\em not} detect any crossing, because the field of view is too narrow. Therefore, proximity to the wall, and predefined delays are to be used.
+\\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and either
+\\\tab (ii) performs a quarter-turn in the preferred orientation as soon as a wall is closed ahead, or
+\\\tab (ii) performs a about-turn if the energy has been increased by an energy source.
+
+With this about-turn heuristic, the bot remains in the corridor with feeding source. However, to perform an about-turn the bot must hit the wall, with generates an energy loss, immedtaly compensated by refilling energy on the source.  This however does not take into account the source energy is bounded and requires time to refill.
+
+Note: The bot is blind with respect to what is on its sides because the field of view is too narrow. Therefore, forward proximity to the wall, and predefined delays are to be used.
 
 \begin{figure}[H]
   \includegraphics[width=0.5\textwidth,valign=c]{./navigation.png}
     \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-      \caption{Illustrates the navigation implementation. The navigation is a loop  made of 4 quarter-turns.
-        \\-Turns 0, 1 and 2 are triggered by the wall ahead proximity.
-        \\-Turn 3 is triggered by a delay after turn 2 and has a predefined precalibrated duration.}
+      \caption{Illustrates the navigation implementation. The navigation is made of quarter-turns to find the source and then about-turns to remain around the source:
+        \\ \tab Quarter-turn is triggered by forward wall proximity and stops when this proximity is low enough. It is used to find the feeding source.
+        \\ \tab About-turn is triggered by forward wall proximity and stops after a fixed delay. It is used to remain around the feeding source.}
         \label{navigation}
     \end{minipage}
 \end{figure}
 
 \item[Internal variables] \eqline{\begin{array}{lll}
-  b_d \in \{0_{\mbox{rightward}}, 1_{\mbox{leftward}}\}, &\left.b_d\right|_{t = 0} = 0 & \mbox{Preferred quarter-turn direction.} \\
+  b_d \in \{0_{\mbox{rightward}}, 1_{\mbox{leftward}}\}, &\left.b_d\right|_{t = 0} = 0 & \mbox{Initial quarter-turn direction.} \\
   b_t \in \{0_{\mbox{forward}}, 1_{\mbox{turning}}\}, &\left.b_t\right|_{t = 0} = 0 & \mbox{Forward versus turning mode.} \\
-  b_{t\bullet} \in \{0,  1\}, \bullet \in \{0, 1, 2, 3_0, 3\} &\left.b_{t\bullet}\right|_{t = 0} = 0 & \mbox{Turn0, Turn1, Turn2, Turn3-delay, and Turn3 modes respectively.} \\
+  b_a \in \{0_{\mbox{quarter-turn}}, 1_{\mbox{about-turn}}\}, &\left.b_t\right|_{t = 0} = 0 & \mbox{Quarter-turn versus about-turn mode.} \\
 \end{array}}
 
 \item[Internal constants]  \eqline{\begin{array}{rcll}
     \gamma &=& 0.035 & \mbox{\parbox{12cm}{Linear feedback gain in forward mode, maximize stability without oscillation.}} \\
-    \alpha    &=& 5.0 & \mbox{\parbox{12cm}{Maximal turn angle, allowing to perform a quater turn in $18$ time steps.}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{12cm}{Maximal turn angle, allowing to perform a quarter turn in $18$ time steps.}} \\
     \beta_1   &=& 0.8 & \mbox{\parbox{12cm}{Proximity threshold triggering a quater-turn.}} \\
     \beta_0   &=& 0.7 & \mbox{\parbox{12cm}{Proximity threshold ending a quater-turn.}} \\
-    \delta _1   &=& 18 & \mbox{\parbox{12cm}{Quarter-turn duration in number of time steps.}} \\
-    \delta _0   &=& 8 & \mbox{\parbox{12cm}{Delay between two quarter-turns in number of time steps.}} \\
+    \delta    &=& 36 & \mbox{\parbox{12cm}{About-turn duration in number of time steps.}} \\
 \end{array}}
   
 \item[Programmatoid solution]:\eqline{\begin{array}{rccc}
     d_l &\leftarrow& \mbox{if } b_t = 0 \mbox{ then } \gamma \, p_r  &  \mbox{elif } b_d = 1 \mbox{ then } \alpha \mbox{ else } 0 \\
     d_r &\leftarrow& \mbox{if } b_t = 0 \mbox{ then } \gamma \, p_l   &  \mbox{elif } b_d = 0 \mbox{ then } \alpha \mbox{ else } 0 \\
-    &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} & \mbox{\small \begin{tabular}{c}quarter-turn \\ left or right\end{tabular}} \end{array}}
+    &                 & \mbox{\small \begin{tabular}{c}linear correction to \\ maintain direction ahead\end{tabular}} & \mbox{\small \begin{tabular}{c}turning \\ left or right\end{tabular}} \end{array}}
  while the bot turning state implementation writes:
-\eqline{\begin{array}{rcll}
+ \eqline{\begin{array}{rcl}
+     \multicolumn{3}{l}{\mbox{Wall proximity turn trigerring, if not yet done:}} \\
+     b_1 &=& p_a > 0.8 \mbox{ and } \mbox{ not } b_t \\
+     \multicolumn{3}{l}{\mbox{About-turn choice iff the energy increased:}} \\
+     b_a &\leftarrow& \mbox{if }  b_1  \mbox{ and } g_{e1} > 0 \mbox{ then } g_e > g_{e1} \mbox{ else } b_a \\
+     \multicolumn{3}{l}{\mbox{About-turn direction change:}} \\
+     b_d &\leftarrow& b_1 \mbox{ and } b_a \mbox{ then } 1 - b_d \mbox{ else } b_d \\
+     \multicolumn{3}{l}{\mbox{About-turn delay, triggered at about-turn start:}} \\
+    &&\mbox{Delay\_0}(b_w, b_1 \mbox{ and } b_a, \delta) \\
+    \multicolumn{3}{l}{\mbox{Turn end triggering:}} \\
+    b_0 &=& b_t \mbox{ and } \mbox{ if } b_a \mbox{ then } b_w \mbox{ else } p_a <  \beta_0 \\
+   \multicolumn{3}{l}{\mbox{Turn mode detection:}} \\
+    b_t &\leftarrow& \mbox{ if } b_1 \mbox{ then } 1 \mbox{ elif } b_0 \mbox{ then } 0 \mbox{ else } b_t\\
+    \multicolumn{3}{l}{\mbox{Turn end detection:}} \\
+    b_s &=& b_0 \mbox{ and not } b_1 \\
+    \multicolumn{3}{l}{\mbox{Gauge energy update:}} \\
+   g_{d1} &\leftarrow&  \mbox{ if } b_s \mbox{ then } g_e - g_{e1} \mbox{ else } g_{d1} \\
+   g_{e1} &\leftarrow&  \mbox{ if } b_s \mbox{ then } g_e \mbox{ else } g_{e1} \\
 \end{array}}
 \end{description}
-
-The $\mbox{Delay\_1}(q_d, q_t, \delta)$ constructs, precisely defined in the sequel, stands for a time bounded output:\\
-\tab \tab $q_d \leftarrow 1$ when $q_t$ raises to $1$ during $\delta$ time steps, before being reset to $q_d \leftarrow 0$.
-
-Given this controller the design reduces to navigation direction choice, i.e., control the $b_d$ variable.
+~\\- The intermediate variables $b_1$, $b_0$ and $b_s$ are not state variable but simply allows to write a more factorize and readable solution.
+\\-  It is important to note that the evaluations are to be performed in sequence, for the mechanism to be valid.
+\\- As detailed in the sequel, the $\mbox{Delay\_0}(b_w, b_{\mbox{trigger}}, \delta)$ construct defines a delay of $\delta$ time steps, triggered by $b_{\mbox{trigger}}$ and which output $b_w$ equals $0$ during this delay.
 
 \subsubsection{Task 1: Simple decision} \begin{description}
-  \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not.
-  \item[Heuristic] If the energy is too low, thus looping in the wrong direction, the direction is changed once. \\
-    At start $b_d = 0$. Then, if the energy is too low it changes once to $b_d = 1$.
-\item[Programmatoid solution] \eqline{\begin{array}{l}
-          b_d \leftarrow \mbox{if } b_d = 1  \mbox{ or } \eta > g_e \mbox{ then } 1 \mbox{ else } 0 \\
-      \end{array}}
-   where: \eqline{\begin{array}{rcll}
-      c &=&1/1000 & \mbox{\parbox{8cm}{Energy consumption at each step.}}\\
-      s &=&1/100 & \mbox{\parbox{8cm}{Speed: location increment at each steps.}}\\
-      b &=& 3/2 & \mbox{\parbox{8cm}{Distance bound between the starting point and the putative energy sources.}}\\
-      \eta &\simeq& b \, c/s = 3/20& \mbox{\parbox{8cm}{Energy consumption threshold if no source on the path.}}\\
-  \end{array}}
+  \item[Heuristic]  Finds on which side is the energy loop and stay around the energy source until, when found.
 \end{description}
 
-\subsubsection{Task 1b: Simple decision but varying environment} \begin{description}
-  \item[Strategy] Restrict navigation to the half-loop that contains the energy source, while the other does not, this may change with time.
-  \item[Heuristic]~
-    \\- If the energy is too low, the direction is inverted.
-    \\-This is registered, avoiding multiple changes at low energy.
-    \\-When the energy is high enough, change registration is reset.
-    \item[Internal variable] \eqline{\begin{array}{lll}
-        g_c \in \{0, 1\} & \left. g_c \right|_{t = 0} = 0 & \mbox{Registers if the low energy has been detected.} \\
-    \end{array}}
-    \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-        \multicolumn{3}{l}{\mbox{Inverts the direction if to be changed.}} \\
-        b_d &\leftarrow& \mbox{if }  \eta > g_e  \mbox{ and } g_c = 0 \mbox{ then } 1 - b_d \mbox{ else } b_d \\
-       \multicolumn{3}{l}{\mbox{Registers the inversion until the energy is high enough.}} \\
-       g_c &\leftarrow& \mbox{if } g_c = 0  \mbox{ and } \eta > g_e  \mbox{ then } 1 \mbox{ elif } g_c = 1 \mbox{ and } 2 \, \eta < g_e  \mbox{ then } 0 \mbox{ else } g_c \\
-    \end{array}} In the sequel, we are going to derive a generic way to compile such an expression with binary values as a programmatoid .
-\begin{figure}[H]
-  \includegraphics[width=0.5\textwidth,valign=c]{./task1b.png}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of $g_c$ value at different level of energy with the indication of the direction change.}
-        \label{task1b}
-    \end{minipage}
-\end{figure}
-\end{description} 
+This is given as a side effect of the navigation implementation, and it also works if the energy source location changes with time.
 
 \subsubsection{Task 2: Cued environment decision} \begin{description}
-  \item[Strategy] Restrict navigation to the half-loop without a closed path, as indicated by a color that has already been seen once.
-  \item[Heuristic] Detect and store the first color blob, and choose to turn in the direction it appears again. \\ The detection is reset when the energy decreases.
+\item[Heuristic] Restricts navigation to the open side with an energy source, as indicated by a blue color at the beggining.
     \item[Internal variable] \eqline{\begin{array}{lll}
-        c_{c\bullet} \in \{0, 1\} , \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} & \left. c_{p\bullet} i \right|_{t = 0} = 0 & \mbox{Detected the color cue code, if any.} \\
+        b_l \in \{0, 1\}  & \left. b_l \right|_{t = 0} = 0 & \mbox{Blue detected on the left.} \\
+        b_r \in \{0, 1\}  & \left. b_r \right|_{t = 0} = 0 & \mbox{Blue detected on the right.} \\
     \end{array}}
     \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-        \multicolumn{3}{l}{\mbox{Detect the cue, if not yet done, and reset below an energy threshold}} \\
-        c_{cb} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lb} = 1 \mbox{ or } c_{rb} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else } c_{cb} \\
-        c_{cr} &\leftarrow& \mbox{if }  c_{cb} = 0 \mbox{ and } c_{cr} = 0 \mbox{ and } (c_{lr} = 1 \mbox{ or } c_{rr} = 1) \mbox{ then} 1 \mbox{ elif } g_e < \eta/2 \mbox{ then } 0 \mbox{ else }c_{cr} \\
-        \multicolumn{3}{l}{\mbox{Set the direction according to the cue}} \\
-        b_d &\leftarrow& \mbox{if }  c_{lb} = c_{cb} \mbox{ or }  c_{lr} = c_{cr} \mbox{ then } 0 \mbox{ elif } c_{rb} = c_{cb} \mbox{ or }  c_{rr} = c_{cr} \mbox{ then } 1 \mbox{ else } b_d \\
-   \end{array}} \end{description}
+        \multicolumn{3}{l}{\mbox{Detects, leftward or righward, the 1st blue cue.}} \\
+        b_l &\leftarrow& \mbox{if }  b_l = 0 \mbox{ and } b_r = 0 \mbox{ and } c_{lb} = 1 \mbox{ then} 1 \mbox{ else } b_l \\
+        b_r &\leftarrow& \mbox{if }  b_l = 0 \mbox{ and } b_r = 0 \mbox{ and } c_{rb} = 1 \mbox{ then} 1 \mbox{ else } b_r \\
+        \multicolumn{3}{l}{\mbox{Sets the left (1) or right (0) direction according to the cue.}} \\
+        b_d &\leftarrow& \mbox{if }  c_{lb} = b_l \mbox{ then } 1 \mbox{ elif } c_{rb} = b_r \mbox{ then } 0 \mbox{ else } b_d \\
+\end{array}} \end{description}
 
-\subsubsection{Task 3: Valued environment decision} \begin{description}
-   \item[Strategy and Heuristic] Test energy sources and change direction if the latter yields less increase than the former.
-   \item[Internal Variables] \eqline{\begin{array}{lll}
-     g_{c\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{c\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last cumulative energy increases.}\\
-     g_{e\flat} \in [0, 1], \flat \in \{1, 2\} &\left.g_{e\flat} \right|_{t = 0} = 0 & \mbox{Last and last-before-last energy value.} \\
-    \multicolumn{2}{l}{b_{di} \defq g_{e} > g_{e1}  \mbox{ and } g_{e1} < g_{e2}} & \mbox{Increase starts,  after a decrease.} \\
-    \multicolumn{2}{l}{b_{ii} \defq g_{e} > g_{e1}  \mbox{ and } g_{e1} > g_{e2}} & \mbox{Increase continues.} \\
-    \multicolumn{2}{l}{b_{id} \defq g_{e} < g_{e1}  \mbox{ and } g_{e1} > g_{e2}} & \mbox{Increase has just stopped, now decreases.} \\
-    \multicolumn{2}{l}{b_{i} \defq g_{c2} > g_{c1}} & \mbox{Previous energy increase is higher.} \\
-   \end{array}}
-  \item[Programmatoid solution] \eqline{\begin{array}{rcl}
-      b_d &\leftarrow& \mbox{if } b_{id} \mbox{ and }  b_{i} \mbox{ then } 1 - b_d \mbox{ else } b_d \\
-   \multicolumn{3}{l}{\mbox{Then, in sequence:}} \\
-     g_{c2} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{c1} \mbox{ else } g_{c2} \\
-     g_{c1} &\leftarrow& \mbox{ if } b_{di}  \mbox{ then } g_{e} - g_{e1} \mbox{ elif } b_{ii} \mbox{ then } g_{c1} + (g_{e} - g_{e1}) \mbox{ else } g_{c1} \\
-     g_{e2} &\leftarrow& g_{e1} \\
-     g_{e1} &\leftarrow& g_{e} \\
-  \end{array}}
-    It is important to note that evaluation is to be done in sequence, for the mechanism to be valid.
-\begin{figure}[H]
-  \includegraphics[width=0.5\textwidth,valign=c]{./energy-step.png}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of energy profile when cumulative energy increase starts (first tick), with $g_{e} > g_{e1}  < g_{e2}$, and stops (last tick), with $g_{e} < g_{e1}$, while during refill $g_{e} > g_{e1}  > g_{e2}$.}
-        \label{energy-step}
-    \end{minipage}
-\end{figure}
-\end{description}
-
+\subsubsection{Task 3: Valued environment decision} \begin{description} 
+  \item[Heuristic] In this case, the previous energy increase has to be compared with the present energy increase, in order to choose the largest. This simply modifies the evaluation of the about-turn trigger, as follows
+   \item[Programmatoid solution] \eqline{\begin{array}{rcl}
+      b_a &\leftarrow& \mbox{if }  b_1  \mbox{ and } g_{d1} > 0 \mbox{ and } g_e > g_{e1} \mbox{ and } g_e - g_{e1} > g_{d1} \mbox{ else } b_a \\
+ \end{array}} \end{description}
+      
 \section{Programmatoid computation} \label{programmatoid}
 
 \subsection{Definition of a programmatoid computation}
@@ -275,7 +237,7 @@ Let us also notice that all arguments $x$ of the step function $\mbox{H}(\cdot)$
 
 \subsection{Conditional expression implementation}
 
-A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  with a binary variable $b_1 \in \{0, 1\}$ writes: \eqline{\begin{array}{rcl}
+A conditional expression on variables on any numerical type $v_n, n \in \{0, 1\}$  with a binary variable $b_1 \in \{0, 1\}$ writes\footnote{It corresponds to the standard languages conditional expression: \\\centerline{{\tt v = b\_1 ? v\_1 : v\_0},}\\ or the Python construct: \\\centerline{{\tt v = v\_1 if v\_1 else v\_0}.}} : \eqline{\begin{array}{rcl}
      v &\leftarrow& \mbox{if } b_1 \mbox{ then } v_1 \mbox{ else } v_0 \\
     &=& b_1 \, v_1 + (1 - b_1) \, v_0 \\
     \multicolumn{3}{l}{\mbox{while, for binary variable, i.e., if and only if $v_n \in \{0, 1\},  n \in \{0, 1\}$: }} \\
@@ -782,10 +744,14 @@ class State:
   data = dict()
   # Inits some data, if needed.
   def init(self):
-  # Updates, at each step, the data from input and sets the output value.\end{verbatim}
+  # Updates, at each step, the data from input and sets the output value.
+  def update(self):
+\end{verbatim}
 
-In {\tt Python} one can start from the followinh example:
-\begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatic_challenge_example.py}{\tt programmatic\_challenge\_example}\end{center}
+The name {\tt programmaticoid\_…} corresponds to a programmatic implementation in the target programming language, but using only programmatoid constructs. It is used for testing purposes.
+
+In {\tt Python} one can start from the following example:
+\begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatic_task1.py}{\tt programmatic\_task1.py}\end{center}
 The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.py}{{\tt programmatoid\_challenge.py}} source file includes all documented methods and the related API documentation is available here:
 \begin{center}\href{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/api/programmatoid_challenge.html}{\tt programmatoid challenge API}\end{center}
   
@@ -831,7 +797,7 @@ The compilation is parameterized by a set of options given in appendix~\ref{pack
 
 The {\tt ./out/\$prgm/test.out.wjson} output file format uses a dialect of the \href{https://www.json.org/json-en.html}{JSON} syntax, called {\tt wJSON}, for weak-json as \href{https://line.gitlabpages.inria.fr/aide-group/wjson/}{presented here}.
 
-\subsection{Running at the artificial neural network level}
+\subsection{Running at the neuronoid level}
 
 If the {\tt network\_weights} compilation option is raised, is is compiled in the form of a network weights as illustrated\footnote{Shared here by courtesy of R. de Coudenhove, Y. Bendi-Ouis, A. Strock and X. Hinaut.} here:
 
@@ -846,6 +812,16 @@ where:
 \\- The non-linearity is a normalized sigmoid.
 
 In fact this compilation option is simply used to verify numerically that such a network is totally equivalent to programmatoid implementation with only neuronoids.
+
+\section{Experimantal validation}
+
+\begin{tabular}{l|c|c|c|}
+     	                       & task 1 & task 2 & task 3 \\
+programmatic      &   &  &  \\
+programmaticoid &   &  &  \\
+programmatoid    &  &  &  \\
+neuronoid             &  &  &  \\
+\end{tabular}
 
 \bibliographystyle{apalike}\bibliography{AIDE}
 

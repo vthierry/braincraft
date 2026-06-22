@@ -9,7 +9,7 @@ endef
 
 export SHELL = /bin/bash
 
-once: rebuild out/programmaticoid_task1/test.out.html
+once: rebuild out/programmaticoid_tasks/test.out.html
 
 test: \
   rebuild \
