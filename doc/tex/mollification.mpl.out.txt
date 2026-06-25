@@ -1,5 +1,5 @@
-    |\^/|     Maple 2025 (X86 64 LINUX)
-._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2025
+    |\^/|     Maple 2026 (X86 64 LINUX)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2026
  \  MAPLE  /  All rights reserved. Maple is a trademark of
  <____ ____>  Waterloo Maple Inc.
       |       Type ? for help.
@@ -22,6 +22,10 @@
                               exp(w)      exp(w)
 
 
+## Study, in [-1, 1]
+> plotsetup(jpeg, plotoutput="mollification.jpg", plotoptions="width=600,height=600"):
+> plot(map(w_->subs(w=w_,h(w * x)), [1,2,5,10,20,50]), x = -1..1, color=["Red","Black","Black","Black","Black","Green"]);
+
 ### Approximation at x=1/2
 > Digits:=3: latex(LinearAlgebra[Transpose](Matrix(map(w->[w,evalf(h(-w/2))],[1,2,5,10,20,50]))));
 \left[\begin{array}{cccccc}
@@ -34,4 +38,4 @@
 
 
 > quit
-memory used=68.4MB, alloc=118.3MB, time=0.82
+memory used=72.7MB, alloc=84.3MB, time=0.37

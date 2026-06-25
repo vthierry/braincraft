@@ -191,7 +191,7 @@ Implementing signed variable is obvious in a programmatoid environment:
 thus manipulating signed variables in a environment with only positive variables.} values $\in [0, 1]$, which evolution is defined using an LN-system with linear units or the step-function $\mbox{H}(\cdot)$ as non-linearity, this writing:
 \eqline{o_n[t] = \left\{ \begin{array}{r} \mbox{H}(z_n[t]) \\ \mbox{Id}(z_n[t]) \\ \end{array} \right., z_n[t] \defq \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\}}
 where $\mbox{Id}(\cdot)$ stands for the identity function. Here
-\\\tab - $i_m[t]$ is the $m$-th input at a discrete $t$, $\left. i_m[t] \right|_{t=0} = 0$and
+\\\tab - $i_m[t]$ is the $m$-th input at a discrete $t$, $\left. i_m[t] \right|_{t=0} = 0$ and
 \\\tab - $o_n[t]$ is the $n$-th output a time $t$
 \\ including recurrent system with some output corresponding to inputs, while
 \\\tab - $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
@@ -714,14 +714,6 @@ we have constructed  a softmax mechanism, directly based on the previous develop
 It is a correct programmatoid mechanism, because $g$ is a constant, so we only have either product with a constant or with a binary value.
 
 We also could have considered $g$ as an input value, yielding product of two valued inputs, thus involving mechanisms discussed previously.
-
-\begin{figure}[H]
-   \includegraphics[width=0.5\textwidth,valign=c]{./softmax.jpg}
-    \hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
-        \caption{Representation of the exp-log function for $K = 2$, $i_2 = 1/2$, with $i_1 \in [0, 1]$ and $g \in \{0, 1/4, 1/2, 3/4, 1\}$, from top to bottom, in black, orange, red, green and blue, respectively. With small $g = 1$ it is exactly a linear average, whereas for $g = 0$ it is close to $\max(x, 1/2)$}.
-        \label{softmax}
-    \end{minipage}
-\end{figure}
 
 Derivations of this subsection are available as \href{https://raw.githubusercontent.com/vthierry/braincraft/master/doc/tex/softmax.mpl.out.txt}{{\tt Maple} code}.
 

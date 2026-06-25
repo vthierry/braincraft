@@ -17,7 +17,7 @@ class ProgrammaticState(State):
                 self.data["timeout"] = 500
 
         def update(self):
-                """ Implements a Task1 minimal solution
+                """ Implements a Task 1,2, or 3 minimal solution
                 """
                 # Variables initialization
                 if self.data["time"] == 1:
@@ -34,6 +34,7 @@ class ProgrammaticState(State):
                 self.data["b_0"] = self.data["b_t"] == 1 and (self.data["p_a"] < 0.7 if self.data["b_a"] == 0 else self.data["b_w"] == 1)
                 self.data["b_t"] = 1 if self.data["b_1"] == 1 else 0 if self.data["b_0"] == 1 else self.data["b_t"]
                 self.data["b_s"] = self.data["b_1"] == 0 and self.data["b_0"] == 1
+                # Manages gauge energy
                 self.data["g_d1"]  = self.data["g_e"] -  self.data["g_e1"] if self.data["b_s"] == 1 and self.data["g_e1"] > 0 and self.data["g_e"] > self.data["g_e1"] else self.data["g_d1"] 
                 self.data["g_e1"]  = self.data["g_e"] if self.data["b_s"] == 1 else self.data["g_e1"] 
                 # Forward versus backward control

@@ -1,14 +1,18 @@
 \documentclass{beamer}
 \usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{amsmath,amssymb,amsfonts}
-\newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
+\usepackage{wasysym} % https://texdoc.org/serve/wasysym.pdf/0
+\newcommand{\hrefc}[2]{\href{#1}{#2 \CheckedBox}}
+\usepackage{newunicodechar}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}}
 \newcommand{\defq}{\stackrel {\rm def}{=}}
 \newcommand{\tab}{\hphantom{4mm}}
 
 \title{Programmatoid and neuronoid computations}
 \author{Nicolas Rougier et al}
 \begin{document}
-\iffalse
 \frame{\titlepage}
 
 \begin{frame}
@@ -32,23 +36,25 @@
 \begin{frame}
 \frametitle{The braincraft benchmark}
 \centerline{\includegraphics[width=0.9\textwidth]{../../data/debug.png}}
+Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/README.md}{README} (please).
 \end{frame}
 
 \begin{frame}
   \frametitle{Three tasks:}
-  \begin{tabular}{|l|l|l|}\hline
-    \parbox[t]{0.25\textwidth}{\href{http://nowhere}{Find the energy source leftward or rightward}.} &
-    \parbox[t]{0.25\textwidth}{\href{http://nowhere}{Find the correct direction, given the blue cue}.} &
-    \parbox[t]{0.25\textwidth}{\href{http://nowhere}{FChoose the best energy source}.} \\
-\hline\end{tabular} \end{frame}
+  \centerline{\begin{tabular}{|l|l|l|}\hline
+    \includegraphics[width=0.3\textwidth]{./task1.png} &
+    \includegraphics[width=0.3\textwidth]{./task2.png} &
+    \includegraphics[width=0.3\textwidth]{./task3.png} \\
+    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Find the energy source leftward or rightward}.} &
+    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Find the correct direction, given the blue cue}.} &
+    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Choose the best energy source}.} \\
+\hline\end{tabular}} \end{frame}
 
 \begin{frame}
   \frametitle{A (simplified) bot, with:}
   \centerline{\includegraphics[width=0.5\textwidth]{./bot.png}}
   ~\\- left, ahead and right proximity sensors \\ \tab  \tab  \tab  \tab $p_\bullet \in  ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}], \bullet \in \{l, a, r\}$, \\- color sensors $c_{\bullet\dagger}$, \\- energy gauge $g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}]$, \\- running at constant velocity, and \\-turning leftward or rightward $d_l \in [0, 1_{+ 5^o}]$.
 \end{frame}
-
-\fi
 
 \begin{frame}
   \frametitle{Heuristics:}
@@ -61,8 +67,149 @@
 \end{itemize}\end{frame}
 \end{document}
 
-
 \begin{frame}
   \frametitle{Programmatic implementation:}
+  \centerline{\includegraphics[width=0.8\textwidth]{./programmatic-implementation.png}}
+  \begin{itemize}
+    \item About 8 internal variables \\ {\small (forward/turns states, turn direction, delays, gauge values)}
+    \item About 40 lines of straight-line program code \\ {\small (beyond initialization and declarations) \\\tab- when \hrefc{http://nowhere}{using about-turn} and \\\tab- about 50 when \hrefc{http://nowhere}{using quarter-turns only}}.
+\end{itemize}\end{frame}
+
+\begin{frame}
+  \frametitle{So what ?}
+  \centerline{\huge From programmatic} ~\\ \centerline{\huge to programmatoid and neuronoid} ~\\ \centerline{\huge implementation.}
 \end{frame}
+
+\begin{frame}
+  \frametitle{The notion of ``programmatoid computation'':}
+- It is an input-output \hrefc{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either \\\tab - binary values $\in \{0, 1\}$ \\\tab - or continuous normalized values $\in [0, 1]$, \\ which evolution is defined using an LN-system with linear units or the step-function $\mbox{H}(\cdot)$ as non-linearity:
+\eqline{\begin{array}{rcl} o_n[t] &=& \left\{ \begin{array}{r} \mbox{H}(z_n[t]) \\ z_n[t] \\ \end{array} \right., \\ z_n[t] &\defq& \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\} \\ \end{array}}
+where $i_m[t]$ is the $m$-th input at a discrete $t$, and $o_n[t]$ an output.
+- A generalized programmatoid computation includes exponential and logarithm as non-linearity, when not other \hrefc{https://en.wikipedia.org/wiki/Pure_function} pure function.
+\end{frame}
+
+\begin{frame}
+  \frametitle{The notion of ``sugared straight-line program'':}
+  - It is an input-output piece of code with \\ \tab - instruction sequences, assigments, conditional instructions, and iterations (no general loops); \\ \tab - using [generalized] programmatoid computation in assignment. \\~\\ \begin{itemize}
+  \item This implements the set of \hrefc{https://en.wikipedia.org/wiki/Primitive_recursive_function}{primitive recursive functions}.
+  \item Any primitive recursive functions rewrites as a programmatoid.
+\end{itemize}
+~\\ - The key idea: \\\tab programmatoid implements conditional expressions \\ on binary or numerical values, i.e.: \centerline{\tt \tiny value = if condition then true\_value else false\_value} rewrites as \centerline{\tt \tiny value = H(condition) true\_value + H(not condition) false\_value} 
+\end{frame}
+
+\begin{frame}[shrink=30] 
+  \frametitle{The reasons why (not a formal proof):}
+\centerline{\begin{tabular}[t]{cc}\hphantom{1mm}\parbox[t]{0.4\textwidth}{~\\\begin{itemize}
+      \item Iterations unfolding \\~\\~\\ ~\\~\\
+      \item Conditional  expansion  \\~\\~\\
+      \item Conditional reduction
+    \end{itemize}} &\parbox[t]{0.6\textwidth}{\tiny
+      \rule{0.5\textwidth}{0.4pt} 
+      \centerline{\parbox{0.5\textwidth}{\tt for n from 0 to n\_1 ≤ n\_max do \\\tab instructions\_1  endfor}}
+      ~\\{$\longrightarrow$}\\~
+      \centerline{\parbox{0.5\textwidth}{\tt  if n ≥ 0 then \\\tab substitute(n =  0, instructions\_1)\\ ...\\if n = n\_1 then \\\tab substitute(n =  n\_1, instructions\_1)}}
+      \rule{0.5\textwidth}{0.4pt} 
+      \centerline{\parbox{0.5\textwidth}{\tt if condition\_1 then instruction\_1 instructions\_2  \\ elif condition\_2 then instructions\_3 \\ … \\ else instructions\_4 endif}}
+      ~\\{$\longrightarrow$}\\~
+      \centerline{\parbox{0.5\textwidth}{\tt if condition\_1 then instruction\_1 endif \\  if condition\_1 then instructions\_2  endif \\  if not condition\_1 and condition\_2 then instructions\_3 endif \\  ...\\  if not condition\_1 and not condition\_2 then instructions\_4 endif}}
+      \rule{0.5\textwidth}{0.4pt} 
+      \centerline{\tt if condition then name = value  endif}
+      ~\\{$\longrightarrow$}\\~
+      \centerline{\tt name = if condition then value else name}
+      \rule{0.5\textwidth}{0.4pt} 
+  }\end{tabular}}\begin{itemize}
+   \item Introducing $\log(\cdot)$ and $\exp(\cdot)$ makes products, thus polynomials, implementable.
+   \item Introducing polynomial, makes regular functions approximatable.
+  \end{itemize}\end{frame}
+
+\begin{frame}
+  \frametitle{The notion of ``neuronoid'':}
+This names the not very biologically plausible simplest biological neuron inspired by mean-field modeling of the Hodgkin–Huxley neuronal axon model:
+\eqline{\tau \frac{\partial v_i}{\partial t}(t) + v_i(t) = z_i(t),  z_i(t) \defq \mbox{h}\left(\sum_j \, w_{ij} \, v_j(t) + w_{i0}\right),}
+using the normalized sigmoid with: \eqline{\mbox{h}(-\infty) = 0, \mbox{h}(0) = 1/2, \mbox{h}'(0) = 1, \mbox{h}(+\infty) = 1, \mbox{h}(x) = 1 - \mbox{h}(-x).}
+~\\{\small \begin{itemize}
+   \item A neuronoid $z \rightarrow \left. h_{\tau = 0}(\omega \, z)\right|_{\omega > 10}$ approximates $H(\cdot)$ below $10^{-10}$. 
+   \item A neuronoid $z \rightarrow \left. \omega \, h_{\tau = 0}(\frac{z}{\omega})\right|_{\omega > 100}$ approximates $z \rightarrow z$ below $10^{-3}$. 
+\end{itemize}} \centerline{
+\hphantom{5cm}\includegraphics[width=0.25\textwidth]{./mollification.jpg} 
+~~~~~~~~~~~~~~\includegraphics[width=0.25\textwidth]{./linearapproximation.jpg}
+}\end{frame}
+
+\begin{frame}
+  \frametitle{Further use of ``programmatoid/neuronoid'':}
+  Combinations of neuronoids ${}_\tau = 0$ approximate regular functions:
+  {\tiny \begin{tabular}[t]{ccc}
+    \includegraphics[width=0.25\textwidth]{./expneuronoid.jpg} &
+    \includegraphics[width=0.25\textwidth]{./logneuronoid.jpg} &
+    \parbox[t]{0.4\textwidth}{\vspace{-2cm}\eqline{\tiny o \defq g \, \underbrace{\left(\frac{1}{K} \sum_k i_k \right)}_{mean} + (1-g) \, \underbrace{\left(\sum_k b_k \, i_k \right)}_{max}}
+      for $b_k$ based on $H(i_h > i_l)$ combinations.} \\
+      The $\exp(\cdot)$ function below $10^{-3}$ &   The $\log(\cdot)$ function below $10^{-2}$ & The softmax operator \\
+  \end{tabular}}  ~\\~\\
+  Neuronoids with $\tau > 0$ implements temporal operators:
+    {\tiny \begin{tabular}[t]{cccc}
+    \includegraphics[width=0.2\textwidth]{./delay1.png} &
+    \includegraphics[width=0.2\textwidth]{./bistable1.png} &
+    \includegraphics[width=0.2\textwidth]{./astable1.png} &
+    \includegraphics[width=0.2\textwidth]{./dlatch.png} \\
+    Delay operator & Bistable operator & Astable operator & D latch \\
+   \end{tabular}}  
+\end{frame}
+
+\begin{frame}[shrink=30] 
+  \frametitle{Implemented functions 1/3}
+  For binary variables $\mbox{{\tt b\_$\bullet$}} \in \{0, 1\}$, continuous variables $\mbox{{\tt v\_$\bullet$}} \in [-1, 1]$, and the sigmoid $h(\cdot)$ the following
+functions, defined previously, are implemented: \\ \centerline{\small \begin{tabular}{ll}&\\
+  {\tt v\_o = h(v)} & The normalized sigmoid. \\
+  {\tt v\_o = H(v)} & Generalized step-function. \\& $\mbox{{\tt v\_o}} \in \{0_{v<0}, 1/2_{v=0}, 1_{v>0}\}$ \\& Converted to {\tt h()}  when the option {\tt prgm["neuronoid"] =  true}.\\
+  {\tt v\_o = Id(v)} & Identity function\\& Converted to a neuronoid when the option {\tt prgm["neuronoid"] =  true}.\\
+  {\tt b\_o = And(b\_1, …)} & Conjunction with a variable number of binary  arguments.\\& Implements {\tt b\_1 and b\_2 …} \\
+  {\tt b\_o = Or(b\_1, …)} & Disjunction with a variable number of binary arguments.\\& Implements {\tt b\_1 or b\_2 …} \\
+  {\tt b\_o = Not(b)} & Negation of a binary value. \\& Implements {\tt not b} \\
+  {\tt b\_ o = If\_b(b\_1, b'\_1, …, b'\_0)} & Binary conditional expression, \\& Implements {\tt if b\_1 then b'\_1 …}. \\
+  {\tt v\_o = If\_v(b\_1, v\_1, …, v\_0)} & Valued conditional expression, \\& Implements {\tt if b\_1 then v\_1 …}. \\
+  {\tt v\_o = Exp\_v(v\_1)} & Exponential function approximation \\& Implements $v_1 \in [-1, 1], e^{v_1} \in [1/e, e] \simeq [0.368, 2.718]$ \\
+  {\tt v\_o = Log\_v(v\_1)} & Natural logarithm approximation \\& Implements $v_1 \in [1, e], \log(v_1) \in [0, 1]$ \\
+  {\tt v\_o = Prod\_v(v\_1, v\_2)} & Multiplication approximation \\& Implements $v_i \in [-1, 1], i \in \{1, 2\}, v_1 \, v_2 \in  [-1, 1]$ \\
+  {\tt v\_o = Prod\_b(b\_1, v\_1, …)} & Sum of binary weights values\\& Implements {\tt b\_1 \, v\_1 + …}.\\& Default missing value is $0$.\\
+\end{tabular}} 
+\end{frame}
+\begin{frame}[shrink=30] 
+  \frametitle{Implemented functions 2/3} \centerline{\small \begin{tabular}{ll}&\\
+  {\tt v\_o = Softmax(v\_1, …, G)} & Mean-max operator. \\ & $\mbox{{\tt G}} \in [0_{maximum}, 1_{average}]$ controls the mean-max balance.\\
+  {\tt Latch\_b(b\_o, b\_i, b\_c)} & Binary memory latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
+  {\tt Latch\_v(b\_o, v\_i, b\_c)} & Valued memory latch. \\& {\tt b\_o} is the  output, \\& {\tt v\_i} is the input,  \\& $\mbox{{\tt b\_c}} \in \{0_{open}, 1_{latched}\}$ is the control. \\
+  {\tt Bistable(b\_o, b\_1, b\_0)} & Two inputs bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_0} resets to $0$, \\& {\tt b\_1} sets to $1$. \\
+  {\tt Bistable(b\_o, b\_i)} & One input bi-stable latch. \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the two-way input.\\
+  {\tt Spikeup(b\_o, b\_i)} & Spike generation on input rising front. \\& {\tt b\_i} is the input, which rising front is detected.\\
+\end{tabular}} 
+\end{frame}
+\begin{frame}[shrink=30] 
+  \frametitle{Implemented functions 3/3} \centerline{\small \begin{tabular}{ll}&\\
+  {\tt Delay(b\_o, b\_i, T)} & Basic delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_i} is the input, that must  remains to 1.\\
+  {\tt Delay\_0(b\_o, b\_1, b\_0, T)} & Delayed output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_1} is the input, \\& {\tt b\_0} is the optional reset.\\
+  {\tt Delay\_1(b\_o, b\_1, b\_0, T)} & Time bounded output. \\& $\mbox{{\tt T}} > 0$ is the delay, in number of global clock event, \\& {\tt b\_o} is the  output, \\& {\tt b\_1} is the input, \\& {\tt b\_0} is the optional reset.\\
+  {\tt Oscillator(b\_o, b\_c, T)} & Oscillatory output. \\& $\mbox{{\tt T}} > 0$ is the period, in number of global clock event. \\& {\tt b\_o} is the  output, \\& $\mbox{{\tt b\_c}} \in \{0_{stop}, 1_{run}\}$ is the control.\\
+\end{tabular}} 
+\end{frame}
+
+\begin{frame}
+  \frametitle{The programmatoid to neuronoid translator}
+  \begin{tabular}[t]{cccc} &
+   \includegraphics[width=0.3\textwidth]{./programmatoid_task@.png} &
+   \includegraphics[width=0.3\textwidth]{./programmatic-implementation.png} &
+   \includegraphics[width=0.3\textwidth]{./res_archi.png} \\
+   \multicolumn{4}{l}{\parbox{\textwidth}{\small \begin{itemize}
+       \item From programmatoid equations … \begin{itemize}
+          \item to Python code … \hphantom{2cm} … {\huge \UParrow} \\ \tab {\tiny a straight-line program with $h(\cdot)$ or $H(\cdot)$ non-linearities, if any.}
+          \item to neural-network weights values … \hphantom{32cm} … {\huge \UParrow} \\ \tab {\tiny using  $h(\cdot)$  non-linearities for all units.}
+   \end{itemize}\end{itemize}}} \\
+  \end{tabular}
+  ~\\
+  {\small The input syntax uses \hrefc{https://en.wikipedia.org/wiki/Maple_(software)}{Maple} syntax and \hrefc{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_make.mpl}{the translator} is implemented in this language, since based on computer algebra symbolic computing.}
+\end{frame}
+
+\begin{frame}
+\centerline{\includegraphics[height=0.8\textheight]{./thatsall.jpg}}
+\end{frame}
+
 \end{document}

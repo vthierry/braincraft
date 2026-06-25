@@ -76,6 +76,7 @@ class ProgrammaticState(State):
                 # Forward versus backward control
                 self.data["d_l"] = 0.035 * self.data["p_r"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 1 else 0
                 self.data["d_r"] = 0.035 * self.data["p_l"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 0 else 0
+                # Dumps current state
                 print(f"   \u007b t: {self.data["time"]:3d} g_e: {self.data["g_e"]:.2f} [{self.g_e0:.2f} {self.g_e1:.2f}] p_lar: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] b_d : {self.b_d} b_t : {self.b_t}  [{self.b_t0} {self.b_t1} {self.b_t2} {self.b_t30}+{self.b_t3}] \u007d", flush=True)
           
 ## Runs and evaluate the bot behavior for the given task
