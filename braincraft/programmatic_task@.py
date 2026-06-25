@@ -15,8 +15,8 @@ class ProgrammaticState(State):
         # - b_a: Quarter-turn (0) versus About-turn (a) turning mode.
         # - b_w: About-turn delay.
         delay = TimeDelay()
-        # - g_e1: Energy after the last turn.
-        # - g_d1: Energy difference, before the next turn, and after the last turn.
+        # - g_e1: Gauge energy after the last turn.
+        # - g_d1: Gauge energy difference, before the next turn, and after the last turn.
         ### Color detection
         # - b_r: Blue detected on the right
 
@@ -27,7 +27,7 @@ class ProgrammaticState(State):
                 self.data["timeout"] = 1000
                 
         def update(self):
-                """ Implements a Task1 minimal solution
+                """ Implements a Task 1,2 or 3 minimal solution
                 """
                 # Variables initialization
                 if self.data["time"] == 1:
@@ -59,6 +59,7 @@ class ProgrammaticState(State):
                 # Stops turning, either in quarter-mode when wall proximity is small enough or in about-turn after a fixed delay
                 elif self.data["b_t"] == 1 and (self.data["p_a"] < 0.7 if self.data["b_a"] == 0 else self.delay.is_done(self.data["time"])):
                         self.data["b_t"] = 0
+                        # Manages gauge energy
                         if self.data["g_e1"] > 0 and self.data["g_e"] > self.data["g_e1"]:
                                 self.data["g_d1"]  = self.data["g_e"] -  self.data["g_e1"]
                         self.data["g_e1"]  = self.data["g_e"]

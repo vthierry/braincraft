@@ -3,6 +3,9 @@
 \usepackage{url} \newcommand{\href}[2]{#2\footnote{\url{#1}}}
 \usepackage{amsmath,amssymb,amsfonts}
 \newcommand{\eqline}[1]{~\vspace{0.1cm}\\\centerline{$#1$}\vspace{0.1cm}\\}
+\usepackage{newunicodechar}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≥}{\ensuremath{\geq}}
 \newcommand{\defq}{\stackrel {\rm def}{=}}
 \newcommand{\tab}{\hphantom{4mm}}
 
@@ -23,7 +26,7 @@ As shown in this figure\footnote{Shared here by courtesy of Nicolas P. Rougier.}
   \hline\multicolumn{3}{|c|}{\mbox{{\bf Input variables}}}\\\hline
   p_l \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Leftward wall proximity, at +30° on the left.\\}} \\\hline 
   p_r \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Rightward wall proximity, at -30° on the  right.\\}} \\\hline 
-  p_a \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Ahead eall proximity, at 0°.\\}} \\\hline 
+  p_a \in ]0_{\mbox{no-wall}}, 1_{\mbox{wall-hit}}] && \mbox{\parbox{5cm}{~\\Ahead wall proximity, at 0°.\\}} \\\hline 
   c_{l\bullet} \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Leftward binary red and blue color detectors.\\}}\\\hline 
   c_{r\bullet}  \in \{0, 1\}, \bullet \in \{b_{\mbox{blue}}, r_{\mbox{red}}\} && \mbox{\parbox{5cm}{~\\Rightward binary red and blue color detectors.\\}} \\\hline 
   g_e \in [0_{\mbox{death}}, 1_{\mbox{full}}] && \mbox{\parbox{5cm}{~\\Energy gauge value.\\}} \\\hline 
@@ -165,6 +168,16 @@ This is given as a side effect of the navigation implementation, and it also wor
       b_a &\leftarrow& \mbox{if }  b_1  \mbox{ and } g_{d1} > 0 \mbox{ and } g_e > g_{e1} \mbox{ and } g_e - g_{e1} > g_{d1} \mbox{ else } b_a \\
  \end{array}} \end{description}
       
+\section{Experimental validation}
+
+\begin{tabular}{l|c|c|c|}
+     	                       & task 1 & task 2 & task 3 \\
+programmatic      &   &  &  \\
+programmaticoid &   &  &  \\
+programmatoid    &  &  &  \\
+neuronoid             &  &  &  \\
+\end{tabular}
+
 \section{Programmatoid computation} \label{programmatoid}
 
 \subsection{Definition of a programmatoid computation}
@@ -183,8 +196,6 @@ where $\mbox{Id}(\cdot)$ stands for the identity function. Here
 \\ including recurrent system with some output corresponding to inputs, while
 \\\tab - $w_{nm}, n \in \{1, N\}, m \in \{ 0, M \}$ are the systems parameters, or, weights for $m > 0$ and bias for $m = 0$.
 
-By design, evaluation is done in sequence at a given $t$, i.e., from $o_1[t]$ to $o_N[t] $.
-
 The step-function, also called Heaviside function, implements the computation of the sign of a value:
 \eqline{\begin{array}{rcl}
     \mbox{H}(x) &\defq& \left\{ \begin{array}{rcl} 1 &\mbox{if}& x > 0\\ 1/2 &\mbox{if}& x = 0\\ 0 &\mbox{if}& x < 0\\ \end{array}\right. \\
@@ -199,6 +210,14 @@ A ``generalized programmatoid computation'' may include other dedicated non-line
 
 For the sake of simplicity if the left hand size correspond to a value at time $t$ and right-hand size to values at $t-1$, which will be always here, and if not informative, temporal indexes are omitted, i.e. the previous equation will be written: 
 \eqline{o_n  \leftarrow \mbox{H}(\sum_{m\in\{1,M\}} w_{nm} \, i_m + w_{n0}), n \in \{1, N\}}
+
+\subsection{On sequential evaluation}
+
+By design, evaluation is done in sequence at a given $t$, i.e., from $o_1[t]$ to $o_N[t]$. Each time the evaluation order counts, this is made explicit in sequel,
+
+However, it must be noted that it is not a limitation because in any programmatoid instruction sequence of the form:
+\eqline{\left\{ \begin{array}{rcl} \cdots \\ o_n[t] &=& f_n\left(\cdots i_m[t-1], \cdots, \cdots o_l[t - 1]  \cdots, \cdots o_k[t]  \cdots  \right), k < n \\ \cdots \\ \end{array} \right.}
+recursively replacing all right-end side values of $o_k[t]$ by the $ f_n\left(\cdot\right)$ correspondent value, will at the fixed point, yields a instruction set for which the evaluation order is meaningless, since interdependences between output variables has been canceled by substitution.
 
 \subsection{Comparison implementation}
 
@@ -278,6 +297,33 @@ As a consequence,
 \\ \tab - {\em A $N$-term conditional expression on continuous variables reduces to a  two layers system of $N$ programmatoid and an output unit with $h_n$ exclusive switches, as defined in the sequel.}
 \end{quotation}
   
+\subsubsection{On conditional instruction implementation}
+
+Let us consider a construct of the form:
+\\\centerline{\tt if condition then name = value  endif}\\
+It is obviously equivalent to the conditional expression:
+\\\centerline{\tt name = if condition then value else name}\\
+in words: the value is change if and only if the condition is true.
+
+Any complex conditional instruction of the form:
+\\\centerline{\parbox{12cm}{\tt if condition\_1 then instruction\_1 instructions\_2  \\ elif condition\_2 then instructions\_3 \\ … \\ else instructions\_4 endif}}\\
+rewrites:
+\\\centerline{\parbox{12cm}{\tt
+      if condition\_1 then instruction\_1 endif \\
+      if condition\_1 then instructions\_2  endif \\
+      if not condition\_1 and condition\_2 then instructions\_3 endif \\
+      ...\\
+      if not condition\_1 and not condition\_2 then instructions\_4 endif}}\\
+in words: any conditional instruction decomposes into elementary conditional expressions.
+
+Similarly fixed length loops can be easily expanded, thus can also be introduced as a syntactic sugar in straight-line pieces of codes, e.g. a construct of the form, for a bounded variable value {\tt n\_1, 0 ≤  n\_1 ≤ n\_max}
+\\\centerline{\parbox{12cm}{\tt for n from 0 to n\_1 ≤ n\_max do instructions\_1  endfor}}\\
+rewrites:
+\\\centerline{\parbox{12cm}{\tt if n ≥ 0 then substitute(n =  0, instructions\_1)\\ ...\\if n = n\_1 then substitute(n =  n\_1, instructions\_1)\\ .}}\\
+in words: expands the loop in sequence for any possible value, while if {\tt n\_1 > n\_max} a compilation error is to be thrown.
+
+All together, a combination of straight-line pieces of codes with conditional expression or fixed length loops, decomposes into a pure straight-line piece of code.
+
 \section{Neuronoid computation} \label{neuronoid}
 
 \subsection{Neuronoid unit}
@@ -757,7 +803,8 @@ The \href{https://github.com/vthierry/braincraft/blob/master/braincraft/programm
   
 \subsection{Running at the programmatoid level}
 
-At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}# A tiny example of programmatoid
+At the programmatoid level, the system is defined by a set of equations of the form: \begin{verbatim}
+# A tiny example of programmatoid
 subs( ## Fixed parameters sequence of constant values
     T = 10, ### The delay
     constantName = constantValue  ### Any other constants
@@ -813,19 +860,98 @@ where:
 
 In fact this compilation option is simply used to verify numerically that such a network is totally equivalent to programmatoid implementation with only neuronoids.
 
-\section{Experimantal validation}
-
-\begin{tabular}{l|c|c|c|}
-     	                       & task 1 & task 2 & task 3 \\
-programmatic      &   &  &  \\
-programmaticoid &   &  &  \\
-programmatoid    &  &  &  \\
-neuronoid             &  &  &  \\
-\end{tabular}
-
 \bibliographystyle{apalike}\bibliography{AIDE}
 
-\appendix \section{Programmatoid package reference}
+\appendix
+
+\section{An alternative solution without about-turn}
+
+We have proposed half-turn mechanism, because the implementation is relatively simpler, thus clearer, for benchmarking the programmatoid and neuronoid implementations.
+However we also can propose a quarter-turn implementation.
+
+\subsubsection{Navigation}\begin{description}
+\item[Heuristic]: The bot runs at constant velocity,
+\\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
+\\\tab (ii) perform a quarter-turn in the preferred orientation as soon as a wall is closed ahead, or if in the middle of the corridor.
+\\- With this navigation mechanism the bot performs either leftward or rightward half-loops, traversing the central corridor.
+\\- In fact, the situation is quite complex because the sensors do {\em not} detect any crossing, because the field of view is too narrow. Therefore, predefined delays are to be used, in order to detect tthe middle of the downward corridor.
+\item[Internal constants]  \eqline{\begin{array}{rcll}
+    \gamma &=& 0.035 & \mbox{\parbox{12cm}{Linear feedback gain in forward mode, maximize stability without oscillation.}} \\
+    \alpha    &=& 5.0 & \mbox{\parbox{12cm}{Maximal turn angle, allowing to perform a quater turn in $18$ time steps.}} \\
+    \beta_1   &=& 0.8 & \mbox{\parbox{12cm}{Proximity threshold triggering a quater-turn.}} \\
+    \beta_0   &=& 0.7 & \mbox{\parbox{12cm}{Proximity threshold ending a quater-turn.}} \\
+    \delta _1   &=& 18 & \mbox{\parbox{12cm}{Quarter-turn duration in number of time steps.}} \\
+    \delta _0   &=& 8 & \mbox{\parbox{12cm}{Delay between two quarter-turns in number of time steps.}} \\
+\end{array}}
+\item[Internal variable]  \eqline{\begin{array}{rcll}
+  b_d \in \{0_{\mbox{rightward}}, 1_{\mbox{leftward}}\}, &\left.b_d\right|_{t = 0} = 0 & \mbox{Quarter-turn direction, either left (1) or right (0).} \\
+  b_t \in \{0_{\mbox{forward}}, 1_{\mbox{turning}}\}, &\left.b_t\right|_{t = 0} = 0 & \mbox{Forward (0) versus turning (1) mode.} \\
+  b_{t\bullet} \in \{0, 1\}, \bullet \in \{0, 3\}&\left.b_{t\bullet}\right|_{t = 0} = 0 & \mbox{Turn 0, 1, 2 or 3 mode.} \\
+  b_{t30} \in \{0, 1\}&\left.b_{t30}\right|_{t = 0} = 0 & \mbox{Turn 3 waiting delay before turing.} \\
+  g_{e\bullet} \in \{0, 1\}, \bullet \in \{0, 1\}&\left.g_{e\bullet}\right|_{t = 0} = 0 & \mbox{Energy after and before turning.} \\
+  b_{3w\bullet} \in \{0, 1\}, \bullet \in \{0, 1\}&\left.g_{e\bullet}\right|_{t = 0} = 0 & \mbox{Delay variables for turrn 3 start and stop.} \\
+\end{array}}
+\item[Implementation] \begin{verbatim}
+  # Starts turning because of the wall distance
+  if b_t == 0 and b_t30 == 0 and b_t3 == 0 and p_a > 0.8
+    b_t = 1
+    # Counts the turns
+    if b_t0 == 0 and  b_t1 == 0 and b_t2 == 0
+      b_t0 = 1
+    elif b_t1 == 0 and b_t2 == 0
+      b_t1 = 1
+      b_t0 = 0
+    elif b_t2 == 0
+      b_t2 = 1
+      b_t1 = 0
+     # Stores energy before and after a corridor
+     if b_t2 == 1
+      g_e0 = g_e
+    elif b_t1 == 1
+      g_e1 = g_e
+    elif b_t0 == 1
+      g_e0 = 0
+      g_e1 = 0
+      endif
+  # Stops turning because of the wall distance
+  elif b_t == 1 and b_t30 == 0 and b_t3 == 0 and p_a < 0.7
+    b_t = 0
+  endif
+  # Updates time delay variables
+  Delay_0(b_t3w0, b_t == 0 and b_t30 == 0 and b_t3 == 0 and b_t2 == 1, 8) 
+  Delay_0(b_t3w1, b_t30 == 1 and b_t3w0 == 1, b_t3w1, 18)
+  # Starts and stops turning because of a left crossing in the middle of the corridor
+  if b_t == 0 and b_t30 == 0 and b_t3 == 0 and b_t2 == 1
+    b_t2 = 0
+    b_t30 = 1
+  elif b_t30 == 1 and  b_t3w0 == 1
+    b_t = 1
+    b_t3 = 1
+    b_t30 = 0
+  elif b_t3 == 1 and b_t3w1 == 1
+    b_t = 0
+    b_t3 = 0
+  endif
+  # Changes direction if energy did not increase
+  if  g_e0 <  g_e1
+    b_d = 1 - b_d
+    endif\end{verbatim}
+    with the same equations to control the {\tt d\_l} and {\tt d\_r} output variables as before. The behavior is tested in \href{https://raw.githubusercontent.com/vthierry/braincraft/master/braincraft/programmatic_quarter_turn_task1}{programmatic\_quarter\_turn\_task1.py}.
+\end{description}
+
+\begin{figure}[H]
+  \includegraphics[width=0.5\textwidth,valign=c]{./navigation2.png}
+\hfill \begin{minipage}{\dimexpr 0.5\linewidth-\columnsep}
+        \caption{Illustrates the quarter turn implementation: it starts when the ahead proximity to a wall exceeds a threshold, and has a predefined duration, using a timer.}
+        \label{starting-moves}
+      \caption{Illustrates the navigation implementation. The navigation is a loop  made of 4 quarter-turns.
+        \\-Turns 0, 1 and 2 are triggered by the wall ahead proximity.
+        \\-Turn 3 is triggered by a delay after turn 2 and has a predefined precalibrated duration.}
+        \label{navigation}
+\end{minipage}
+\end{figure}
+
+\section{Programmatoid package reference}
 
 \subsection{Package and compiler options and outputs}\label{package-options}
 

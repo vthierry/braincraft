@@ -1,7 +1,16 @@
 
 define TODO
+faire les slime très rapidement de bravecraft avec juste quelques mots clés et des liens 
+
+Ajouter l´option neurnoid au niveau du makefile et de _make.sh
 
 Changer de variable pour les omega * f(…)
+
+Ajouter les pages de résultat à index.html
+
+Ajouter les liens vers video et sources dans le prgm.html sous forme de champ avec url
+
+Faire manip avec 10 runs et sans timeout
 
 endef
 
@@ -11,6 +20,7 @@ all: rebuild \
   out/programmatic_task1 \
   out/programmatic_task2 \
   out/programmatic_task3 \
+  out/programmatic_quarter_turn_task1 \
   out/programmaticoid_task1 \
   out/programmaticoid_task2 \
   out/programmaticoid_task3 \

@@ -7,25 +7,22 @@ subs(
   beta _1 = 0.7,		### Proximity turn stop threshold
   delta  = 40,			### About-turn number of steps
 ,[
-  prgm_options = { challenge = @ },
-
-#
-#              self.data["b_d"] = 1 if self.data["challenge"] == 2 and self.data["b_k"] == 0 and self.data["c_lb"] == 1 else self.data["b_d"]
-#                self.data["b_k"] = 1 if self.data["challenge"] != 2 or self.data["c_lb"] == 1 or self.data["c_rb"] == 1 else self.data["b_k"] 
-#                self.data["b_1"] = self.data["b_t"] == 0 and self.data["p_a"] > 0.8
-#                self.data["b_a"]  =  ((1 if self.data["g_e1"] > 0 and self.data["g_e"] > self.data["g_e1"]  else self.data["b_a"]) if self.data["challenge"] != 3 else (1 if self.data["g_d1"] > 0 and self.data["g_e"] - self.data["g_e1"]  > self.data["g_d1"] else self.data["b_a"])) if self.data["b_1"] == 1 else self.data["b_a"]
-#                self.data["b_d"] = 1 - self.data["b_d"] if  self.data["b_1"] == 1 and self.data["b_a"] == 1 else self.data["b_d"] 
-#                if self.data["b_1"] == 1 and self.data["b_a"] == 1:
-#                        self.delay.start(self.data["time"], 42)
-#                self.data["b_w"] = self.delay.is_done(self.data["time"])
-#                self.data["b_0"] = self.data["b_t"] == 1 and (self.data["p_a"] < 0.7 if self.data["b_a"] == 0 else self.data["b_w"] == 1)
-#                self.data["b_t"] = 1 if self.data["b_1"] == 1 else 0 if self.data["b_0"] == 1 else self.data["b_t"]
-#                self.data["b_s"] = self.data["b_1"] == 0 and self.data["b_0"] == 1
-#                self.data["g_d1"]  = self.data["g_e"] -  self.data["g_e1"] if self.data["b_s"] == 1 and self.data["g_e1"] > 0 and self.data["g_e"] > self.data["g_e1"] else self.data["g_d1"] 
-#                self.data["g_e1"]  = self.data["g_e"] if self.data["b_s"] == 1 else self.data["g_e1"] 
-#                # Forward versus backward control
-#                self.data["d_l"] = 0.035 * self.data["p_r"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 1 else 0
-#                self.data["d_r"] = 0.035 * self.data["p_l"] if self.data["b_t"] == 0 else 5 if self.data["b_d"] == 0 else 0
-
+  prgm_options = { challenge = @, networking = false},
+  # Bot state control
+  b_d = If_b(And(challenge = 2, Not(b_k), c_lb), 1, b_d),
+  b_k = If_b(Or(challenge != 2 or c_lb or c_rb, 1, b_k),
+  b_1 = And(Not(b_t) , p_a > 0.8),
+  b_a = If_b(If_b(challenge = 3, And(g_d1 > 0, g_e - g_e1  > g_d1), And(g_e1 > 0, g_e > g_e1)), 1, b_a),
+  b_d = If_b(And(b_1, b_a), Not(b_d), b_d),
+  Delay_0(b_w, And(b_1, b_a), delta),
+  b_0 = And(b_t, If_b(b_a, b_w, p_a < 0.7)),
+  b_t = If_b(b_1, 1, b_0, 0, b_t),
+  b_s = And(Not(b_1),  b_0),
+  ### Energy variables update
+  g_d1 = If_v(And(b_s, g_e1 > 0, g_e > g_e1), g_e - g_e1, g_d1),
+  g_e1 = If_v(b_s, g_e, g_e1),
+  ### Navigation equations
+  d_l = If_v(b_t, If_v(b_d, 5, 0), 0.035 * p_r),
+  d_r = If_v(b_t, If_v(b_d, 0, 4), 0.035 * p_l)
 ]):
 
