@@ -13,6 +13,9 @@
 \title{Programmatoid and neuronoid computations}
 \author{Nicolas Rougier et al}
 \begin{document}
+
+\iffalse
+
 \frame{\titlepage}
 
 \begin{frame}
@@ -193,7 +196,7 @@ functions, defined previously, are implemented: \\ \centerline{\small \begin{tab
 \end{frame}
 
 \begin{frame}
-  \frametitle{The programmatoid to neuronoid translator}
+  \frametitle{The programmatoid to neuronoid translator:}
   \begin{tabular}[t]{cccc} &
    \includegraphics[width=0.3\textwidth]{./programmatoid_task@.png} &
    \includegraphics[width=0.3\textwidth]{./programmatic-implementation.png} &
@@ -206,6 +209,22 @@ functions, defined previously, are implemented: \\ \centerline{\small \begin{tab
   \end{tabular}
   ~\\
   {\small The input syntax uses \hrefc{https://en.wikipedia.org/wiki/Maple_(software)}{Maple} syntax and \hrefc{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_make.mpl}{the translator} is implemented in this language, since based on computer algebra symbolic computing.}
+\end{frame}
+
+\fi
+
+\begin{frame}
+  \frametitle{Open science approach and experimental reproducibility:}
+\begin{itemize}
+  \item Everything is available online under the \hrefc{chttps://spdx.org/licenses/CECILL-C}{CECILL-C} {\tiny (for the code)} and \hrefc{https://creativecommons.org/licenses/by/4.0{CC-BY} {\tiny (for other resources)} licenses.
+  \item All sources are available in a \hrefc{https://github.com/vthierry/braincraft/programmatoid}{{\tt git} repository.
+  \item All results are available via a \hrefc{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/public/index.html}{single web-page}.
+  \item All commands are gathered in fully documented \hrefc{https://github.com/vthierry/braincraft/blob/master/programmatoid/makefile}{makefile}:
+    \begin{itemize}
+       \item The user is simply supposed to enter {\tt make clean build} to check the reproducibility.
+       \item The test's screen casts are recorded, and the complete process trace is made available.
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}

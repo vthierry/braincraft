@@ -1,12 +1,27 @@
 #
-# This files gather all commands regarding using the braincraft challenge as a programmatoid benchmark
-# 
+# Gathers all commands regarding using the braincraft challenge as a programmatoid benchmark
+#
+# Here: https://github.com/vthierry/braincraft/programmatoid
+# Doc:  https://makefiletutorial.com
+#
+define TODO
 
-## Configures properly the makefile in silent mode, with bash, with automatic usage
+Faire manip avec 10 runs et sans timeout
 
-.SILENT: $(shell sed -n 's/^\([a-z]*\):.*/\1/p' < makefile)
+Changer de variable pour les omega * f(…) apres 1ers teste programmatoid
+
+endef
+
+
+default: build
+
+## Configures properly the makefile in silent mode, with bash, avoiding spurious paralleism, with automatic usage
+
+.SILENT: $(shell sed -n 's/^\([^:]*\):.*/\1/p' < makefile)
 
 export SHELL := /bin/bash
+
+.NOTPARALLEL:
 
 usage: # Shows the makefile usage.
 	echo -e 'Usage: make $$command\nCommands:'
@@ -22,7 +37,7 @@ sync: # Synchronizes files with the github repository.
 ## build_all
 
 build: # Builds all test, demo and documentation files.
-	echo $(BUILD)
+	$(MAKE) -s $(BUILD)
 
 BUILD = \
 	../public/api/programmatoid_utils.html \
@@ -31,13 +46,17 @@ BUILD = \
 
 ## build_api
 
-../public/api/programmatoid_utils.html: ../braincraft/programmatoid_utils.py
-	rm -rf $(@D)/* ; pdoc --logo ../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../../data/braincraft-favicon.png   --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o api
+../public/api/programmatoid_utils.html: ./src/programmatoid_utils.py
+	rm -rf $(@D)/* ; pdoc --logo ../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../data/braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../public/api
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 
 ## build_tex
 
-BUILD_TEX := $(patsubst %.odg,%.png,$(wildcard doc/*.odg)) $(patsubst %.mpl,%.mpl.out.txt,$(wildcard doc/*.mpl)) $(patsubst %.tex,%.pdf,$(wildcard tex/*.tex)) ../public/programmatoid.png
+BUILD_TEX := \
+  $(patsubst %.odg,%.png,$(wildcard doc/*.odg)) \
+  $(patsubst %.mpl,%.mpl.out.txt,$(wildcard doc/*.mpl)) \
+  ../public/programmatoid.png \
+  ../public/programmatoid-slides.png
 
 ../public/%.pdf: doc/%.tex $(wildcard doc/*.odg) $(wildcard doc/*.mpl) $(wildcard doc/*.bib) 
 	cd tex; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; rm -f $*.aux $*.bbl $*.blg $*.toc $*.nav $*.snm $*.out ; ok=
@@ -49,64 +68,55 @@ doc/%.mpl.out.txt: doc/%.mpl
 doc/%.png : doc/%.odg
 	libreoffice --headless --convert-to png --outdir $(@D) $^
 
-../public/programmatoid.png: doc/programmatoid.pdf
-	pdftk $^ cat 1 output programmatoid-0.pdf
-	convert programmatoid-0.pdf $@
-	rm programmatoid-0.pdf
+../public/%.png: public/%.pdf
+	pdftk $^ cat 1 output /tmp/%-0.pdf ; convert /tmp/%-0.pdf $@ ; rm /tmp/%-0.pdf
 
 ## build_demo
 
+DEMOS := \
+  programmatic_task1 \
+  programmatic_task2 \
+  programmatic_task3 \
+  programmatic_quarter_turn_task1 \
+  programmaticoid_task1 \
+  programmaticoid_task2 \
+  programmaticoid_task3 \
+  programmatoid_task1 \
+  programmatoid_task2 \
+  programmatoid_task3 \
+ 
 BUILD_DEMO := \
-  ../public/programmatic_task1 \
-  ../public/programmatic_task2 \
-  ../public/programmatic_task3 \
-  ../public/programmatic_quarter_turn_task1 \
-  ../public/programmaticoid_task1 \
-  ../public/programmaticoid_task2 \
-  ../public/programmaticoid_task3 \
-  ../public/programmatoid_task1 \
-  ../public/programmatoid_task2 \
-  ../public/programmatoid_task3
+  $(patsubst %,../public/%, $(DEMOS)) \
+  ../public/index.html
 
-../public/%: %.py
-	echo ./programmatoid_challenge.sh -c $* $^
+../public/%: ./src/%.py
+	echo ./src/programmatoid_challenge.sh -c $* $^
 
-../public/programmatic_task%: programmatic_task@.py
-	echo ./programmatoid_challenge.sh -c $* $^
+../public/programmatic_task%: ./src/programmatic_task@.py
+	echo ./src/programmatoid_challenge.sh -c $* $^
 
-../public/programmaticoid_task%: programmaticoid_task@.py
-	echo ./programmatoid_challenge.sh -c $* $^
+../public/programmaticoid_task%: ./src/programmaticoid_task@.py
+	echo ./src/programmatoid_challenge.sh -c $* $^
 
-../public/programmatoid_task%: programmatoid_task@.mpl
-	echo ./programmatoid_challenge.sh -c $* $^
+../public/programmatoid_task%: ./src/programmatoid_task@.mpl
+	echo ./src/programmatoid_challenge.sh -c $* $^
 
-define TODO
+../public/index.html: $(patsubst %,../public/%, $(DEMOS))
+	cp $@ $@~ ; sed 's/const  *demos *= *\[[^]]*\]/const  demos = [ $(patsubst %,"%,",$(DEMOS))]/' < $@~ | sed 's/,]/ ]/' > $@
 
-makefile unique à la racine aamev make qui remonte pour le trouver
+## show
 
-ajouter tout de suite la mise en forme du HTML en retour d expérience mettre à jour les liens dans les slides et dans le document latex
+### Detects a browser if not yet defined
+ifeq (,$(BROWSER))
+BROWSERS = chromium firefox google-chrome
+export BROWSER = $(shell l=($(foreach b,$(BROWSERS),$(shell if which -s $(b) ; then echo $(b) ; fi))) ; echo $${l[0]})
+endif
 
-ajouter slide sur l expérience reproductible avec l'idée d'un mec five unique make five
+show: build # Shows the public home page.
+	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/public/index.html
 
-Changer de variable pour les omega * f(…) apres 1ers teste programmatoid
-
-Ajouter les pages de résultat à index.html
-
-Ajouter les liens vers video et sources dans le prgm.html sous forme de champ avec url
-
-Faire manip avec 10 runs et sans timeout
-
-
-# Opening some  web pages
-
-git:
-	$(BROWSER) https://github.com/vthierry/braincraft
-
-home:
-	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/doc/index.html
-
-endef
-
+clean: # Cleans all built files to check the reproducibility
+	/bin/rm -f src/programmatoid_make.mw ../public/*.png ../public/*/*.*
 
 ## These two targets are only to be used by vthierry
 
