@@ -815,21 +815,7 @@ This piece of {\tt Maple} code, stored in a file of the form {\tt prgm\_name.mpl
 It is output as a piece of {\tt Python} code and then executed in the desired environment using the:
 \begin{center}\href{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_challenge.sh}{\tt programmatoid challenge script}\end{center}
 \begin{verbatim}
-Usage: $0 [-h | [-s] $prgm]
-  - The input is:
-     - Either a programmatic  source in a $prgm.py  file,
-     - Or a programmatoid source is in a $prgm.mpl file.
-  - The compilation output is saved:
-    -  In a out/$prgm/prgm.py file for the init() and update() procedures.
-     - In a out/$prgm/prgm.mw file for the maple compilation output.
-  - The test is run executing an automatically generated out/$prgm/test.py file
-  - The compilation and execution output is available:
-     - In out/$prgm/test.out.wjson (in weak JSON syntax) in text form.
-     - In out/$prgm/test.out.html in HTML format.
-     - In out/$prgm/test.mkv for the screen cast format, when in programmatic mode.
-  Options:
-   -s : shows the result in the current BROWSER if defined.
-   -h : shows this usage and exit.
+Usage: A COMPLETER QUAND STABLE
 \end{verbatim}
 
 The compilation is parameterized by a set of options given in appendix~\ref{package-options} and is defined using a set of functions given in appendix~\ref{programmatoid-functions} corresponding to all functionnalities defined in this document.

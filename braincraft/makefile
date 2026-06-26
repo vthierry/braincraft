@@ -1,8 +1,5 @@
 
 define TODO
-faire les slime très rapidement de bravecraft avec juste quelques mots clés et des liens 
-
-Ajouter l´option neurnoid au niveau du makefile et de _make.sh
 
 Changer de variable pour les omega * f(…)
 
@@ -27,6 +24,9 @@ all: rebuild \
   out/programmatoid_task1 \
   out/programmatoid_task2 \
   out/programmatoid_task3
+
+out/%: %.py
+	echo ./programmatoid_challenge.sh -c $* $^
 
 out/programmatic_task%: programmatic_task@.py
 	echo ./programmatoid_challenge.sh -c $* $^
