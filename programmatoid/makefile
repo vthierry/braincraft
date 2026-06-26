@@ -57,16 +57,16 @@ doc/%.png : doc/%.odg
 ## build_demo
 
 BUILD_DEMO := \
-  out/programmatic_task1 \
-  out/programmatic_task2 \
-  out/programmatic_task3 \
-  out/programmatic_quarter_turn_task1 \
-  out/programmaticoid_task1 \
-  out/programmaticoid_task2 \
-  out/programmaticoid_task3 \
-  out/programmatoid_task1 \
-  out/programmatoid_task2 \
-  out/programmatoid_task3
+  ../public/programmatic_task1 \
+  ../public/programmatic_task2 \
+  ../public/programmatic_task3 \
+  ../public/programmatic_quarter_turn_task1 \
+  ../public/programmaticoid_task1 \
+  ../public/programmaticoid_task2 \
+  ../public/programmaticoid_task3 \
+  ../public/programmatoid_task1 \
+  ../public/programmatoid_task2 \
+  ../public/programmatoid_task3
 
 ../public/%: %.py
 	echo ./programmatoid_challenge.sh -c $* $^
