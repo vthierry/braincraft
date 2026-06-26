@@ -30,7 +30,7 @@ usage: # Shows the makefile usage.
 
 sync: # Synchronizes files with the github repository.
 	cd doc ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
-	find .. -name 'nohup.out' -o -name '*~' -delete
+	find .. \( -name 'nohup.out' -o -name '*~' \) -delete
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
 ## build_all
