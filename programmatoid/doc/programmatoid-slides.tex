@@ -2,7 +2,7 @@
 \usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{wasysym} % https://texdoc.org/serve/wasysym.pdf/0
-\newcommand{\hrefc}[2]{\href{#1}{#2 \CheckedBox}}
+\newcommand{\hrefc}[2]{\href{#1}{{#2 \CheckedBox}}}
 \usepackage{newunicodechar}
 \newunicodechar{≤}{\ensuremath{\leq}}
 \newunicodechar{≥}{\ensuremath{\geq}}
@@ -13,8 +13,6 @@
 \title{Programmatoid and neuronoid computations}
 \author{Nicolas Rougier et al}
 \begin{document}
-
-\iffalse
 
 \frame{\titlepage}
 
@@ -33,7 +31,6 @@
   \item To illustrate  a feed-forward neural network computational property.
   \item To provide an approximate neural network complexity  lower bound, given a task.
   \item To obtain a parsimonious computation tool.
-  \item Why not ?
 \end{itemize}} \end{frame}
 
 \begin{frame}
@@ -68,7 +65,6 @@ Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/READ
     \item Stores the preferred quarter-turn direction, e.g. from cue.
     \item Stores previous energy feeds for comparison.
 \end{itemize}\end{frame}
-\end{document}
 
 \begin{frame}
   \frametitle{Programmatic implementation:}
@@ -85,19 +81,21 @@ Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/READ
 
 \begin{frame}
   \frametitle{The notion of ``programmatoid computation'':}
-- It is an input-output \hrefc{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either \\\tab - binary values $\in \{0, 1\}$ \\\tab - or continuous normalized values $\in [0, 1]$, \\ which evolution is defined using an LN-system with linear units or the step-function $\mbox{H}(\cdot)$ as non-linearity:
-\eqline{\begin{array}{rcl} o_n[t] &=& \left\{ \begin{array}{r} \mbox{H}(z_n[t]) \\ z_n[t] \\ \end{array} \right., \\ z_n[t] &\defq& \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\} \\ \end{array}}
+- It is an input-output \hrefc{https://en.wikipedia.org/wiki/Straight-line_program}{straight-line program} implementing an operator on either {\small \\\tab - binary values $\in \{0, 1\}$ \\\tab - or continuous normalized values $\in [0, 1]$,} \\ which evolution is defined using an LN-system with linear units or the step-function $\mbox{H}(x) \in \{0_{x < 0}, {1/2}_{x = 0}, 1_{x >0}\}$ as non-linearity:
+\eqline{\small \begin{array}{rcl} o_n[t] &=& \left\{ \begin{array}{r} \mbox{H}(z_n[t]) \\ z_n[t] \\ \end{array} \right., \\ z_n[t] &\defq& \sum_{m\in\{1,M\}} w_{nm} \, i_m[t-1] + w_{n0}, n \in \{1, N\} \\ \end{array}}
 where $i_m[t]$ is the $m$-th input at a discrete $t$, and $o_n[t]$ an output.
-- A generalized programmatoid computation includes exponential and logarithm as non-linearity, when not other \hrefc{https://en.wikipedia.org/wiki/Pure_function} pure function.
+~\\ - The key idea: \vspace{-3mm} \begin{center} {\small programmatoid implements conditional expressions \\ on binary or numerical values:} \vspace{2mm} \\ {\tt \tiny value = if condition then true\_value else false\_value \\ $\longrightarrow$ \vspace{-2mm} \\ value = H(condition) true\_value + H(not condition) false\_value} \end{center}
+{\small For a property ${\cal P}$, $\mbox{H}({\cal P}) \in \{0_{\mbox{${\cal P}$ is false}}, 1_{\mbox{${\cal P}$ is true}}\}$.}
 \end{frame}
 
 \begin{frame}
   \frametitle{The notion of ``sugared straight-line program'':}
   - It is an input-output piece of code with \\ \tab - instruction sequences, assigments, conditional instructions, and iterations (no general loops); \\ \tab - using [generalized] programmatoid computation in assignment. \\~\\ \begin{itemize}
   \item This implements the set of \hrefc{https://en.wikipedia.org/wiki/Primitive_recursive_function}{primitive recursive functions}.
-  \item Any primitive recursive functions rewrites as a programmatoid.
+  \item Any primitive recursive functions rewrites as a generalized programmatoid:\begin{itemize}
+  \item A generalized programmatoid computation includes: \\- exponential and logarithm as non-linearity, when not \\- other \hrefc{https://en.wikipedia.org/wiki/Pure_function} pure function.
 \end{itemize}
-~\\ - The key idea: \\\tab programmatoid implements conditional expressions \\ on binary or numerical values, i.e.: \centerline{\tt \tiny value = if condition then true\_value else false\_value} rewrites as \centerline{\tt \tiny value = H(condition) true\_value + H(not condition) false\_value} 
+\end{itemize}
 \end{frame}
 
 \begin{frame}[shrink=30] 
@@ -211,18 +209,16 @@ functions, defined previously, are implemented: \\ \centerline{\small \begin{tab
   {\small The input syntax uses \hrefc{https://en.wikipedia.org/wiki/Maple_(software)}{Maple} syntax and \hrefc{https://github.com/vthierry/braincraft/blob/master/braincraft/programmatoid_make.mpl}{the translator} is implemented in this language, since based on computer algebra symbolic computing.}
 \end{frame}
 
-\fi
-
 \begin{frame}
-  \frametitle{Open science approach and experimental reproducibility:}
-\begin{itemize}
-  \item Everything is available online under the \hrefc{chttps://spdx.org/licenses/CECILL-C}{CECILL-C} {\tiny (for the code)} and \hrefc{https://creativecommons.org/licenses/by/4.0{CC-BY} {\tiny (for other resources)} licenses.
-  \item All sources are available in a \hrefc{https://github.com/vthierry/braincraft/programmatoid}{{\tt git} repository.
+  \frametitle{Open science approach and experimental reproducibility:} \begin{itemize}
+  \item Everything is available online \\\tab under the \hrefc{https://spdx.org/licenses/CECILL-C}{CeCILL-C} {\small (for the code)} and \\\tab under \hrefc{https://creativecommons.org/licenses/by/4.0}{CC-BY} {\small (for other resources)} licenses.
+  \item All sources are available in a \hrefc{https://github.com/vthierry/braincraft/programmatoid}{{\tt git}} repository.
   \item All results are available via a \hrefc{https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/public/index.html}{single web-page}.
-  \item All commands are gathered in fully documented \hrefc{https://github.com/vthierry/braincraft/blob/master/programmatoid/makefile}{makefile}:
+  \item All commands are gathered in fully documented \hrefc{https://github.com/vthierry/braincraft/blob/master/programmatoid/makefile}{{\tt makefile}}:
     \begin{itemize}
-       \item The user is simply supposed to enter {\tt make clean build} to check the reproducibility.
-       \item The test's screen casts are recorded, and the complete process trace is made available.
+       \item The \hrefc{https://en.wikipedia.org/wiki/Reproducibility}{reproducibility} test, simply writes: \\\tab  {\small \tt make rebuild}.
+       \item The test's screen casts are recorded.
+       \item The complete process trace is made available, \\\tab  in \hrefc{https://line.gitlabpages.inria.fr/aide-group/wjson}{wJSON}, easily readable.
     \end{itemize}
   \end{itemize}
 \end{frame}
