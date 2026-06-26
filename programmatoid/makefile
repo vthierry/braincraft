@@ -15,7 +15,7 @@ usage: # Shows the makefile usage.
 ## git_sync
 
 sync: # Synchronizes files with the github repository.
-	cd doc/tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
+	cd doc ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
 	rm -f `find -name 'nohup.out' -o -name '*~'`
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
