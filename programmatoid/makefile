@@ -12,7 +12,6 @@ Changer de variable pour les omega * f(…) apres 1ers teste programmatoid
 
 endef
 
-
 default: build
 
 ## Configures properly the makefile in silent mode, with bash, avoiding spurious paralleism, with automatic usage
@@ -49,6 +48,7 @@ BUILD = \
 ../public/api/programmatoid_utils.html: ./src/programmatoid_utils.py
 	rm -rf $(@D)/* ; pdoc --logo ../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../data/braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../public/api
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
+	git add $(@D)
 
 ## build_tex
 
@@ -70,6 +70,7 @@ doc/%.png : doc/%.odg
 
 ../public/%.png: public/%.pdf
 	pdftk $^ cat 1 output /tmp/%-0.pdf ; convert /tmp/%-0.pdf $@ ; rm /tmp/%-0.pdf
+	git add $@
 
 ## build_demo
 
