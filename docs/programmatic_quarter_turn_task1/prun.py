@@ -20,9 +20,9 @@ class ProgrammaticState(State):
  
         def __init__(self):
                 self.data["challenge"] = 1
-                self.data["runs"] = 1
+                self.data["runs"] = 10
                 self.data["rate"] = 0
-                self.data["timeout"] = 100
+                self.data["timeout"] = 0
 
         def update(self):
                 """ Implements a Task1 minimal solution

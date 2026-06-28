@@ -9,7 +9,7 @@ Changer de variable pour les omega * f(…) apres 1er test programmatoid
 endef
 
 default:
-#	/bin/rm -rf ../public/programmatic_quarter_turn_task1
+#	/bin/rm -rf ../docs/programmatic_quarter_turn_task1
 	$(MAKE) build
 
 ## Configures properly the makefile in silent mode, with bash, avoiding spurious paralleism, with automatic usage
@@ -27,7 +27,7 @@ usage: # Shows the makefile usage.
 ## git_sync
 
 sync: # Synchronizes files with the github repository.
-	cd doc ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
+	cd tex ; rm -f *.aux *.bbl *.blg *.out *.log *.toc *.nav *.snm
 	find .. \( -name 'nohup.out' -o -name '*~' \) -delete
 	git pull -q ; git commit -q -a -m 'sync from makefile' ; git push -q ; git status -s
 
@@ -37,14 +37,14 @@ build: # Builds all test, demo and documentation files.
 	$(MAKE) $(BUILD)
 
 BUILD = \
-	../public/api/programmatoid_utils.html \
+	../docs/api/programmatoid_utils.html \
 	$(BUILD_TEX) \
 	$(BUILD_DEMO)
 
 ## build_api
 
-../public/api/programmatoid_utils.html: ./src/programmatoid_utils.py
-	rm -rf $(@D) ; pdoc --logo ./braincraft-benchmark.png --favicon ./braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../public/api
+../docs/api/programmatoid_utils.html: ./src/programmatoid_utils.py
+	rm -rf $(@D) ; pdoc --logo ./braincraft-benchmark.png --favicon ./braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../docs/api
 	cp ./src/{braincraft-benchmark,braincraft-favicon}.png $(@D)
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 	git add $(@D)
@@ -56,22 +56,22 @@ BUILD_PDF := \
   programmatoid-slides \
 
 BUILD_TEX := \
-  $(patsubst %.odg,%.png,$(wildcard doc/*.odg)) \
-  $(patsubst %.mpl,%.mpl.out.txt,$(wildcard doc/*.mpl)) \
-  $(patsubst %,../public/%.pdf,$(BUILD_PDF)) \
-  $(patsubst %,../public/%.png,$(BUILD_PDF))
+  $(patsubst %.odg,%.png,$(wildcard tex/*.odg)) \
+  $(patsubst %.mpl,%.mpl.out.txt,$(wildcard tex/*.mpl)) \
+  $(patsubst %,../docs/%.pdf,$(BUILD_PDF)) \
+  $(patsubst %,../docs/%.png,$(BUILD_PDF))
 
-../public/%.pdf: doc/%.tex $(wildcard doc/*.odg) $(wildcard doc/*.mpl) $(wildcard doc/*.bib) 
-	cd doc; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; rm -f $*.aux $*.bbl $*.blg $*.toc $*.nav $*.snm $*.out ; ok=
-	mv doc/$*.pdf $@ 
+../docs/%.pdf: tex/%.tex $(wildcard tex/*.odg) $(wildcard tex/*.mpl) $(wildcard tex/*.bib) 
+	cd tex; pdflatex -halt-on-error  -draftmode  $* ;  bibtex $* ; pdflatex -halt-on-error  -draftmode $* ; pdflatex -halt-on-error  $* ; grep -i undefined $*.log ; rm -f $*.aux $*.bbl $*.blg $*.toc $*.nav $*.snm $*.out ; ok=
+	mv tex/$*.pdf $@ 
 
-doc/%.mpl.out.txt: doc/%.mpl
+tex/%.mpl.out.txt: tex/%.mpl
 	cd tex ; maple ../$^ > ../$@
 
-doc/%.png : doc/%.odg
+tex/%.png : tex/%.odg
 	libreoffice --headless --convert-to png --outdir $(@D) $^
 
-../public/%.png: ../public/%.pdf
+../docs/%.png: ../docs/%.pdf
 	pdftk $^ cat 1 output /tmp/%-0.pdf ; convert /tmp/%-0.pdf $@ ; rm /tmp/%-0.pdf
 	git add $@
 
@@ -93,25 +93,25 @@ DEMOS := \
   programmatoneuronoid_task3
  
 BUILD_DEMO := \
-  $(patsubst %,../public/%, $(DEMOS)) \
-  ../public/index.html
+  $(patsubst %,../docs/%, $(DEMOS)) \
+  ../docs/index.html
 
-../public/programmatic_task%: ./src/programmatic_task@.py
-	./src/programmatoid_make.sh -c $* $^
+../docs/programmatic_task%: ./src/programmatic_task@.py
+	./src/programmatoid_make.sh -p ../docs -c $* $^
 
-../public/programmatic_quarter_turn_task1: ./src/programmatic_quarter_turn_task1.py
-	./src/programmatoid_make.sh -c 1 $^
+../docs/programmatic_quarter_turn_task1: ./src/programmatic_quarter_turn_task1.py
+	./src/programmatoid_make.sh -p ../docs -c 1 $^
 
-../public/programmaticoid_task%: ./src/programmaticoid_task@.py
-	echo ./src/programmatoid_make.sh -c $* $^
+../docs/programmaticoid_task%: ./src/programmaticoid_task@.py
+	echo ./src/programmatoid_make.sh -p ../docs -c $* $^
 
-../public/programmatoid_task%: ./src/programmatoid_task@.mpl
-	echo ./src/programmatoid_make.sh -c $* $^
+../docs/programmatoid_task%: ./src/programmatoid_task@.mpl
+	echo ./src/programmatoid_make.sh -p ../docs -c $* $^
 
-../public/programmatoneuronoid_task%: ./src/programmatoid_task@.mpl
-	echo ./src/programmatoid_make.sh -c $* -n $^
+../docs/programmatoneuronoid_task%: ./src/programmatoid_task@.mpl
+	echo ./src/programmatoid_make.sh -p ../docs -c $* -n $^
 
-../public/index.html: ./src/index.html
+../docs/index.html: ./src/index.html
 	sed 's/@@/$(DEMOS)/' < $^ > $@
 
 ## show
@@ -122,11 +122,11 @@ BROWSERS = chromium firefox google-chrome
 export BROWSER = $(shell l=($(foreach b,$(BROWSERS),$(shell if which -s $(b) ; then echo $(b) ; fi))) ; echo $${l[0]})
 endif
 
-show: build # Shows the public home page.
-	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/public/index.html
+show: build # Shows the docs home page.
+	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/docs/index.html
 
 clean: # Cleans all built files.
-	/bin/rm -rf ./src/programmatoid_make.mw ../public/*
+	/bin/rm -rf ./src/programmatoid_make.mw ../docs/*
 
 rebuild: clean build # Rebuilds all built files to check the reproducibility.
 
