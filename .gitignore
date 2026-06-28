@@ -196,5 +196,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Programmatoid results output is ignored
-/braincraft/out
+# Local file ignored
+/public/node_modules
+/public/package.json
+/public/package-lock.json
+

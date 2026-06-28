@@ -842,12 +842,12 @@ In fact this compilation option is simply used to verify numerically that such a
 
 \appendix
 
-\section{An alternative solution without about-turn}
+\section{An alternative solution with quarter-turn only and no about-turn}
 
 We have proposed half-turn mechanism, because the implementation is relatively simpler, thus clearer, for benchmarking the programmatoid and neuronoid implementations.
 However we also can propose a quarter-turn implementation.
 
-\subsubsection{Navigation}\begin{description}
+\begin{description}
 \item[Heuristic]: The bot runs at constant velocity,
 \\\tab (i) ahead by default, thanks to a linear correction, high enough to correct the direction, small enough to avoid oscillations, and
 \\\tab (ii) perform a quarter-turn in the preferred orientation as soon as a wall is closed ahead, or if in the middle of the corridor.

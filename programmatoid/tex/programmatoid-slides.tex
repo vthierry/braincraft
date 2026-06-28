@@ -2,7 +2,7 @@
 \usepackage{graphicx} \usepackage[export]{adjustbox} \usepackage{float}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{wasysym} % https://texdoc.org/serve/wasysym.pdf/0
-\newcommand{\hrefc}[2]{\href{#1}{{#2 \CheckedBox}}}
+\newcommand{\hrefc}[2]{\href[pdfnewwindow=true]{#1}{{#2 \CheckedBox}}}
 \usepackage{newunicodechar}
 \newunicodechar{≤}{\ensuremath{\leq}}
 \newunicodechar{≥}{\ensuremath{\geq}}
@@ -45,9 +45,9 @@ Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/READ
     \includegraphics[width=0.3\textwidth]{./task1.png} &
     \includegraphics[width=0.3\textwidth]{./task2.png} &
     \includegraphics[width=0.3\textwidth]{./task3.png} \\
-    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Find the energy source leftward or rightward}.} &
-    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Find the correct direction, given the blue cue}.} &
-    \parbox[t]{0.3\textwidth}{\hrefc{http://nowhere}{Choose the best energy source}.} \\
+    \parbox[t]{0.3\textwidth}{\hrefc{./programmatic_task1/prgm.mp4}{Find the energy source leftward or rightward}.} &
+    \parbox[t]{0.3\textwidth}{\hrefc{./programmatic_task1/prgm.mp4}{Find the correct direction, given the blue cue}.} &
+    \parbox[t]{0.3\textwidth}{\hrefc{./programmatic_task1/prgm.mp4}{Choose the best energy source}.} \\
 \hline\end{tabular}} \end{frame}
 
 \begin{frame}
@@ -58,7 +58,8 @@ Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/READ
 
 \begin{frame}
   \frametitle{Heuristics:}
-  \centerline{\includegraphics[width=0.4\textwidth]{./navigation.png} \tab \includegraphics[width=0.4\textwidth]{./navigation2.png}}  \begin{itemize}
+  \centerline{\hrefc{./programmatic_task1/prgm.mp4}{\includegraphics[width=0.4\textwidth]{./navigation.png}} \tab
+                      \hrefc{./programmatic_quarter_turn_task1/prgm.mp4}{\includegraphics[width=0.4\textwidth]{./navigation2.png}}}  \begin{itemize}
     \item Stabilizes the forward motion using linear feedback correction.
     \item Performs quarter-turn using ahead proximity thresholds.
     \item Performs about-turn or half-corridor turn using delays.
@@ -71,7 +72,7 @@ Documented in the \hrefc{https://github.com/vthierry/braincraft/blob/master/READ
   \centerline{\includegraphics[width=0.8\textwidth]{./programmatic-implementation.png}}
   \begin{itemize}
     \item About 8 internal variables \\ {\small (forward/turns states, turn direction, delays, gauge values)}
-    \item About 40 lines of straight-line program code \\ {\small (beyond initialization and declarations) \\\tab- when \hrefc{http://nowhere}{using about-turn} and \\\tab- about 50 when \hrefc{http://nowhere}{using quarter-turns only}}.
+    \item About 40 lines of straight-line program code \\ {\small (beyond initialization and declarations) \\\tab- when \hrefc{./programmatic_task1/prgm.html}{using about-turn} and \\\tab- about 50 when \hrefc{./programmatic_quarter_turn_task1/prgm.html}{using quarter-turns only}}.
 \end{itemize}\end{frame}
 
 \begin{frame}
