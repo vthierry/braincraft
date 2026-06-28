@@ -1,0 +1,18 @@
+{
+ programmatoid_make
+ prgm: "programmatic_quarter_turn_task1"
+ date: 2026-06-28_22-27-29
+ source = "<a href='./prun.py' target='_blank'>programmatic_quarter_turn_task1.py</a>"
+ execution: {
+  challenge: 1
+  timeout: 100
+  runs: 1
+  display: true
+  trace: [
+  ]
+  evaluation-time: "3.04 sec" 
+  iterations: "100.00 ± 0.00" 
+  distances: "1.00 ± 0.00"
+  hits: "0.00 ± 0.00" 
+ }
+}

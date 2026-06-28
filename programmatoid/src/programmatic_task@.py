@@ -73,7 +73,7 @@ class ProgrammaticState(State):
                 else:
                         self.data["d_l"], self.data["d_r"] = 0.035 * self.data["p_r"], 0.035 * self.data["p_l"]
                 # Dumps current state
-                print(f"   \u007b t: {self.data["time"]:3d} p_lar: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] g_e: [{self.data["g_e"]:.2f} > {self.data["g_e1"]:.2f} ±{self.data["g_d1"]:.2f}] b_d: {self.data["b_d"]} b_t: {self.data["b_t"]}  b_a: {self.data["b_a"]}  b_h: {1 if self.data["b_h"] else 0}  \u007d", flush=True)
+                ## print(f"   \u007b t: {self.data["time"]:3d} p_lar: [{self.data["p_l"]:.2f} {self.data["p_a"]:.2f} {self.data["p_r"]:.2f}] g_e: [{self.data["g_e"]:.2f} > {self.data["g_e1"]:.2f} ±{self.data["g_d1"]:.2f}] b_d: {self.data["b_d"]} b_t: {self.data["b_t"]}  b_a: {self.data["b_a"]}  b_h: {1 if self.data["b_h"] else 0}  \u007d", flush=True)
 
 ## Runs and evaluate the bot behavior for the given task
 if __name__ == "__main__":

@@ -15,6 +15,8 @@ prgm_default_options := table([
 
 ## Defines expandable functions
 
+Heaviside(v) := 1/2:
+
 prgm_functions := {
    h = (v ->
        if type(v, constant) then evalf(1.0/(1.0+exp(-4.0*x)))

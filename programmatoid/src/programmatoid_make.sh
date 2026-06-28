@@ -4,19 +4,22 @@
 if [ -f ~/.bashrc ] ; then . ~/.bashrc ; fi
 
 ## Option parsing
-n="false" ; n_=""
-p="../public"
+fatal_error() {
+    echo -e "programmatoid_make error: $1." ;  /bin/rm -rf $target ; exit -1
+}
+n="false" ; _n=""
+target="../public"
 while true ; do case "$1" in
-    -p ) shift ; c="$1" ; shift ;;
+    -p ) shift ; target="$1" ; shift ;;
     -c ) shift ; c="$1" ; shift ;;
-    -n ) shift ; n="true" ; n_="_neuronoid" ;;
+    -n ) shift ; n="true" ; _n="_neuronoid" ;;
     -i ) shift ; pause=" ; read -p 'Type enter to close' cont" ;;
     -h | -H | --help ) $0 ; exit 0 ;;
-    -*) echo "Error: Spurious option '$1'  ($0 -h for help)." ;  exit -1 ;;
+    -*) fatal_error "Spurious option '$1'  ($0 -h for help)" ;;
     * ) break ;;
 esac ; done
-if [ -f "$1" ] ; then echo "Error: File not found '$1'  ($0 -h for help)." ;  exit -1 ; fi
-if [  "${1##*.}"  \!= "py" -o  "${1##*.}"  \!= "mpl" ] ; then echo "Error: Spurious extension '.${1##*.}'  ($0 -h for help)." ;  exit -1 ; fi
+if [ \! -f "$1" ] ; then fatal_error "File not found '`pwd`/$1'." ; fi
+if [  "${1##*.}"  \!= "py" -a  "${1##*.}"  \!= "mpl" ] ; then fatal_error "Spurious extension '.${1##*.}'" ; fi
 
 ## Usage of the script
 if [ -z "$1" ] ; then cat <<EOF 
@@ -29,15 +32,15 @@ Usage: $0 [-h | [-c \$c] [-p \$p] [-i] \$prgm.(mpl|py)]
       - \$o/prgm.mw for the programmatoid translation maple trace, if any.
       - \$o/prun.py for the programmatic input or translated source.
       - \$o/*.py for all source dependecies, if any.
-      - \$o/prgm.mkv for the process screen cast.
+      - \$o/prgm.mp4 for the process screen cast.
       - \$o/prgm.wjson (in weak JSON syntax) for the process trace.
       - \$o/prgm.html for the process output presentation.
       - The \$o directory is added to the git repository, if any, when no error.
   Options:
-   -p \$p: Output parent publication directory, default is '../public'.
+   -p \$p: Target parent publication directory, default is '../public'.
    -c \$c: Optional challenge number.
    -n: Generates a neuronoid implementation (using network weights), default is false.
-   -i: Interactively pause at the end of the run.
+   -i: Interactively pause at the end of the run (for debug purposes only).
    -h: Shows this usage and exit.
   Note:
     - Space or path separator char in input/output names is not supported.
@@ -47,16 +50,24 @@ fi
 
 ## Prepares the working and output directory
 ### Sets the directory name
-prgm="${1%.*}" ; if [ -z "${prgm//^@/}" ] ; then prgm="$prgm$c$n_" ; else prgm="${$prgm//@/$c}" ; fi
+prgm="${1##*/}" ; prgm="${prgm%.*}" ; if [ -z "${prgm//@/}" ] ; then prgm="$prgm$c$_n" ; else prgm="${prgm//@/$c}$_n" ; fi
+target="$target/$prgm"
 ## Cleans previous files and prepares the repository
-mkdir -p $p/$prgm ; rm -rf $p/$prgm/*.* ; git rm -qrf $p/$prgm 2> /dev/null
+/bin/rm -rf $target ; git rm -qrf $target 2> /dev/null ; mkdir -p $target
 ### Defines the log file name
-l="$p/$prgm/prgm.wjson"
+l="$target/prgm.wjson"
 echo -e "{\n programmatoid_make\n prgm: \"$prgm\"\n date: `date '+%Y-%m-%d_%H-%M-%S'`" | tee $l
 ### Copy the utilities files to run in the target directory
-programmatoid_utils.py $p/$prgm
-if [ \! -z "$c" ] ; then cp bot.py camera.py environment_$c.py $p/$prgm ; fi
-prun="$p/$prgm/prun.py"
+d="`dirname $0`"
+cp $d/programmatoid_utils.py $target
+if [ \! -z "$c" ] ; then cp $d/../../braincraft/{bot.py,camera.py,environment_$c.py} $target ; fi
+prun="$target/prun.py"
+
+# Copies the python program instancing the challenge if any
+if [ "${1##*.}" = "py" ] ; then
+    sed "s/@/$c/g" < $1 > $prun
+    echo -e " source = \"<a href='./prun.py' target='_blank'>$prgm.py</a>\"" | tee -a $l
+fi
 
 ## Translates programmatoid, if defined in maple
 if [ "${1##*.}" = "mpl" ] ; then
@@ -66,19 +77,15 @@ programmatoid_make.mw: programmatoid_make.mpl
 	maple -q $^
 EOF
    ### Checks maple syntax
-   e="`maple -q $1`" ; if [ \! -z "$e" ] ; then echo -e "Error: bad maple syntax : \"`echo $e | sed 's/"//g'`\"\n" | tee -a $l ; exit -1 ; fi
+   e="`maple -q $1`" ; if [ \! -z "$e" ] ; then fatal_error "Bad maple syntax : \"`echo $e | sed 's/"//g'`\"\n" ; fi
    # Instanciates the challenge if any
-   sed "s/challenge *= *0/challenge = $c/g" < $1 | sed "s/neuronoid *= *false/neuronoid = $n/g" > $p/$prgm/prgm.mpl
+   sed "s/challenge *= *0/challenge = $c/g" < $1 | sed "s/neuronoid *= *false/neuronoid = $n/g" > $target/prgm.mpl
    ### Translates the programmatoid equations
-   (echo 'read "./programmatoid_make.mw": prgm_compile("'$p/$prgm'", "'$p/$prgm/prgm.mpl'");' | maple -q) | sed 's/^"//' | sed 's/  }"/ }/' | grep -v '^$' | tee -a $l 
+   (echo 'read "./programmatoid_make.mw": prgm_compile("'$target'", "'$target/prgm.mpl'");' | maple -q) | sed 's/^"//' | sed 's/  }"/ }/' | grep -v '^$' | tee -a $l 
    ## Creates the file to run
-   if [ -f "$p/$prgm/prgm.py" ]
+   if [ -f "$target/prgm.py" ]
    then
-     if [ -z "$c" ]
-     then
-	 prun="$p/$prgm/prgm.py"
-     else
-	 cat <<EOF  > $p/$prgm/prun.py
+	 cat <<EOF  > $target/prun.py
 # This file is automatically generated, better not edit!
 import numpy as np
 from bot import Bot
@@ -89,48 +96,37 @@ from prgm import MyState
 if __name__ == "__main__":
 	evaluate(Bot, Environment, MyState)
 EOF
-     fi
-  else
-     echo "Error: the '$p/$prgm/prgm.py' has not been created, there is a translation error" | tee -a $l ; exit -1
-  fi
-else
-  # Instanciates the challenge if any
-   sed "s/@/$c/g" < $1 > $prun
+   else
+     fatal_error "The '$target/prgm.py' has not been created, there is a translation error"
+   fi
 fi
 
 ## Runs at the programmatic level
-    ### Adds the source to the trace if in the programmatic case
-    if [ \! -f "$p/$prgm/prgm.mpl" ] ; then echo -e '"\tsource = "\n' ; cat $prun | awk print '{ \t\t$0 }' | sed 's/"/\\"/g' ; echo -e '\t"\n' ; fi
     ### Kills any previous running xterm console with the same geometry
     kill `ps -ef | ps -ef | grep 'xterm.*-geometry 70x11+50+50' | awk '{print $2}'` >/dev/null 2>&1
     ### Starts a pipe for the simplescreenrecorder stdin
-    /bin/rm -f  /tmp/ssr-input ; mkfifo /tmp/ssr-input
+    /bin/rm -f  /tmp/prgm-$$-ssr-input ; mkfifo /tmp/prgm-$$-ssr-input
     ### Copies the simplescreenrecorder in /tmp to avoid any change and to set the proper output
-    s="`echo $p/$prgm | sed 's/\//\\\//g'`" ; sed < ssr-settings.conf > /tmp/ssr-settings.conf "s/PRGM/$s/"
+    s="`echo $target | sed 's/\//\\\\\//g'`" ; sed < $d/ssr-settings.conf > /tmp/prgm-$$-ssr-settings.conf "s/PRGM/$s/"
     ### Starts a delayed move of the graphic window
     (sleep 1 ; xdotool search --name "Figure 1" windowmove 50 415) &
     ### Starts the simplescreenrecorder using predefined settings in background and piped input
-    (sleep 1 ; tail -f /tmp/ssr-input | simplescreenrecorder --settingsfile=/tmp/ssr-settings.conf --start-recording --start-hidden >/dev/null 2>&1) &
+    (sleep 1 ; tail -f /tmp/prgm-$$-ssr-input | simplescreenrecorder --settingsfile=/tmp/prgm-$$-ssr-settings.conf --start-recording --start-hidden >/dev/null 2>&1) &
     ### Starts the program in an xterm console
-    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $prun 2>&1 | tee -a $l $pause "
+    xterm -geometry 70x11+50+50 -sb -sl 10000 -rightbar -fa 'Monospace' -fs 18 -title 'programmatic challenge' -e sh -c "python3 $prun 2>&1 | tee -a $l > `tty` $pause "
     ### When done, stops and saves the screen recording and dumps the log file
-    (echo  record-pause  ; echo  record-save ) >  /tmp/ssr-input
+    (echo  record-pause  ; echo  record-save ) >  /tmp/prgm-$$-ssr-input
     ### Extracts a thumbnail
-    ffmpeg -i $p/$prgm/prgm.mkv  -vf "select=eq(n\,111)" -vframes 1 $p/$prgm/prgm.png
-    cat $l
-   
+    sleep 2 ;  ffmpeg -loglevel error -i $target/prgm.mp4 -vframes 10 /tmp/prgm-$$-%d.png ; mv /tmp/prgm-$$-10.png $target/prgm.png
+    ### Cleans files
+    /bin/rm -f /tmp/prgm-$$*
 echo -e "}"  | tee -a $l 
 
 ## Finalizes the output file in html
-if [ -f "../../etc/wjson-master/src/wjson2html.js" ]
-then
-    trace="`../../etc/wjson-master/src/wjson2html.js < $l`"
-else
-    trace="<pre>$l</pre>"
-fi
+wjson2html="$d/../../etc/wjson-master/src/wjson2html.js"
+if [ \! -f "$wjson2html" ] ; then fatal_error "The wjson2html is not installed, are you in the right git branch ?" ; fi
 title="${prgm//_/ }"
-
-cat <<EOF >$p/$prgm/prgm.html
+cat <<EOF >$target/prgm.html
 <html>
   <head>
     <title>The $title demonstration</title>
@@ -138,10 +134,12 @@ cat <<EOF >$p/$prgm/prgm.html
   </head>
   <body>
     <h1>The $title demonstration</h1>
-     <center><a href="prgm.mkv" target="_blank"><img src="prgm.png"/></a></center>
-     <hr/>$trace
+     <center><a href="prgm.mp4" target="_blank"><img width="400" src="prgm.png"/></a></center>
+     <hr/>
+       `$wjson2html < $l`
    </body>
 </html>
 EOF
 
-git add $p/$prgm 2> /dev/null
+## Updates the git repository
+git add $target 2> /dev/null

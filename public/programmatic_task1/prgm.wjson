@@ -1,0 +1,18 @@
+{
+ programmatoid_make
+ prgm: "programmatic_task1"
+ date: 2026-06-28_21-56-37
+source = "<a href='./prun.py' target='_blank'>programmatic_task1.py</a>"
+ execution: {
+  challenge: 1
+  timeout: 0
+  runs: 10
+  display: true
+  trace: [
+  ]
+  evaluation-time: "145.99 sec" 
+  iterations: "870.70 ± 13.67" 
+  distances: "7.17 ± 0.22"
+  hits: "154.60 ± 9.09" 
+  }
+}

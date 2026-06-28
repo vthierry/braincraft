@@ -177,7 +177,7 @@ def evaluate(Bot, Environment, State):
     distances = []
     hits = []
 
-    plt.pause(2)
+    plt.pause(0.9)
 
     for i in range(runs):
         state.data["time"] = 0
@@ -271,6 +271,6 @@ def evaluate(Bot, Environment, State):
     if debug:
         elapsed = time.time() - start_time
 
-    print(f"  ]\n  evaluation-time: \"{elapsed:.2f} sec\" \n  iterations: \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\" \n  distances: \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\"\n  hits: \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\" \n  \u007d", flush=True)
+    print(f"  ]\n  evaluation-time: \"{elapsed:.2f} sec\" \n  iterations: \"{np.mean(iterations):.2f} ± {np.std(iterations):.2f}\" \n  distances: \"{np.mean(distances):.2f} ± {np.std(distances):.2f}\"\n  hits: \"{np.mean(hits):.2f} ± {np.std(hits):.2f}\" \n \u007d", flush=True)
 
 

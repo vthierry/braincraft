@@ -5,14 +5,12 @@
 # Doc:  https://makefiletutorial.com
 #
 define TODO
-
-Faire manip avec 10 runs et sans timeout
-
-Changer de variable pour les omega * f(…) apres 1ers teste programmatoid
-
+Changer de variable pour les omega * f(…) apres 1er test programmatoid
 endef
 
-default: build
+default:
+#	/bin/rm -rf ../public/programmatic_quarter_turn_task1
+	$(MAKE) build
 
 ## Configures properly the makefile in silent mode, with bash, avoiding spurious paralleism, with automatic usage
 
@@ -36,7 +34,7 @@ sync: # Synchronizes files with the github repository.
 ## build_all
 
 build: # Builds all test, demo and documentation files.
-	$(MAKE) -s $(BUILD)
+	$(MAKE) $(BUILD)
 
 BUILD = \
 	../public/api/programmatoid_utils.html \
@@ -46,7 +44,8 @@ BUILD = \
 ## build_api
 
 ../public/api/programmatoid_utils.html: ./src/programmatoid_utils.py
-	rm -rf $(@D)/* ; pdoc --logo ../data/braincraft0.png --logo-link 'https://github.com/rougier/braincraft' --favicon ../data/braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../public/api
+	rm -rf $(@D) ; pdoc --logo ./braincraft-benchmark.png --favicon ./braincraft-favicon.png  --footer-text "`date +'%Y-%m-%d %H:%M:%S'` version"  $^ -o ../public/api
+	cp ./src/{braincraft-benchmark,braincraft-favicon}.png $(@D)
 	mv $@ $@~ ; sed < $@~ > $@ 's/....custom.css.../.attribution { display: none!important; }/'
 	git add $(@D)
 
@@ -89,25 +88,31 @@ DEMOS := \
   programmatoid_task1 \
   programmatoid_task2 \
   programmatoid_task3 \
+  programmatoneuronoid_task1 \
+  programmatoneuronoid_task2 \
+  programmatoneuronoid_task3
  
 BUILD_DEMO := \
   $(patsubst %,../public/%, $(DEMOS)) \
   ../public/index.html
 
-../public/%: ./src/%.py
-	echo ./src/programmatoid_challenge.sh -c $* $^
-
 ../public/programmatic_task%: ./src/programmatic_task@.py
-	echo ./src/programmatoid_challenge.sh -c $* $^
+	./src/programmatoid_make.sh -c $* $^
+
+../public/programmatic_quarter_turn_task1: ./src/programmatic_quarter_turn_task1.py
+	./src/programmatoid_make.sh -c 1 $^
 
 ../public/programmaticoid_task%: ./src/programmaticoid_task@.py
-	echo ./src/programmatoid_challenge.sh -c $* $^
+	echo ./src/programmatoid_make.sh -c $* $^
 
 ../public/programmatoid_task%: ./src/programmatoid_task@.mpl
-	echo ./src/programmatoid_challenge.sh -c $* $^
+	echo ./src/programmatoid_make.sh -c $* $^
 
-../public/index.html: $(patsubst %,../public/%, $(DEMOS))
-	cp $@ $@~ ; sed 's/const  *demos *= *\[[^]]*\]/const  demos = [ $(patsubst %,"%,",$(DEMOS))]/' < $@~ | sed 's/,]/ ]/' > $@
+../public/programmatoneuronoid_task%: ./src/programmatoid_task@.mpl
+	echo ./src/programmatoid_make.sh -c $* -n $^
+
+../public/index.html: ./src/index.html
+	sed 's/@@/$(DEMOS)/' < $^ > $@
 
 ## show
 
@@ -121,7 +126,7 @@ show: build # Shows the public home page.
 	$(BROWSER) https://html-preview.github.io/?url=https://github.com/vthierry/braincraft/blob/master/public/index.html
 
 clean: # Cleans all built files.
-	/bin/rm -f src/programmatoid_make.mw ../public/*.png ../public/*/*.*
+	/bin/rm -rf ./src/programmatoid_make.mw ../public/*
 
 rebuild: clean build # Rebuilds all built files to check the reproducibility.
 
