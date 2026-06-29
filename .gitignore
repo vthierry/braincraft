@@ -197,7 +197,7 @@ cython_debug/
 .cursorindexingignore
 
 # Local file ignored
-/public/node_modules
-/public/package.json
-/public/package-lock.json
+/docs/node_modules
+/docs/package.json
+/docs/package-lock.json
 
