@@ -127,25 +127,32 @@ BROWSERS = chromium firefox google-chrome
 export BROWSER = $(shell l=($(foreach b,$(BROWSERS),$(shell if which -s $(b) ; then echo $(b) ; fi))) ; echo $${l[0]})
 endif
 
-show: build # Shows the documentation home page.
-## If npm is installed uses a minimal server
-### Installs locally the npm http-server if not yet done
-### If no server active
-#### Starts the server in a detached child process
-#### Creates a script to stop the server
-### Opens the page
-## Else, opens the page as a file
+show: build ../docs/http-server-stop # Shows the documentation home page, local=1 to run it locally
+ifeq (1,$(local))
+## - If npm is installed uses a minimal server,
+##     -  Installs locally the npm http-server if not yet done,
+##     - If no server active,
+##       - Starts the server in a detached child process,
+##    - Opens the page,
+## - Opens as a file, otherwise.
 	if which -s npm ; then \
 	  cd ../docs ;\
 	  if ! which -s http-server ; then npm --silent install http-server ; fi ;\
 	  if [ "`curl -s -w '%{http_code}' -L '127.0.0.1:8080/' -o /dev/null`" -ne 200 ] ; then \
-	    (nohup ./node_modules/http-server/bin/http-server -a 127.0.0.1-p 8080 --silent &>/dev/null 0</dev/null &) ;\
-	    echo -e "#!/bin/bash\nkill -9 $$$$ &>/dev/null" > http-server-stop ; chmod a+x http-server-stop ; echo "Run '.../docs/http-server-stop' to stop the server" ;\
+	    (nohup ./node_modules/http-server/bin/http-server -a 127.0.0.1 -p 8080 0</dev/null &>/dev/null &) ;\
+	    echo "Run '.../docs/http-server-stop' to stop the server" ;\
 	  fi ;\
 	  ($(BROWSER) http://127.0.0.1:8080/index.html &) ;\
 	else \
-	  ($(BROWSER) `pwd`/../docs/index.html &) ;\
+	  ($(BROWSER) `pwd`/docs/index.html &) ;\
 	fi
+else
+## - Opens the git page
+	  ($(BROWSER) https://vthierry.github.io/braincraft &)
+endif
+
+../docs/http-server-stop: makefile
+	echo -e "#!/bin/bash\nkillall -q http-server" > $@ ; chmod a+x $@
 
 stop: # Stops running the documentation server.
 	if [ -f ../docs/http-server-stop ] ; then ../docs/http-server-stop ; /bin/rm ../docs/http-server-stop ; fi

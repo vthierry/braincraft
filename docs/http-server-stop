@@ -1,2 +1,2 @@
 #!/bin/bash
-kill -9 80838 &>/dev/null
+killall -q http-server
