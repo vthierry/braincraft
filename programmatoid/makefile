@@ -11,10 +11,10 @@ Commencer à tester la translation
 Changer de variable pour les omega * f(…) apres 1er test programmatoid
 endef
 
-default: usage
+default: 
 #	/bin/rm -rf ../docs/programmatic_quarter_turn_task1
-#	$(MAKE) build
-#
+	$(MAKE) build
+
 
 ## Configures properly the makefile in silent mode, with bash, avoiding spurious paralleism, with automatic usage.
 
@@ -113,7 +113,7 @@ BUILD_DEMO := \
 	./src/programmatoid_make.sh -p ../docs -c 1 $^
 
 ../docs/programmaticoid_task%: ./src/programmaticoid_task@.py
-	echo ./src/programmatoid_make.sh -p ../docs -c $* $^
+	./src/programmatoid_make.sh -p ../docs -c $* $^
 
 ../docs/programmatoid_task%: ./src/programmatoid_task@.mpl
 	echo ./src/programmatoid_make.sh -p ../docs -c $* $^
